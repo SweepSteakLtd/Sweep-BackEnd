@@ -1,0 +1,13 @@
+node_modules
+build
+.editorconfig
+.secrets
+.env
+.env.development
+.env.production
+.env.service-account.json
+.vscode
+.idea
+scripts/payment-ids-prod.ts
+scripts/reports
+.DS_Store

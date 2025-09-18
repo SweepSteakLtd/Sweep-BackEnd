@@ -1,0 +1,11 @@
+
+# For production backend
+runConfig:
+  cpu: 1
+  memory: 1GiB
+  concurrency: 100
+env:
+    - variable: APPLIED_ENV
+      value: production
+    - variable: MONGODB_URI
+      value: mock-mongodb-url
