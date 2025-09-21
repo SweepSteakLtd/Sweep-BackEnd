@@ -15,6 +15,7 @@ const plainApp = express();
 
 const applyRootConfiguration = (appObject: Express): Express => {
   appObject.use(cors({ origin: true }));
+  appObject.use(BP.json()); // Add JSON body parsing
   appObject.use(BP.urlencoded({ extended: false }));
 
   // Log routes as they're being registered

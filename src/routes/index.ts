@@ -1,5 +1,64 @@
 import type { RequestHandler } from 'express';
-import { playgroundHandler } from '../handlers';
+import {
+  // User handlers
+  createUserHandler,
+  getCurrentUserHandler,
+  updateCurrentUserHandler,
+  deleteCurrentUserHandler,
+
+  // Game handlers
+  createGameHandler,
+  deleteGameHandler,
+  getAllGamesHandler,
+  getGameByIdHandler,
+  updateGameHandler,
+
+  // Bet handlers
+  createBetHandler,
+  deleteBetHandler,
+  getBetsHandler,
+  updateBetHandler,
+
+  // Player profile handlers
+  getPlayerProfilesHandler,
+
+  // Transaction handlers
+  getTransactionsHandler,
+
+  // Admin - Games
+  deleteGameAdminHandler,
+  getAllGamesAdminHandler,
+  updateGameAdminHandler,
+
+  // Admin - Player Profiles
+  createPlayerProfileHandler,
+  deletePlayerProfileHandler,
+  getAllPlayerProfilesAdminHandler,
+  updatePlayerProfileHandler,
+
+  // Admin - Players
+  createPlayerHandler,
+  deletePlayerByIdHandler,
+  getPlayersByTournamentHandler,
+  updatePlayerByIdHandler,
+
+  // Admin - Tournaments
+  createTournamentHandler,
+  deleteTournamentHandler,
+  getAllTournamentsHandler,
+  updateTournamentHandler,
+
+  // Admin - Transactions
+  createTransactionHandler,
+  deleteTransactionHandler,
+  getAllTransactionsHandler,
+  updateTransactionHandler,
+
+  // Admin - Users
+  deleteUserHandler,
+  getAllUsersHandler,
+  updateUserHandler,
+} from '../handlers';
 
 interface RouteEndpoint {
   method: 'get' | 'post' | 'put' | 'patch' | 'delete';
@@ -14,12 +73,228 @@ interface RouteDescription {
 
 export const routes: RouteDescription[] = [
   {
-    apiName: 'playground',
+    apiName: 'users',
+    endpoints: [
+      {
+        method: 'post',
+        name: '/',
+        stack: [createUserHandler],
+      },
+      {
+        method: 'get',
+        name: '/me',
+        stack: [getCurrentUserHandler],
+      },
+      {
+        method: 'put',
+        name: '/me',
+        stack: [updateCurrentUserHandler],
+      },
+      {
+        method: 'delete',
+        name: '/me',
+        stack: [deleteCurrentUserHandler],
+      },
+    ],
+  },
+  {
+    apiName: 'games',
+    endpoints: [
+      {
+        method: 'post',
+        name: '/',
+        stack: [createGameHandler],
+      },
+      {
+        method: 'get',
+        name: '/',
+        stack: [getAllGamesHandler],
+      },
+      {
+        method: 'get',
+        name: '/:id',
+        stack: [getGameByIdHandler],
+      },
+      {
+        method: 'put',
+        name: '/:id',
+        stack: [updateGameHandler],
+      },
+      {
+        method: 'delete',
+        name: '/:id',
+        stack: [deleteGameHandler],
+      },
+    ],
+  },
+  {
+    apiName: 'bets',
+    endpoints: [
+      {
+        method: 'post',
+        name: '/',
+        stack: [createBetHandler],
+      },
+      {
+        method: 'get',
+        name: '/',
+        stack: [getBetsHandler],
+      },
+      {
+        method: 'put',
+        name: '/:id',
+        stack: [updateBetHandler],
+      },
+      {
+        method: 'delete',
+        name: '/:id',
+        stack: [deleteBetHandler],
+      },
+    ],
+  },
+  {
+    apiName: 'player-profiles',
     endpoints: [
       {
         method: 'get',
         name: '/',
-        stack: [playgroundHandler],
+        stack: [getPlayerProfilesHandler],
+      },
+    ],
+  },
+  {
+    apiName: 'transactions',
+    endpoints: [
+      {
+        method: 'get',
+        name: '/',
+        stack: [getTransactionsHandler],
+      },
+    ],
+  },
+  {
+    apiName: 'admin',
+    endpoints: [
+      // Games admin endpoints
+      {
+        method: 'get',
+        name: '/games',
+        stack: [getAllGamesAdminHandler],
+      },
+      {
+        method: 'put',
+        name: '/games/:id',
+        stack: [updateGameAdminHandler],
+      },
+      {
+        method: 'delete',
+        name: '/games/:id',
+        stack: [deleteGameAdminHandler],
+      },
+
+      // Player profiles admin endpoints
+      {
+        method: 'post',
+        name: '/player-profiles',
+        stack: [createPlayerProfileHandler],
+      },
+      {
+        method: 'get',
+        name: '/player-profiles',
+        stack: [getAllPlayerProfilesAdminHandler],
+      },
+      {
+        method: 'put',
+        name: '/player-profiles/:id',
+        stack: [updatePlayerProfileHandler],
+      },
+      {
+        method: 'delete',
+        name: '/player-profiles/:id',
+        stack: [deletePlayerProfileHandler],
+      },
+
+      // Players admin endpoints
+      {
+        method: 'post',
+        name: '/players',
+        stack: [createPlayerHandler],
+      },
+      {
+        method: 'get',
+        name: '/players/tournament/:tournamentId',
+        stack: [getPlayersByTournamentHandler],
+      },
+      {
+        method: 'put',
+        name: '/players/:id',
+        stack: [updatePlayerByIdHandler],
+      },
+      {
+        method: 'delete',
+        name: '/players/:id',
+        stack: [deletePlayerByIdHandler],
+      },
+
+      // Tournaments admin endpoints
+      {
+        method: 'post',
+        name: '/tournaments',
+        stack: [createTournamentHandler],
+      },
+      {
+        method: 'get',
+        name: '/tournaments',
+        stack: [getAllTournamentsHandler],
+      },
+      {
+        method: 'put',
+        name: '/tournaments/:id',
+        stack: [updateTournamentHandler],
+      },
+      {
+        method: 'delete',
+        name: '/tournaments/:id',
+        stack: [deleteTournamentHandler],
+      },
+
+      // Transactions admin endpoints
+      {
+        method: 'post',
+        name: '/transactions',
+        stack: [createTransactionHandler],
+      },
+      {
+        method: 'get',
+        name: '/transactions',
+        stack: [getAllTransactionsHandler],
+      },
+      {
+        method: 'put',
+        name: '/transactions/:id',
+        stack: [updateTransactionHandler],
+      },
+      {
+        method: 'delete',
+        name: '/transactions/:id',
+        stack: [deleteTransactionHandler],
+      },
+
+      // Users admin endpoints
+      {
+        method: 'get',
+        name: '/users',
+        stack: [getAllUsersHandler],
+      },
+      {
+        method: 'put',
+        name: '/users/:id',
+        stack: [updateUserHandler],
+      },
+      {
+        method: 'delete',
+        name: '/users/:id',
+        stack: [deleteUserHandler],
       },
     ],
   },

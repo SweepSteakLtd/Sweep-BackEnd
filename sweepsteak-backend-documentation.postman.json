@@ -1,0 +1,1919 @@
+{
+  "info": {
+    "name": "Golf Betting API",
+    "description": "Complete API collection for Golf Betting Platform with authentication and comprehensive examples",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "x-auth-id",
+        "type": "string"
+      },
+      {
+        "key": "value",
+        "value": "{{auth_token}}",
+        "type": "string"
+      },
+      {
+        "key": "in",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "your-auth-token-here",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Public Endpoints",
+      "item": [
+        {
+          "name": "Users",
+          "item": [
+            {
+              "name": "Create User",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"id\": \"user123\",\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"bio\": \"Golf enthusiast\",\n  \"profile_picture\": \"https://example.com/avatar.jpg\",\n  \"phone_number\": \"+1234567890\",\n  \"game_stop_id\": \"gs123\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/users",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "users"]
+                }
+              },
+              "response": [
+                {
+                  "name": "201 Created",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"id\": \"user123\",\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"bio\": \"Golf enthusiast\",\n  \"profile_picture\": \"https://example.com/avatar.jpg\",\n  \"phone_number\": \"+1234567890\",\n  \"game_stop_id\": \"gs123\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/users",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "users"]
+                    }
+                  },
+                  "status": "Created",
+                  "code": 201,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"id\": \"user123\",\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"bio\": \"Golf enthusiast\",\n  \"profile_picture\": \"https://example.com/avatar.jpg\",\n  \"phone_number\": \"+1234567890\",\n  \"game_stop_id\": \"gs123\",\n  \"is_auth_verified\": false,\n  \"is_identity_verified\": false,\n  \"deposit_limit\": 0,\n  \"betting_limit\": 0,\n  \"payment_id\": \"\",\n  \"current_balance\": 0,\n  \"created_at\": \"2024-01-01T00:00:00Z\",\n  \"updated_at\": \"2024-01-01T00:00:00Z\"\n}"
+                },
+                {
+                  "name": "422 Validation Error",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"first_name\": \"John\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/users",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "users"]
+                    }
+                  },
+                  "status": "Unprocessable Entity",
+                  "code": 422,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Validation Error\",\n  \"message\": \"Invalid request data\",\n  \"details\": [\"Field 'email' is required\", \"Field 'id' is required\"]\n}"
+                },
+                {
+                  "name": "500 Internal Server Error",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"id\": \"user123\",\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"bio\": \"Golf enthusiast\",\n  \"profile_picture\": \"https://example.com/avatar.jpg\",\n  \"phone_number\": \"+1234567890\",\n  \"game_stop_id\": \"gs123\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/users",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "users"]
+                    }
+                  },
+                  "status": "Internal Server Error",
+                  "code": 500,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Internal Server Error\",\n  \"message\": \"An unexpected error occurred\"\n}"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },    {
+
+      "name": "Authenticated User Endpoints",
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "key": "key",
+            "value": "x-auth-id",
+            "type": "string"
+          },
+          {
+            "key": "value",
+            "value": "{{auth_token}}",
+            "type": "string"
+          },
+          {
+            "key": "in",
+            "value": "header",
+            "type": "string"
+          }
+        ]
+      },
+      "item": [
+        {
+          "name": "Current User",
+          "item": [
+            {
+              "name": "Get Current User",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/users/me",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "users", "me"]
+                }
+              },
+              "response": [
+                {
+                  "name": "200 OK",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/users/me",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "users", "me"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"id\": \"user123\",\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"bio\": \"Golf enthusiast\",\n  \"profile_picture\": \"https://example.com/avatar.jpg\",\n  \"phone_number\": \"+1234567890\",\n  \"game_stop_id\": \"gs123\",\n  \"is_auth_verified\": true,\n  \"is_identity_verified\": true,\n  \"deposit_limit\": 1000,\n  \"betting_limit\": 500,\n  \"payment_id\": \"pay123\",\n  \"current_balance\": 250,\n  \"created_at\": \"2024-01-01T00:00:00Z\",\n  \"updated_at\": \"2024-01-01T00:00:00Z\"\n}"
+                },
+                {
+                  "name": "403 Forbidden",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "invalid-token"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/users/me",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "users", "me"]
+                    }
+                  },
+                  "status": "Forbidden",
+                  "code": 403,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Forbidden\",\n  \"message\": \"Insufficient permissions\"\n}"
+                },
+                {
+                  "name": "500 Internal Server Error",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/users/me",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "users", "me"]
+                    }
+                  },
+                  "status": "Internal Server Error",
+                  "code": 500,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Internal Server Error\",\n  \"message\": \"An unexpected error occurred\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Current User",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Smith\",\n  \"bio\": \"Professional golfer\",\n  \"profile_picture\": \"https://example.com/new-avatar.jpg\",\n  \"phone_number\": \"+1234567890\",\n  \"deposit_limit\": 2000,\n  \"betting_limit\": 1000\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/users/me",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "users", "me"]
+                }
+              },
+              "response": [
+                {
+                  "name": "200 OK",
+                  "originalRequest": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Smith\",\n  \"bio\": \"Professional golfer\",\n  \"profile_picture\": \"https://example.com/new-avatar.jpg\",\n  \"phone_number\": \"+1234567890\",\n  \"deposit_limit\": 2000,\n  \"betting_limit\": 1000\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/users/me",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "users", "me"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"id\": \"user123\",\n  \"first_name\": \"John\",\n  \"last_name\": \"Smith\",\n  \"email\": \"john.doe@example.com\",\n  \"bio\": \"Professional golfer\",\n  \"profile_picture\": \"https://example.com/new-avatar.jpg\",\n  \"phone_number\": \"+1234567890\",\n  \"game_stop_id\": \"gs123\",\n  \"is_auth_verified\": true,\n  \"is_identity_verified\": true,\n  \"deposit_limit\": 2000,\n  \"betting_limit\": 1000,\n  \"payment_id\": \"pay123\",\n  \"current_balance\": 250,\n  \"created_at\": \"2024-01-01T00:00:00Z\",\n  \"updated_at\": \"2024-01-01T00:00:00Z\"\n}"
+                },
+                {
+                  "name": "403 Forbidden",
+                  "originalRequest": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "x-auth-id",
+                        "value": "invalid-token"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Smith\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/users/me",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "users", "me"]
+                    }
+                  },
+                  "status": "Forbidden",
+                  "code": 403,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Forbidden\",\n  \"message\": \"Insufficient permissions\"\n}"
+                },
+                {
+                  "name": "422 Validation Error",
+                  "originalRequest": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"deposit_limit\": \"invalid\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/users/me",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "users", "me"]
+                    }
+                  },
+                  "status": "Unprocessable Entity",
+                  "code": 422,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Validation Error\",\n  \"message\": \"Invalid request data\",\n  \"details\": [\"Field 'deposit_limit' must be a number\"]\n}"
+                },
+                {
+                  "name": "500 Internal Server Error",
+                  "originalRequest": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Smith\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/users/me",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "users", "me"]
+                    }
+                  },
+                  "status": "Internal Server Error",
+                  "code": 500,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Internal Server Error\",\n  \"message\": \"An unexpected error occurred\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Delete Current User",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/users/me",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "users", "me"]
+                }
+              },
+              "response": [
+                {
+                  "name": "204 No Content",
+                  "originalRequest": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/users/me",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "users", "me"]
+                    }
+                  },
+                  "status": "No Content",
+                  "code": 204,
+                  "header": [],
+                  "body": ""
+                },
+                {
+                  "name": "403 Forbidden",
+                  "originalRequest": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "invalid-token"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/users/me",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "users", "me"]
+                    }
+                  },
+                  "status": "Forbidden",
+                  "code": 403,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Forbidden\",\n  \"message\": \"Insufficient permissions\"\n}"
+                },
+                {
+                  "name": "500 Internal Server Error",
+                  "originalRequest": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/users/me",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "users", "me"]
+                    }
+                  },
+                  "status": "Internal Server Error",
+                  "code": 500,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Internal Server Error\",\n  \"message\": \"An unexpected error occurred\"\n}"
+                }
+              ]
+            }
+          ]
+        },        {
+
+          "name": "Transactions",
+          "item": [
+            {
+              "name": "Get Transactions",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/transactions?type=deposit",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "transactions"],
+                  "query": [
+                    {
+                      "key": "type",
+                      "value": "deposit",
+                      "description": "Filter by transaction type"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "200 OK",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/transactions?type=deposit",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "transactions"],
+                      "query": [
+                        {
+                          "key": "type",
+                          "value": "deposit"
+                        }
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "[\n  {\n    \"id\": \"txn123\",\n    \"name\": \"Deposit\",\n    \"value\": \"100.00\",\n    \"type\": \"deposit\",\n    \"charge_id\": \"ch_123\",\n    \"user_id\": \"user123\",\n    \"created_at\": \"2024-01-01T00:00:00Z\",\n    \"updated_at\": \"2024-01-01T00:00:00Z\"\n  }\n]"
+                },
+                {
+                  "name": "403 Forbidden",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "invalid-token"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/transactions",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "transactions"]
+                    }
+                  },
+                  "status": "Forbidden",
+                  "code": 403,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Forbidden\",\n  \"message\": \"Insufficient permissions\"\n}"
+                },
+                {
+                  "name": "500 Internal Server Error",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/transactions",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "transactions"]
+                    }
+                  },
+                  "status": "Internal Server Error",
+                  "code": 500,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Internal Server Error\",\n  \"message\": \"An unexpected error occurred\"\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Games",
+          "item": [
+            {
+              "name": "Get All Games",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/games?tournament_id=tournament123&entry_fee=50",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "games"],
+                  "query": [
+                    {
+                      "key": "tournament_id",
+                      "value": "tournament123",
+                      "description": "Filter by tournament ID"
+                    },
+                    {
+                      "key": "entry_fee",
+                      "value": "50",
+                      "description": "Filter by entry fee"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "200 OK",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/games",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "games"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "[\n  {\n    \"id\": \"game123\",\n    \"name\": \"Masters Tournament Pool\",\n    \"description\": \"Betting pool for the Masters\",\n    \"entry_fee\": 50,\n    \"contact_phone\": \"+1234567890\",\n    \"contact_email\": \"contact@example.com\",\n    \"contact_visibility\": true,\n    \"join_code\": \"MASTERS2024\",\n    \"max_participants\": 100,\n    \"rewards\": [\n      {\n        \"position\": 1,\n        \"percentage\": 50,\n        \"type\": \"cash\",\n        \"product_id\": \"\"\n      }\n    ],\n    \"start_time\": \"2024-04-11T08:00:00Z\",\n    \"end_time\": \"2024-04-14T20:00:00Z\",\n    \"owner_id\": \"user123\",\n    \"tournament_id\": \"tournament123\",\n    \"user_id_list\": [\"user123\", \"user456\"],\n    \"created_at\": \"2024-01-01T00:00:00Z\",\n    \"updated_at\": \"2024-01-01T00:00:00Z\"\n  }\n]"
+                },
+                {
+                  "name": "403 Forbidden",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "invalid-token"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/games",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "games"]
+                    }
+                  },
+                  "status": "Forbidden",
+                  "code": 403,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Forbidden\",\n  \"message\": \"Insufficient permissions\"\n}"
+                },
+                {
+                  "name": "500 Internal Server Error",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/games",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "games"]
+                    }
+                  },
+                  "status": "Internal Server Error",
+                  "code": 500,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Internal Server Error\",\n  \"message\": \"An unexpected error occurred\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Game",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Masters Tournament Pool\",\n  \"description\": \"Betting pool for the Masters\",\n  \"entry_fee\": 50,\n  \"contact_phone\": \"+1234567890\",\n  \"contact_email\": \"contact@example.com\",\n  \"contact_visibility\": true,\n  \"join_code\": \"MASTERS2024\",\n  \"max_participants\": 100,\n  \"rewards\": [\n    {\n      \"position\": 1,\n      \"percentage\": 50,\n      \"type\": \"cash\",\n      \"product_id\": \"\"\n    }\n  ],\n  \"start_time\": \"2024-04-11T08:00:00Z\",\n  \"end_time\": \"2024-04-14T20:00:00Z\",\n  \"tournament_id\": \"tournament123\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/games",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "games"]
+                }
+              },
+              "response": [
+                {
+                  "name": "201 Created",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Masters Tournament Pool\",\n  \"description\": \"Betting pool for the Masters\",\n  \"entry_fee\": 50,\n  \"contact_phone\": \"+1234567890\",\n  \"contact_email\": \"contact@example.com\",\n  \"contact_visibility\": true,\n  \"join_code\": \"MASTERS2024\",\n  \"max_participants\": 100,\n  \"rewards\": [\n    {\n      \"position\": 1,\n      \"percentage\": 50,\n      \"type\": \"cash\",\n      \"product_id\": \"\"\n    }\n  ],\n  \"start_time\": \"2024-04-11T08:00:00Z\",\n  \"end_time\": \"2024-04-14T20:00:00Z\",\n  \"tournament_id\": \"tournament123\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/games",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "games"]
+                    }
+                  },
+                  "status": "Created",
+                  "code": 201,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"id\": \"game123\",\n  \"name\": \"Masters Tournament Pool\",\n  \"description\": \"Betting pool for the Masters\",\n  \"entry_fee\": 50,\n  \"contact_phone\": \"+1234567890\",\n  \"contact_email\": \"contact@example.com\",\n  \"contact_visibility\": true,\n  \"join_code\": \"MASTERS2024\",\n  \"max_participants\": 100,\n  \"rewards\": [\n    {\n      \"position\": 1,\n      \"percentage\": 50,\n      \"type\": \"cash\",\n      \"product_id\": \"\"\n    }\n  ],\n  \"start_time\": \"2024-04-11T08:00:00Z\",\n  \"end_time\": \"2024-04-14T20:00:00Z\",\n  \"owner_id\": \"user123\",\n  \"tournament_id\": \"tournament123\",\n  \"user_id_list\": [\"user123\"],\n  \"created_at\": \"2024-01-01T00:00:00Z\",\n  \"updated_at\": \"2024-01-01T00:00:00Z\"\n}"
+                },
+                {
+                  "name": "403 Forbidden",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "x-auth-id",
+                        "value": "invalid-token"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Masters Tournament Pool\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/games",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "games"]
+                    }
+                  },
+                  "status": "Forbidden",
+                  "code": 403,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Forbidden\",\n  \"message\": \"Insufficient permissions\"\n}"
+                },
+                {
+                  "name": "422 Validation Error",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Masters Tournament Pool\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/games",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "games"]
+                    }
+                  },
+                  "status": "Unprocessable Entity",
+                  "code": 422,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Validation Error\",\n  \"message\": \"Invalid request data\",\n  \"details\": [\"Field 'tournament_id' is required\", \"Field 'entry_fee' is required\"]\n}"
+                },
+                {
+                  "name": "500 Internal Server Error",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Masters Tournament Pool\",\n  \"tournament_id\": \"tournament123\",\n  \"entry_fee\": 50\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/games",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "games"]
+                    }
+                  },
+                  "status": "Internal Server Error",
+                  "code": 500,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Internal Server Error\",\n  \"message\": \"An unexpected error occurred\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Game by ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/games/game123",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "games", "game123"]
+                }
+              },
+              "response": [
+                {
+                  "name": "200 OK",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/games/game123",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "games", "game123"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"game\": {\n    \"id\": \"game123\",\n    \"name\": \"Masters Tournament Pool\",\n    \"description\": \"Betting pool for the Masters\",\n    \"entry_fee\": 50,\n    \"contact_phone\": \"+1234567890\",\n    \"contact_email\": \"contact@example.com\",\n    \"contact_visibility\": true,\n    \"join_code\": \"MASTERS2024\",\n    \"max_participants\": 100,\n    \"rewards\": [],\n    \"start_time\": \"2024-04-11T08:00:00Z\",\n    \"end_time\": \"2024-04-14T20:00:00Z\",\n    \"owner_id\": \"user123\",\n    \"tournament_id\": \"tournament123\",\n    \"user_id_list\": [\"user123\", \"user456\"],\n    \"created_at\": \"2024-01-01T00:00:00Z\",\n    \"updated_at\": \"2024-01-01T00:00:00Z\"\n  },\n  \"tournament\": {\n    \"id\": \"tournament123\",\n    \"name\": \"Masters Tournament\",\n    \"starts_at\": \"2024-04-11T08:00:00Z\",\n    \"finishes_at\": \"2024-04-14T20:00:00Z\",\n    \"description\": \"The Masters Tournament\",\n    \"url\": \"https://masters.com\",\n    \"cover_picture\": \"https://example.com/masters.jpg\",\n    \"gallery\": [],\n    \"holes\": [],\n    \"ads\": [],\n    \"proposed_entry_fee\": 50,\n    \"maximum_cut_amount\": 1000,\n    \"maximum_score_generator\": 300,\n    \"players\": [],\n    \"created_at\": \"2024-01-01T00:00:00Z\",\n    \"updated_at\": \"2024-01-01T00:00:00Z\"\n  },\n  \"user_bets\": [\n    {\n      \"id\": \"bet123\",\n      \"owner_id\": \"user123\",\n      \"game_id\": \"game123\",\n      \"player_id\": \"player123\",\n      \"created_at\": \"2024-01-01T00:00:00Z\",\n      \"updated_at\": \"2024-01-01T00:00:00Z\"\n    }\n  ]\n}"
+                },
+                {
+                  "name": "403 Forbidden",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "invalid-token"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/games/game123",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "games", "game123"]
+                    }
+                  },
+                  "status": "Forbidden",
+                  "code": 403,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Forbidden\",\n  \"message\": \"Insufficient permissions\"\n}"
+                },
+                {
+                  "name": "500 Internal Server Error",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/games/game123",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "games", "game123"]
+                    }
+                  },
+                  "status": "Internal Server Error",
+                  "code": 500,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Internal Server Error\",\n  \"message\": \"An unexpected error occurred\"\n}"
+                }
+              ]
+            }
+          ]
+        },        
+{
+          "name": "Bets",
+          "item": [
+            {
+              "name": "Get Bets",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/bets?game_id=game123",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "bets"],
+                  "query": [
+                    {
+                      "key": "game_id",
+                      "value": "game123",
+                      "description": "Filter by game ID"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "200 OK",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/bets?game_id=game123",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "bets"],
+                      "query": [
+                        {
+                          "key": "game_id",
+                          "value": "game123"
+                        }
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "[\n  {\n    \"id\": \"bet123\",\n    \"owner_id\": \"user123\",\n    \"game_id\": \"game123\",\n    \"player_id\": \"player123\",\n    \"created_at\": \"2024-01-01T00:00:00Z\",\n    \"updated_at\": \"2024-01-01T00:00:00Z\"\n  }\n]"
+                },
+                {
+                  "name": "403 Forbidden",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "invalid-token"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/bets",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "bets"]
+                    }
+                  },
+                  "status": "Forbidden",
+                  "code": 403,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Forbidden\",\n  \"message\": \"Insufficient permissions\"\n}"
+                },
+                {
+                  "name": "500 Internal Server Error",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/bets",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "bets"]
+                    }
+                  },
+                  "status": "Internal Server Error",
+                  "code": 500,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Internal Server Error\",\n  \"message\": \"An unexpected error occurred\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Bet",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"game_id\": \"game123\",\n  \"player_id\": \"player123\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/bets",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "bets"]
+                }
+              },
+              "response": [
+                {
+                  "name": "201 Created",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"game_id\": \"game123\",\n  \"player_id\": \"player123\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/bets",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "bets"]
+                    }
+                  },
+                  "status": "Created",
+                  "code": 201,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"id\": \"bet123\",\n  \"owner_id\": \"user123\",\n  \"game_id\": \"game123\",\n  \"player_id\": \"player123\",\n  \"created_at\": \"2024-01-01T00:00:00Z\",\n  \"updated_at\": \"2024-01-01T00:00:00Z\"\n}"
+                },
+                {
+                  "name": "403 Forbidden",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "x-auth-id",
+                        "value": "invalid-token"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"game_id\": \"game123\",\n  \"player_id\": \"player123\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/bets",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "bets"]
+                    }
+                  },
+                  "status": "Forbidden",
+                  "code": 403,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Forbidden\",\n  \"message\": \"Insufficient permissions\"\n}"
+                },
+                {
+                  "name": "422 Validation Error",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"game_id\": \"game123\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/bets",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "bets"]
+                    }
+                  },
+                  "status": "Unprocessable Entity",
+                  "code": 422,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Validation Error\",\n  \"message\": \"Invalid request data\",\n  \"details\": [\"Field 'player_id' is required\"]\n}"
+                },
+                {
+                  "name": "500 Internal Server Error",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"game_id\": \"game123\",\n  \"player_id\": \"player123\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/bets",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "bets"]
+                    }
+                  },
+                  "status": "Internal Server Error",
+                  "code": 500,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Internal Server Error\",\n  \"message\": \"An unexpected error occurred\"\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Player Profiles",
+          "item": [
+            {
+              "name": "Get Player Profiles",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/player-profiles?country=USA",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "player-profiles"],
+                  "query": [
+                    {
+                      "key": "country",
+                      "value": "USA",
+                      "description": "Filter by country"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "200 OK",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/player-profiles?country=USA",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "player-profiles"],
+                      "query": [
+                        {
+                          "key": "country",
+                          "value": "USA"
+                        }
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "[\n  {\n    \"id\": \"profile123\",\n    \"external_id\": \"ext123\",\n    \"first_name\": \"Tiger\",\n    \"last_name\": \"Woods\",\n    \"country\": \"USA\",\n    \"age\": 48,\n    \"ranking\": 1,\n    \"created_at\": \"2024-01-01T00:00:00Z\",\n    \"updated_at\": \"2024-01-01T00:00:00Z\"\n  }\n]"
+                },
+                {
+                  "name": "403 Forbidden",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "invalid-token"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/player-profiles",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "player-profiles"]
+                    }
+                  },
+                  "status": "Forbidden",
+                  "code": 403,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Forbidden\",\n  \"message\": \"Insufficient permissions\"\n}"
+                },
+                {
+                  "name": "500 Internal Server Error",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/player-profiles",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "player-profiles"]
+                    }
+                  },
+                  "status": "Internal Server Error",
+                  "code": 500,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Internal Server Error\",\n  \"message\": \"An unexpected error occurred\"\n}"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },    {
+
+      "name": "Super Admin Endpoints",
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "key": "key",
+            "value": "x-auth-id",
+            "type": "string"
+          },
+          {
+            "key": "value",
+            "value": "{{auth_token}}",
+            "type": "string"
+          },
+          {
+            "key": "in",
+            "value": "header",
+            "type": "string"
+          }
+        ]
+      },
+      "item": [
+        {
+          "name": "Users Management",
+          "item": [
+            {
+              "name": "Get All Users",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/admin/users",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "admin", "users"]
+                }
+              },
+              "response": [
+                {
+                  "name": "200 OK",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/users",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "users"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "[\n  {\n    \"id\": \"user123\",\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"bio\": \"Golf enthusiast\",\n    \"profile_picture\": \"https://example.com/avatar.jpg\",\n    \"phone_number\": \"+1234567890\",\n    \"game_stop_id\": \"gs123\",\n    \"is_auth_verified\": true,\n    \"is_identity_verified\": true,\n    \"deposit_limit\": 1000,\n    \"betting_limit\": 500,\n    \"payment_id\": \"pay123\",\n    \"current_balance\": 250,\n    \"created_at\": \"2024-01-01T00:00:00Z\",\n    \"updated_at\": \"2024-01-01T00:00:00Z\"\n  }\n]"
+                },
+                {
+                  "name": "403 Forbidden",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "user-token"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/users",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "users"]
+                    }
+                  },
+                  "status": "Forbidden",
+                  "code": 403,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Forbidden\",\n  \"message\": \"Insufficient permissions\"\n}"
+                },
+                {
+                  "name": "500 Internal Server Error",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/users",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "users"]
+                    }
+                  },
+                  "status": "Internal Server Error",
+                  "code": 500,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Internal Server Error\",\n  \"message\": \"An unexpected error occurred\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update User",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Smith\",\n  \"bio\": \"Professional golfer\",\n  \"profile_picture\": \"https://example.com/new-avatar.jpg\",\n  \"phone_number\": \"+1234567890\",\n  \"deposit_limit\": 2000,\n  \"betting_limit\": 1000\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/admin/users/user123",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "admin", "users", "user123"]
+                }
+              },
+              "response": [
+                {
+                  "name": "200 OK",
+                  "originalRequest": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Smith\",\n  \"bio\": \"Professional golfer\",\n  \"profile_picture\": \"https://example.com/new-avatar.jpg\",\n  \"phone_number\": \"+1234567890\",\n  \"deposit_limit\": 2000,\n  \"betting_limit\": 1000\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/users/user123",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "users", "user123"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"id\": \"user123\",\n  \"first_name\": \"John\",\n  \"last_name\": \"Smith\",\n  \"email\": \"john.doe@example.com\",\n  \"bio\": \"Professional golfer\",\n  \"profile_picture\": \"https://example.com/new-avatar.jpg\",\n  \"phone_number\": \"+1234567890\",\n  \"game_stop_id\": \"gs123\",\n  \"is_auth_verified\": true,\n  \"is_identity_verified\": true,\n  \"deposit_limit\": 2000,\n  \"betting_limit\": 1000,\n  \"payment_id\": \"pay123\",\n  \"current_balance\": 250,\n  \"created_at\": \"2024-01-01T00:00:00Z\",\n  \"updated_at\": \"2024-01-01T00:00:00Z\"\n}"
+                },
+                {
+                  "name": "403 Forbidden",
+                  "originalRequest": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "x-auth-id",
+                        "value": "user-token"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Smith\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/users/user123",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "users", "user123"]
+                    }
+                  },
+                  "status": "Forbidden",
+                  "code": 403,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Forbidden\",\n  \"message\": \"Insufficient permissions\"\n}"
+                },
+                {
+                  "name": "422 Validation Error",
+                  "originalRequest": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"deposit_limit\": \"invalid\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/users/user123",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "users", "user123"]
+                    }
+                  },
+                  "status": "Unprocessable Entity",
+                  "code": 422,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Validation Error\",\n  \"message\": \"Invalid request data\",\n  \"details\": [\"Field 'deposit_limit' must be a number\"]\n}"
+                },
+                {
+                  "name": "500 Internal Server Error",
+                  "originalRequest": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Smith\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/users/user123",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "users", "user123"]
+                    }
+                  },
+                  "status": "Internal Server Error",
+                  "code": 500,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Internal Server Error\",\n  \"message\": \"An unexpected error occurred\"\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Tournaments Management",
+          "item": [
+            {
+              "name": "Get All Tournaments",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/admin/tournaments",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "admin", "tournaments"]
+                }
+              },
+              "response": [
+                {
+                  "name": "200 OK",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/tournaments",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "tournaments"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "[\n  {\n    \"id\": \"tournament123\",\n    \"name\": \"Masters Tournament\",\n    \"starts_at\": \"2024-04-11T08:00:00Z\",\n    \"finishes_at\": \"2024-04-14T20:00:00Z\",\n    \"description\": \"The Masters Tournament\",\n    \"url\": \"https://masters.com\",\n    \"cover_picture\": \"https://example.com/masters.jpg\",\n    \"gallery\": [\"https://example.com/gallery1.jpg\"],\n    \"holes\": [\n      {\n        \"id\": \"hole1\",\n        \"name\": \"Hole 1\",\n        \"description\": \"First hole\",\n        \"position\": 1,\n        \"cover_image\": \"https://example.com/hole1.jpg\",\n        \"par\": 4,\n        \"distance\": 445\n      }\n    ],\n    \"ads\": [\n      {\n        \"id\": \"ad1\",\n        \"name\": \"Sponsor Ad\",\n        \"description\": \"Advertisement\",\n        \"position\": 1,\n        \"website\": \"https://sponsor.com\"\n      }\n    ],\n    \"proposed_entry_fee\": 50,\n    \"maximum_cut_amount\": 1000,\n    \"maximum_score_generator\": 300,\n    \"players\": [\n      {\n        \"id\": \"player123\",\n        \"level\": 1\n      }\n    ],\n    \"created_at\": \"2024-01-01T00:00:00Z\",\n    \"updated_at\": \"2024-01-01T00:00:00Z\"\n  }\n]"
+                },
+                {
+                  "name": "403 Forbidden",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "user-token"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/tournaments",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "tournaments"]
+                    }
+                  },
+                  "status": "Forbidden",
+                  "code": 403,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Forbidden\",\n  \"message\": \"Insufficient permissions\"\n}"
+                },
+                {
+                  "name": "500 Internal Server Error",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/tournaments",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "tournaments"]
+                    }
+                  },
+                  "status": "Internal Server Error",
+                  "code": 500,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Internal Server Error\",\n  \"message\": \"An unexpected error occurred\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Tournament",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Masters Tournament\",\n  \"starts_at\": \"2024-04-11T08:00:00Z\",\n  \"finishes_at\": \"2024-04-14T20:00:00Z\",\n  \"description\": \"The Masters Tournament\",\n  \"url\": \"https://masters.com\",\n  \"cover_picture\": \"https://example.com/masters.jpg\",\n  \"gallery\": [\"https://example.com/gallery1.jpg\"],\n  \"holes\": [\n    {\n      \"id\": \"hole1\",\n      \"name\": \"Hole 1\",\n      \"description\": \"First hole\",\n      \"position\": 1,\n      \"cover_image\": \"https://example.com/hole1.jpg\",\n      \"par\": 4,\n      \"distance\": 445\n    }\n  ],\n  \"ads\": [\n    {\n      \"id\": \"ad1\",\n      \"name\": \"Sponsor Ad\",\n      \"description\": \"Advertisement\",\n      \"position\": 1,\n      \"website\": \"https://sponsor.com\"\n    }\n  ],\n  \"proposed_entry_fee\": 50,\n  \"maximum_cut_amount\": 1000,\n  \"maximum_score_generator\": 300,\n  \"players\": [\n    {\n      \"id\": \"player123\",\n      \"level\": 1\n    }\n  ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/admin/tournaments",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "admin", "tournaments"]
+                }
+              },
+              "response": [
+                {
+                  "name": "201 Created",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Masters Tournament\",\n  \"starts_at\": \"2024-04-11T08:00:00Z\",\n  \"finishes_at\": \"2024-04-14T20:00:00Z\",\n  \"description\": \"The Masters Tournament\",\n  \"url\": \"https://masters.com\",\n  \"cover_picture\": \"https://example.com/masters.jpg\",\n  \"gallery\": [\"https://example.com/gallery1.jpg\"],\n  \"holes\": [\n    {\n      \"id\": \"hole1\",\n      \"name\": \"Hole 1\",\n      \"description\": \"First hole\",\n      \"position\": 1,\n      \"cover_image\": \"https://example.com/hole1.jpg\",\n      \"par\": 4,\n      \"distance\": 445\n    }\n  ],\n  \"ads\": [\n    {\n      \"id\": \"ad1\",\n      \"name\": \"Sponsor Ad\",\n      \"description\": \"Advertisement\",\n      \"position\": 1,\n      \"website\": \"https://sponsor.com\"\n    }\n  ],\n  \"proposed_entry_fee\": 50,\n  \"maximum_cut_amount\": 1000,\n  \"maximum_score_generator\": 300,\n  \"players\": [\n    {\n      \"id\": \"player123\",\n      \"level\": 1\n    }\n  ]\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/tournaments",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "tournaments"]
+                    }
+                  },
+                  "status": "Created",
+                  "code": 201,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"id\": \"tournament123\",\n  \"name\": \"Masters Tournament\",\n  \"starts_at\": \"2024-04-11T08:00:00Z\",\n  \"finishes_at\": \"2024-04-14T20:00:00Z\",\n  \"description\": \"The Masters Tournament\",\n  \"url\": \"https://masters.com\",\n  \"cover_picture\": \"https://example.com/masters.jpg\",\n  \"gallery\": [\"https://example.com/gallery1.jpg\"],\n  \"holes\": [\n    {\n      \"id\": \"hole1\",\n      \"name\": \"Hole 1\",\n      \"description\": \"First hole\",\n      \"position\": 1,\n      \"cover_image\": \"https://example.com/hole1.jpg\",\n      \"par\": 4,\n      \"distance\": 445\n    }\n  ],\n  \"ads\": [\n    {\n      \"id\": \"ad1\",\n      \"name\": \"Sponsor Ad\",\n      \"description\": \"Advertisement\",\n      \"position\": 1,\n      \"website\": \"https://sponsor.com\"\n    }\n  ],\n  \"proposed_entry_fee\": 50,\n  \"maximum_cut_amount\": 1000,\n  \"maximum_score_generator\": 300,\n  \"players\": [\n    {\n      \"id\": \"player123\",\n      \"level\": 1\n    }\n  ],\n  \"created_at\": \"2024-01-01T00:00:00Z\",\n  \"updated_at\": \"2024-01-01T00:00:00Z\"\n}"
+                },
+                {
+                  "name": "403 Forbidden",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "x-auth-id",
+                        "value": "user-token"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Masters Tournament\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/tournaments",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "tournaments"]
+                    }
+                  },
+                  "status": "Forbidden",
+                  "code": 403,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Forbidden\",\n  \"message\": \"Insufficient permissions\"\n}"
+                },
+                {
+                  "name": "422 Validation Error",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Masters Tournament\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/tournaments",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "tournaments"]
+                    }
+                  },
+                  "status": "Unprocessable Entity",
+                  "code": 422,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Validation Error\",\n  \"message\": \"Invalid request data\",\n  \"details\": [\"Field 'starts_at' is required\", \"Field 'finishes_at' is required\"]\n}"
+                },
+                {
+                  "name": "500 Internal Server Error",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "x-auth-id",
+                        "value": "{{auth_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Masters Tournament\",\n  \"starts_at\": \"2024-04-11T08:00:00Z\",\n  \"finishes_at\": \"2024-04-14T20:00:00Z\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/tournaments",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "tournaments"]
+                    }
+                  },
+                  "status": "Internal Server Error",
+                  "code": 500,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"error\": \"Internal Server Error\",\n  \"message\": \"An unexpected error occurred\"\n}"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
