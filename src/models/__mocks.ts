@@ -17,7 +17,7 @@ import {
 export const mockUsers: User[] = [
   {
     id: 'user_1',
-    first_name: 'John',
+    first_name: 'John - cli test',
     last_name: 'Doe',
     email: 'john.doe@example.com',
     bio: 'Golf enthusiast and weekend warrior',
