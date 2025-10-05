@@ -1,64 +1,44 @@
 import type { RequestHandler } from 'express';
 import {
-  // User handlers
-  createUserHandler,
-  getCurrentUserHandler,
-  updateCurrentUserHandler,
-  deleteCurrentUserHandler,
-
-  // Game handlers
-  createGameHandler,
-  deleteGameHandler,
-  getAllGamesHandler,
-  getGameByIdHandler,
-  updateGameHandler,
-
-  // Bet handlers
   createBetHandler,
-  deleteBetHandler,
-  getBetsHandler,
-  updateBetHandler,
-
-  // Player profile handlers
-  getPlayerProfilesHandler,
-
-  // Transaction handlers
-  getTransactionsHandler,
-
-  // Admin - Games
-  deleteGameAdminHandler,
-  getAllGamesAdminHandler,
-  updateGameAdminHandler,
-
-  // Admin - Player Profiles
-  createPlayerProfileHandler,
-  deletePlayerProfileHandler,
-  getAllPlayerProfilesAdminHandler,
-  updatePlayerProfileHandler,
-
-  // Admin - Players
+  createGameHandler,
   createPlayerHandler,
-  deletePlayerByIdHandler,
-  getPlayersByTournamentHandler,
-  updatePlayerByIdHandler,
-
-  // Admin - Tournaments
+  createPlayerProfileHandler,
   createTournamentHandler,
-  deleteTournamentHandler,
-  getAllTournamentsHandler,
-  updateTournamentHandler,
-
-  // Admin - Transactions
   createTransactionHandler,
+  createUserHandler,
+  deleteBetHandler,
+  deleteCurrentUserHandler,
+  deleteGameAdminHandler,
+  deleteGameHandler,
+  deletePlayerByIdHandler,
+  deletePlayerProfileHandler,
+  deleteTournamentHandler,
   deleteTransactionHandler,
-  getAllTransactionsHandler,
-  updateTransactionHandler,
-
-  // Admin - Users
   deleteUserHandler,
+  getAllGamesAdminHandler,
+  getAllGamesHandler,
+  getAllPlayerProfilesAdminHandler,
+  getAllTournamentsHandler,
+  getAllTransactionsHandler,
   getAllUsersHandler,
+  getBetsHandler,
+  getCurrentUserHandler,
+  getGameByIdHandler,
+  getPlayerProfilesHandler,
+  getPlayersByTournamentHandler,
+  getTransactionsHandler,
+  updateBetHandler,
+  updateCurrentUserHandler,
+  updateGameAdminHandler,
+  updateGameHandler,
+  updatePlayerByIdHandler,
+  updatePlayerProfileHandler,
+  updateTournamentHandler,
+  updateTransactionHandler,
   updateUserHandler,
 } from '../handlers';
+import { AuthenticateMiddleware } from '../middlewares';
 
 interface RouteEndpoint {
   method: 'get' | 'post' | 'put' | 'patch' | 'delete';
@@ -83,7 +63,7 @@ export const routes: RouteDescription[] = [
       {
         method: 'get',
         name: '/me',
-        stack: [getCurrentUserHandler],
+        stack: [AuthenticateMiddleware, getCurrentUserHandler],
       },
       {
         method: 'put',
