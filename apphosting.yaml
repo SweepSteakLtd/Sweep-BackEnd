@@ -7,5 +7,9 @@ runConfig:
 env:
     - variable: APPLIED_ENV
       value: development
-    - variable: MONGODB_URI
-      value: mock-mongodb-url
+    - variable: SUPABASE_DATABASE_PASSWORD
+      secret: SUPABASE_DATABASE_PASSWORD
+    - variable: NEXT_PUBLIC_SUPABASE_URL
+      secret: NEXT_PUBLIC_SUPABASE_URL    
+    - variable: NEXT_PUBLIC_SUPABASE_ANON_KEY
+      secret: NEXT_PUBLIC_SUPABASE_ANON_KEY
