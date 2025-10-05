@@ -8,7 +8,7 @@ env:
     - variable: APPLIED_ENV
       value: development
     - variable: SUPABASE_DATABASE_PASSWORD
-      secret: projects/230553092247/secrets/SUPABASE_DATABASE_PASSWORD
+      secret: projects/230553092247/secrets/SUPABASE_DATABASE_PASSWORD@2
     - variable: NEXT_PUBLIC_SUPABASE_URL
       secret: projects/230553092247/secrets/NEXT_PUBLIC_SUPABASE_URL    
     - variable: NEXT_PUBLIC_SUPABASE_ANON_KEY
