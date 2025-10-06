@@ -68,12 +68,12 @@ export const routes: RouteDescription[] = [
       {
         method: 'put',
         name: '/me',
-        stack: [updateCurrentUserHandler],
+        stack: [AuthenticateMiddleware, updateCurrentUserHandler],
       },
       {
         method: 'delete',
         name: '/me',
-        stack: [deleteCurrentUserHandler],
+        stack: [AuthenticateMiddleware, deleteCurrentUserHandler],
       },
     ],
   },
