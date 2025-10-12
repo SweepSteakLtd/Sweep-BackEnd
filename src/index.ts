@@ -1,6 +1,7 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 
+import openapi from '@wesleytodd/openapi';
 import BP from 'body-parser';
 import cors from 'cors';
 import express, { Express, Request, Response } from 'express';
@@ -13,6 +14,20 @@ if (!env.CURRENT) {
 
 const plainApp = express();
 
+const options = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'sweepstake API',
+      version: '1.0.0',
+      description: 'API documentation for the sweepstake application',
+    },
+  },
+};
+
+const oapi = openapi(options);
+plainApp.use(oapi);
+
 const applyRootConfiguration = (appObject: Express): Express => {
   appObject.use(cors({ origin: true }));
   appObject.use(BP.json()); // Add JSON body parsing
@@ -22,7 +37,7 @@ const applyRootConfiguration = (appObject: Express): Express => {
   routes.forEach(route =>
     route.endpoints.map(endpoint => {
       const fullPath = `/api/${route.apiName}${endpoint.name}`;
-      appObject[endpoint.method](fullPath, endpoint.stack);
+      appObject[endpoint.method](fullPath, oapi.path(endpoint.apiDescription), endpoint.stack);
       console.log(`ENV: ${env.CURRENT} PORT: 8080 ROUTE: ${fullPath} METHOD: ${endpoint.method.toUpperCase()}`);
     }),
   );
@@ -36,13 +51,9 @@ const applyRootConfiguration = (appObject: Express): Express => {
 };
 
 export const app = applyRootConfiguration(plainApp);
+app.use('/swaggerui', oapi.swaggerui())
+
 console.log('SERVER APP GENERATED');
-
-console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅' : '❌');
-console.log('Supabase Key:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '✅' : '❌');
-console.log('DB Password:', process.env.SUPABASE_DATABASE_PASSWORD ? '✅' : '❌');
-console.log('ENV PORT:', process.env.PORT);
-
 app.listen(parseInt(process.env.PORT) || 8080, async () => {
   console.log(`APP LISTENING ON PORT ${process.env.PORT || 8080}, environment: ${env.CURRENT}`);
   console.log(`Running on Node.js version: ${config.NODE_JS_VERSION}`);
