@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { mockGames } from '../../../models/__mocks';
 
 /**
@@ -16,4 +16,12 @@ export const getAllGamesAdminHandler = async (req: Request, res: Response, next:
       message: 'An unexpected error occurred',
     });
   }
+};
+
+getAllGamesAdminHandler.apiDescription = {
+  responses: {
+    200: { description: '200 OK' },
+    403: { description: '403 Forbidden' },
+    500: { description: '500 Internal Server Error' },
+  },
 };

@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 /**
  * Delete player profile (admin endpoint)
@@ -15,4 +15,12 @@ export const deletePlayerProfileHandler = async (req: Request, res: Response, ne
       message: 'An unexpected error occurred',
     });
   }
+};
+
+deletePlayerProfileHandler.apiDescription = {
+  responses: {
+    204: { description: '204 No Content' },
+    403: { description: '403 Forbidden' },
+    500: { description: '500 Internal Server Error' },
+  },
 };

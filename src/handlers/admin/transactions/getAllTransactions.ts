@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { mockTransactions } from '../../../models/__mocks';
 
 /**
@@ -17,4 +17,12 @@ export const getAllTransactionsHandler = async (req: Request, res: Response, nex
       message: 'An unexpected error occurred',
     });
   }
+};
+
+getAllTransactionsHandler.apiDescription = {
+  responses: {
+    200: { description: '200 OK' },
+    403: { description: '403 Forbidden' },
+    500: { description: '500 Internal Server Error' },
+  },
 };

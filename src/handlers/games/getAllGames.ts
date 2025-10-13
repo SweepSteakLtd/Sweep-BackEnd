@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { mockGames } from '../../models/__mocks';
 
 /**
@@ -15,4 +15,47 @@ export const getAllGamesHandler = async (req: Request, res: Response, next: Next
       message: 'An unexpected error occurred',
     });
   }
+};
+
+getAllGamesHandler.apiDescription = {
+  responses: {
+    200: {
+      description: '200 OK',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'array',
+          },
+        },
+      },
+    },
+    403: {
+      description: '403 Forbidden',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    500: {
+      description: '500 Internal Server Error',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  },
 };

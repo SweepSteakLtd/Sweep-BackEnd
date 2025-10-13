@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { mockGames, mockTournaments, mockBets } from '../../models/__mocks';
+import { NextFunction, Request, Response } from 'express';
+import { mockBets, mockGames, mockTournaments } from '../../models/__mocks';
 
 /**
  * Get game by ID (authenticated endpoint)
@@ -11,7 +11,7 @@ export const getGameByIdHandler = async (req: Request, res: Response, next: Next
     const gameData = {
       game: mockGames[0],
       tournament: mockTournaments[0],
-      user_bets: mockBets
+      user_bets: mockBets,
     };
     return res.status(200).send({ data: gameData, is_mock: true });
   } catch (error: any) {
@@ -21,4 +21,47 @@ export const getGameByIdHandler = async (req: Request, res: Response, next: Next
       message: 'An unexpected error occurred',
     });
   }
+};
+
+getGameByIdHandler.apiDescription = {
+  responses: {
+    200: {
+      description: '200 OK',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+          },
+        },
+      },
+    },
+    403: {
+      description: '403 Forbidden',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    500: {
+      description: '500 Internal Server Error',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  },
 };

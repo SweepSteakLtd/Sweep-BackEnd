@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { mockBets } from '../../models/__mocks';
 
 /**
@@ -19,4 +19,13 @@ export const updateBetHandler = async (req: Request, res: Response, next: NextFu
       message: 'An unexpected error occurred',
     });
   }
+};
+
+updateBetHandler.apiDescription = {
+  responses: {
+    200: { description: '200 OK' },
+    403: { description: '403 Forbidden' },
+    422: { description: '422 Validation Error' },
+    500: { description: '500 Internal Server Error' },
+  },
 };

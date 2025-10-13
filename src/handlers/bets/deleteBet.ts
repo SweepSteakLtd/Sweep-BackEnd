@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 /**
  * Delete bet (authenticated endpoint)
@@ -15,4 +15,12 @@ export const deleteBetHandler = async (req: Request, res: Response, next: NextFu
       message: 'An unexpected error occurred',
     });
   }
+};
+
+deleteBetHandler.apiDescription = {
+  responses: {
+    204: { description: '204 No Content' },
+    403: { description: '403 Forbidden' },
+    500: { description: '500 Internal Server Error' },
+  },
 };

@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { mockBets } from '../../models/__mocks';
 
 /**
@@ -18,4 +18,70 @@ export const createBetHandler = async (req: Request, res: Response, next: NextFu
       message: 'An unexpected error occurred',
     });
   }
+};
+
+createBetHandler.apiDescription = {
+  responses: {
+    201: {
+      description: '201 Created',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              owner_id: { type: 'string' },
+              game_id: { type: 'string' },
+              player_id: { type: 'string' },
+              created_at: { type: 'string' },
+              updated_at: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    403: {
+      description: '403 Forbidden',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    422: {
+      description: '422 Validation Error',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+              details: { type: 'array' },
+            },
+          },
+        },
+      },
+    },
+    500: {
+      description: '500 Internal Server Error',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  },
 };

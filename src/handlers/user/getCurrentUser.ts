@@ -24,3 +24,69 @@ export const getCurrentUserHandler = async (req: Request, res: Response, next: N
     });
   }
 };
+
+getCurrentUserHandler.apiDescription = {
+  responses: {
+    200: {
+      description: '200 OK',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              first_name: { type: 'string' },
+              last_name: { type: 'string' },
+              email: { type: 'string' },
+              bio: { type: 'string' },
+              profile_picture: { type: 'string' },
+              phone_number: { type: 'string' },
+              game_stop_id: { type: 'string' },
+              is_auth_verified: { type: 'boolean' },
+              is_identity_verified: { type: 'boolean' },
+              deposit_limit: { type: 'number' },
+              betting_limit: { type: 'number' },
+              payment_id: { type: 'string' },
+              current_balance: { type: 'number' },
+              created_at: { type: 'string' },
+              updated_at: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    403: {
+      description: '403 Forbidden',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    500: {
+      description: '500 Internal Server Error',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  },
+  security: [
+    {
+      ApiKeyAuth: [],
+    },
+  ],
+};

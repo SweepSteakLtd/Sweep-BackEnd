@@ -61,3 +61,82 @@ export const createUserHandler = async (req: Request<{}, {}, User>, res: Respons
     });
   }
 };
+
+createUserHandler.apiDescription = {
+  responses: {
+    201: {
+      description: '201 Created',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              first_name: { type: 'string' },
+              last_name: { type: 'string' },
+              email: { type: 'string' },
+              bio: { type: 'string' },
+              profile_picture: { type: 'string' },
+              phone_number: { type: 'string' },
+              game_stop_id: { type: 'string' },
+              is_auth_verified: { type: 'boolean' },
+              is_identity_verified: { type: 'boolean' },
+              deposit_limit: { type: 'number' },
+              betting_limit: { type: 'number' },
+              payment_id: { type: 'string' },
+              current_balance: { type: 'number' },
+              created_at: { type: 'string' },
+              updated_at: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    422: {
+      description: '422 Validation Error',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+              details: { type: 'array' },
+            },
+          },
+        },
+      },
+    },
+    500: {
+      description: '500 Internal Server Error',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  },
+  requestBody: {
+    content: {
+      'application/json': {
+        example: {
+          first_name: 'John',
+          last_name: 'Doe',
+          email: 'john.doe@example.com',
+          bio: 'Golf enthusiast',
+          profile_picture: 'https://example.com/avatar.jpg',
+          phone_number: '+1234567890',
+          deposit_limit: 1200,
+          betting_limit: 2400,
+        },
+      },
+    },
+    required: true,
+  },
+};

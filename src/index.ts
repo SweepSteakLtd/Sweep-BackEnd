@@ -28,6 +28,12 @@ const options = {
 const oapi = openapi(options);
 plainApp.use(oapi);
 
+oapi.securitySchemes('ApiKeyAuth', {
+  type: 'apiKey',
+  in: 'header',
+  name: 'X-Auth-Id',
+});
+
 const applyRootConfiguration = (appObject: Express): Express => {
   appObject.use(cors({ origin: true }));
   appObject.use(BP.json()); // Add JSON body parsing
@@ -37,7 +43,12 @@ const applyRootConfiguration = (appObject: Express): Express => {
   routes.forEach(route =>
     route.endpoints.map(endpoint => {
       const fullPath = `/api/${route.apiName}${endpoint.name}`;
-      appObject[endpoint.method](fullPath, oapi.path(endpoint.apiDescription), endpoint.stack);
+      const apiDescription = endpoint.stack.find(item => item.apiDescription)?.apiDescription;
+      if (!apiDescription) {
+        console.log('[DEBUG] handler missing apiDescription', route.apiName);
+      }
+
+      appObject[endpoint.method](fullPath, apiDescription ? oapi.path(apiDescription) : () => {}, endpoint.stack);
       console.log(`ENV: ${env.CURRENT} PORT: 8080 ROUTE: ${fullPath} METHOD: ${endpoint.method.toUpperCase()}`);
     }),
   );
@@ -51,7 +62,7 @@ const applyRootConfiguration = (appObject: Express): Express => {
 };
 
 export const app = applyRootConfiguration(plainApp);
-app.use('/swaggerui', oapi.swaggerui())
+app.use('/swaggerui', oapi.swaggerui());
 
 console.log('SERVER APP GENERATED');
 app.listen(parseInt(process.env.PORT) || 8080, async () => {

@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { mockPlayerProfiles } from '../../../models/__mocks';
 
 /**
@@ -8,7 +8,7 @@ import { mockPlayerProfiles } from '../../../models/__mocks';
  * @body first_name - string - optional
  * @body last_name - string - optional
  * @body country - string - optional
- * @body age - number - 
+ * @body age - number -
  * @body ranking - optional
  * @returns PlayerProfile
  */
@@ -22,4 +22,12 @@ export const updatePlayerProfileHandler = async (req: Request, res: Response, ne
       message: 'An unexpected error occurred',
     });
   }
+};
+updatePlayerProfileHandler.apiDescription = {
+  responses: {
+    200: { description: '200 OK' },
+    403: { description: '403 Forbidden' },
+    422: { description: '422 Validation Error' },
+    500: { description: '500 Internal Server Error' },
+  },
 };

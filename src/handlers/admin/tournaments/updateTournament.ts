@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { mockTournaments } from '../../../models/__mocks';
 
 /**
@@ -29,4 +29,13 @@ export const updateTournamentHandler = async (req: Request, res: Response, next:
       message: 'An unexpected error occurred',
     });
   }
+};
+
+updateTournamentHandler.apiDescription = {
+  responses: {
+    200: { description: '200 OK' },
+    403: { description: '403 Forbidden' },
+    422: { description: '422 Validation Error' },
+    500: { description: '500 Internal Server Error' },
+  },
 };

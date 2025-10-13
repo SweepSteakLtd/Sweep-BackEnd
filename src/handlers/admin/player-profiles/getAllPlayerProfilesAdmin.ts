@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { mockPlayerProfiles } from '../../../models/__mocks';
 
 /**
@@ -16,4 +16,11 @@ export const getAllPlayerProfilesAdminHandler = async (req: Request, res: Respon
       message: 'An unexpected error occurred',
     });
   }
+};
+getAllPlayerProfilesAdminHandler.apiDescription = {
+  responses: {
+    200: { description: '200 OK' },
+    403: { description: '403 Forbidden' },
+    500: { description: '500 Internal Server Error' },
+  },
 };
