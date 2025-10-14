@@ -1,5 +1,7 @@
+import { createId } from '@paralleldrive/cuid2';
 import { NextFunction, Request, Response } from 'express';
-import { mockGames } from '../../models/__mocks';
+import { Game, games } from '../../models';
+import { database } from '../../services';
 
 /**
  * Create game (authenticated endpoint)
@@ -21,7 +23,36 @@ import { mockGames } from '../../models/__mocks';
  */
 export const createGameHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return res.status(201).send({ data: mockGames[0], is_mock: true });
+    const { name, entry_fee, start_time, end_time, tournament_id } = req.body as Game;
+
+    if (!name || !entry_fee || !start_time || !end_time || !tournament_id) {
+      console.log('[debug]');
+      return res.status(422).send({ error: 'Invalid request body', message: 'required properties missing' });
+    }
+
+    const gameObject: Game = {
+      id: createId(),
+      name,
+      description: req.body.description,
+      entry_fee,
+      contact_phone: req.body.contact_phone,
+      contact_email: req.body.contact_email,
+      contact_visibility: req.body.contact_visibility,
+      join_code: req.body.join_code, // TODO: should this be created on BE or FE. If BE what is the format
+      max_participants: req.body.max_participants,
+      rewards: req.body.rewards, // TODO: what should be a format for rewards
+      start_time: new Date(start_time),
+      end_time: new Date(end_time),
+      owner_id: res.locals.user.id,
+      tournament_id,
+      user_id_list: req.body.user_id_list,
+      created_at: new Date(),
+      updated_at: new Date(),
+    };
+
+    await database.insert(games).values(gameObject).execute();
+
+    return res.status(201).send({ data: gameObject });
   } catch (error: any) {
     console.log(`CREATE GAME ERROR: ${error.message} 🛑`);
     return res.status(500).send({
@@ -106,4 +137,32 @@ createGameHandler.apiDescription = {
       },
     },
   },
+  requestBody: {
+    content: {
+      'application/json': {
+        example: {
+          name: 'ultimate game',
+          description: 'this is newly created game',
+          entry_fee: 2555,
+          contact_phone: '12345678',
+          contact_email: 'example@sweepstake.com',
+          contact_visibility: true,
+          join_code: '1337',
+          max_participants: 50,
+          rewards: [],
+          start_time: 'today',
+          end_time: 'yesterday',
+          owner_id: '42',
+          tournament_id: '43',
+          user_id_list: [],
+        },
+      },
+    },
+    required: true,
+  },
+  security: [
+    {
+      ApiKeyAuth: [],
+    },
+  ],
 };

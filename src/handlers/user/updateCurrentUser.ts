@@ -23,39 +23,41 @@ import { database } from '../../services';
  */
 export const updateCurrentUserHandler = async (req: Request<Partial<User>>, res: Response, next: NextFunction) => {
   try {
-    const email = res.locals.email;
-    const existingUser = await database.select().from(users).where(eq(users.email, email)).limit(1).execute();
-
-    if (existingUser.length === 0) {
-      console.log("[DEBUG]: failed to update user - user doesn't exist");
-      return res.status(400).send({
-        error: 'Invalid update request',
-        message: 'Please make sure all necessary fields are provided and valid',
-      });
-    }
+    const propertiesAvailableForUpdate = [
+      'bio',
+      'profile_picture',
+      'game_stop_id',
+      'deposit_limit',
+      'betting_limit',
+      'payment_id',
+      'current_balance',
+      'first_name',
+      'last_name',
+      'phone_number',
+      'updated_at',
+    ];
 
     const updatedUser: Partial<User> = {
-      ...existingUser[0],
-      bio: req.body.bio,
-      profile_picture: req.body.profile_picture,
-      game_stop_id: req.body.game_stop_id,
       // TODO: think if we should allow update of is_auth_verified from client or handle it on backend.
       // is_auth_verified: req.body.is_auth_verified,
       // TODO: part of gbg process
       // is_identity_verified: req.body.is_identity_verified,
-      deposit_limit: req.body.deposit_limit,
-      betting_limit: req.body.betting_limit,
-      payment_id: req.body.payment_id,
-      current_balance: req.body.current_balance,
-      first_name: req.body.first_name,
-      last_name: req.body.last_name,
-      phone_number: req.body.phone_number,
-      updated_at: new Date(),
     };
 
-    await database.update(users).set(updatedUser).where(eq(users.email, email)).execute();
+    Object.entries(req.body).forEach(([key, value]) => {
+      if (propertiesAvailableForUpdate.includes(key)) {
+        updatedUser[key] = value;
+      }
+    });
 
-    return res.status(200).send({ data: updatedUser });
+    if (!Object.keys(updatedUser).length) {
+      return res.status(422).send({ error: 'Invalid request body', message: 'required properties missing' });
+    }
+    updatedUser['updated_at'] = new Date();
+
+    const finishedUpdatedObject = await database.update(users).set(updatedUser).where(eq(users.email, res.locals.user.email)).execute();
+
+    return res.status(200).send({ data: finishedUpdatedObject });
   } catch (error: any) {
     console.log(`[DEBUG]: UPDATE CURRENT USER ERROR: ${error.message} 🛑`);
     return res.status(500).send({

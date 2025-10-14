@@ -109,27 +109,27 @@ export const routes: RouteDescription[] = [
       {
         method: 'post',
         name: '/',
-        stack: [createGameHandler],
+        stack: [AuthenticateMiddleware, createGameHandler],
       },
       {
         method: 'get',
         name: '/',
-        stack: [getAllGamesHandler],
+        stack: [AuthenticateMiddleware, getAllGamesHandler],
       },
       {
         method: 'get',
         name: '/:id',
-        stack: [getGameByIdHandler],
+        stack: [AuthenticateMiddleware, getGameByIdHandler],
       },
       {
         method: 'put',
         name: '/:id',
-        stack: [updateGameHandler],
+        stack: [AuthenticateMiddleware, updateGameHandler],
       },
       {
         method: 'delete',
         name: '/:id',
-        stack: [deleteGameHandler],
+        stack: [AuthenticateMiddleware, deleteGameHandler],
       },
     ],
   },
