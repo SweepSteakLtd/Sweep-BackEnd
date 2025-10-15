@@ -49,4 +49,9 @@ deleteGameHandler.apiDescription = {
     422: { description: '422 validation Error' },
     500: { description: '500 Internal Server Error' },
   },
+  security: [
+    {
+      ApiKeyAuth: [],
+    },
+  ],
 };

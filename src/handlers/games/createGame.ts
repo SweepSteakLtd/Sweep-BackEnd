@@ -40,7 +40,7 @@ export const createGameHandler = async (req: Request, res: Response, next: NextF
       contact_visibility: req.body.contact_visibility,
       join_code: req.body.join_code, // TODO: should this be created on BE or FE. If BE what is the format
       max_participants: req.body.max_participants,
-      rewards: req.body.rewards, // TODO: what should be a format for rewards
+      rewards: req.body.rewards,
       start_time: new Date(start_time),
       end_time: new Date(end_time),
       owner_id: res.locals.user.id,
@@ -149,7 +149,14 @@ createGameHandler.apiDescription = {
           contact_visibility: true,
           join_code: '1337',
           max_participants: 50,
-          rewards: [],
+          rewards: [
+            {
+              position: 1,
+              percentage: 50,
+              type: 'cash',
+              product_id: '',
+            },
+          ],
           start_time: 'today',
           end_time: 'yesterday',
           owner_id: '42',

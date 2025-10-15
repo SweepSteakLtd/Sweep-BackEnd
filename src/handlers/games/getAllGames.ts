@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { games } from '../../models';
 import { database } from '../../services';
@@ -7,12 +7,28 @@ import { database } from '../../services';
  * Get all games (authenticated endpoint)
  * @returns Game[]
  */
-export const getAllGamesHandler = async (_: Request, res: Response, next: NextFunction) => {
+export const getAllGamesHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const user = res.locals.user;
-    const existingGame = await database.select().from(games).where(eq(games.owner_id, user.id)).execute();
+    const existingGame = database.select().from(games);
+
+    const allowedFilters = ['entry_fee', 'tournament_id'];
+    const filters = [];
+
+    allowedFilters.forEach(filter => {
+      const currentFilter = req.query[filter];
+      if (currentFilter) {
+        filters.push(eq(games[filter], currentFilter));
+      }
+    });
+
+    let finalResult = null;
+    if (filters.length > 0) {
+      finalResult = await existingGame.where(filters.length > 1 ? and(...filters) : filters[0]).execute();
+    } else {
+      finalResult = await existingGame.execute();
+    }
     // TODO: should we return finished games or only games in progress?
-    return res.status(200).send({ data: existingGame });
+    return res.status(200).send({ data: finalResult });
   } catch (error: any) {
     console.log(`GET ALL GAMES ERROR: ${error.message} 🛑`);
     return res.status(500).send({
@@ -63,4 +79,9 @@ getAllGamesHandler.apiDescription = {
       },
     },
   },
+  security: [
+    {
+      ApiKeyAuth: [],
+    },
+  ],
 };
