@@ -24,6 +24,7 @@ import { database } from '../../services';
 export const createGameHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name, entry_fee, start_time, end_time, tournament_id } = req.body as Game;
+    // TODO: total pot size filter
 
     if (!name || !entry_fee || !start_time || !end_time || !tournament_id) {
       console.log('[debug]');
