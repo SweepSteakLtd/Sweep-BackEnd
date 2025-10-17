@@ -13,3 +13,5 @@ env:
       secret: projects/230553092247/secrets/NEXT_PUBLIC_SUPABASE_URL    
     - variable: NEXT_PUBLIC_SUPABASE_ANON_KEY
       secret: projects/230553092247/secrets/NEXT_PUBLIC_SUPABASE_ANON_KEY
+    - variable: BE_DATABASE_PASSWORD
+      secret: projects/230553092247/secrets/BE_DATABASE_PASSWORD
