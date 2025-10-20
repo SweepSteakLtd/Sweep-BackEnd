@@ -23,7 +23,7 @@ import { database } from '../../services';
 export const createUserHandler = async (req: Request<{}, {}, User>, res: Response, next: NextFunction) => {
   try {
     const isExisting = await database.select().from(users).where(eq(users.email, res.locals.email)).limit(1).execute();
-    const fieldsToValidate = ['first_name', 'last_name', 'email'];
+    const fieldsToValidate = ['first_name', 'last_name', 'phone_number'];
 
     if (isExisting.length > 0) {
       console.log(`[DEBUG] User with email already exists`);
@@ -50,7 +50,7 @@ export const createUserHandler = async (req: Request<{}, {}, User>, res: Respons
       email: res.locals.email,
       bio: req.body.bio || '',
       profile_picture: req.body.profile_picture || '',
-      phone_number: req.body.phone_number || '',
+      phone_number: req.body.phone_number,
       game_stop_id: req.body.game_stop_id || '',
       is_auth_verified: req.body.is_auth_verified || false,
       is_identity_verified: req.body.is_identity_verified || false,
