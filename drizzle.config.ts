@@ -7,7 +7,7 @@ export default defineConfig({
   schema: './src/models/index.ts',
   out: './supabase/migrations',
   dialect: 'postgresql',
-  dbCredentials: {
-    url: process.env.SUPABASE_DATABASE_PASSWORD || '',
-  },
+  // dbCredentials: {
+  //   url: process.env.SUPABASE_DATABASE_PASSWORD || '',
+  // },
 });
