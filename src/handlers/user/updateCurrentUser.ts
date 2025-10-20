@@ -55,9 +55,11 @@ export const updateCurrentUserHandler = async (req: Request<Partial<User>>, res:
     }
     updatedUser['updated_at'] = new Date();
 
-    const finishedUpdatedObject = await database.update(users).set(updatedUser).where(eq(users.email, res.locals.user.email)).execute();
+    await database.update(users).set(updatedUser).where(eq(users.email, res.locals.user.email)).execute();
 
-    return res.status(200).send({ data: finishedUpdatedObject });
+    const existingUser = await database.select().from(users).where(eq(users.email, res.locals.user.email)).limit(1).execute();
+
+    return res.status(200).send({ data: existingUser[0] });
   } catch (error: any) {
     console.log(`[DEBUG]: UPDATE CURRENT USER ERROR: ${error.message} 🛑`);
     return res.status(500).send({

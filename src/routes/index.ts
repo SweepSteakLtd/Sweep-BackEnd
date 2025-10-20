@@ -38,7 +38,7 @@ import {
   updateTransactionHandler,
   updateUserHandler,
 } from '../handlers';
-import { AuthenticateMiddleware } from '../middlewares';
+import { AuthenticateEmailMiddleware, AuthenticateMiddleware } from '../middlewares';
 
 type ApiSecurity = Array<{ [scheme: string]: any }>;
 
@@ -84,7 +84,7 @@ export const routes: RouteDescription[] = [
       {
         method: 'post',
         name: '/',
-        stack: [createUserHandler],
+        stack: [AuthenticateEmailMiddleware, createUserHandler],
       },
       {
         method: 'get',
