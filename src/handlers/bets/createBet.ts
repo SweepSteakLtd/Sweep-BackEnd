@@ -82,14 +82,13 @@ export const createBetHandler = async (req: Request, res: Response, next: NextFu
       });
     }
 
-    // TODO: can user bet on game that is already started?
-    // if (existingGame[0].start_time < new Date()) {
-    //   console.log('DEBUG: Cannot place bet on not started game', game_id);
-    //   return res.status(422).send({
-    //     error: 'Game has not started',
-    //     message: `Cannot place bet on a game that has not started yet`,
-    //   });
-    // }
+    if (existingGame[0].start_time < new Date()) {
+      console.log('DEBUG: Cannot place bet on started game', game_id);
+      return res.status(422).send({
+        error: 'Game has started',
+        message: `Cannot place bet on a game that has started`,
+      });
+    }
 
     if (existingGame[0].entry_fee > amount) {
       console.log(
