@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from 'express';
-import { mockUsers } from '../../../models/__mocks';
 
 /**
  * Get all users (admin endpoint)
@@ -8,7 +7,7 @@ import { mockUsers } from '../../../models/__mocks';
  */
 export const getAllUsersHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return res.status(200).send({ data: mockUsers, is_mock: true });
+    return res.status(200).send({ data: [], is_mock: true });
   } catch (error: any) {
     console.log(`GET ALL USERS ERROR: ${error.message} 🛑`);
     return res.status(500).send({

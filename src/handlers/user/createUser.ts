@@ -58,6 +58,9 @@ export const createUserHandler = async (req: Request<{}, {}, User>, res: Respons
       betting_limit: req.body.betting_limit || 0,
       payment_id: req.body.payment_id || '',
       current_balance: req.body.current_balance || 0,
+      is_admin: false,
+      kyc_completed: false,
+      kyc_instance_id: '',
       created_at: new Date(),
       updated_at: new Date(),
     };

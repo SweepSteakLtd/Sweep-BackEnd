@@ -1,5 +1,7 @@
+import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { mockBets } from '../../models/__mocks';
+import { bets } from '../../models';
+import { database } from '../../services';
 
 /**
  * Get bets (authenticated endpoint)
@@ -8,7 +10,16 @@ import { mockBets } from '../../models/__mocks';
  */
 export const getBetsHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return res.status(200).send({ data: mockBets, is_mock: true });
+    const gameId = req.query.game_id as string;
+    let existingBets = [];
+    // TODO: would it make sense to fetch user values?
+    if (gameId) {
+      existingBets = await database.select().from(bets).where(eq(bets.game_id, gameId)).execute();
+    } else {
+      existingBets = await database.select().from(bets).execute();
+    }
+
+    return res.status(200).send({ data: existingBets });
   } catch (error: any) {
     console.log(`GET BETS ERROR: ${error.message} 🛑`);
     return res.status(500).send({
@@ -59,4 +70,9 @@ getBetsHandler.apiDescription = {
       },
     },
   },
+  security: [
+    {
+      ApiKeyAuth: [],
+    },
+  ],
 };

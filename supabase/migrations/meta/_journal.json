@@ -8,6 +8,27 @@
       "when": 1758140035402,
       "tag": "0000_unknown_scream",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1760991740903,
+      "tag": "0001_stale_reaper",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1761065207471,
+      "tag": "0002_wild_grim_reaper",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1761065268605,
+      "tag": "0003_foamy_jocasta",
+      "breakpoints": true
     }
   ]
 }

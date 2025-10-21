@@ -1,75 +1,15 @@
 import {
-  User,
-  PlayerProfile,
-  Player,
-  Tournament,
   Game,
-  Bet,
-  Transaction,
+  Player,
   PlayerAttemptData,
-  TournamentHoleData,
-  TournamentAdsData,
-  TournamentPlayerData,
+  PlayerProfile,
   RewardSplitData,
+  Tournament,
+  TournamentAdsData,
+  TournamentHoleData,
+  TournamentPlayerData,
+  Transaction,
 } from './index';
-
-// Mock Users
-export const mockUsers: User[] = [
-  {
-    id: 'user_1',
-    first_name: 'John',
-    last_name: 'Doe',
-    email: 'john.doe@example.com',
-    bio: 'Golf enthusiast and weekend warrior',
-    profile_picture: 'https://example.com/profiles/john.jpg',
-    phone_number: '+1234567890',
-    game_stop_id: 'gs_12345',
-    is_auth_verified: true,
-    is_identity_verified: true,
-    deposit_limit: 100,
-    betting_limit: 75,
-    payment_id: 'pay_abc123',
-    current_balance: 250,
-    created_at: new Date('2024-01-15T10:00:00Z'),
-    updated_at: new Date('2024-01-20T15:30:00Z'),
-  },
-  {
-    id: 'user_2',
-    first_name: 'Jane',
-    last_name: 'Smith',
-    email: 'jane.smith@example.com',
-    bio: 'Professional golfer and coach',
-    profile_picture: 'https://example.com/profiles/jane.jpg',
-    phone_number: '+1987654321',
-    game_stop_id: 'gs_67890',
-    is_auth_verified: true,
-    is_identity_verified: false,
-    deposit_limit: 250,
-    betting_limit: 50,
-    payment_id: 'pay_def456',
-    current_balance: 750,
-    created_at: new Date('2024-01-10T08:00:00Z'),
-    updated_at: new Date('2024-01-22T12:15:00Z'),
-  },
-  {
-    id: 'user_3',
-    first_name: 'Mike',
-    last_name: 'Johnson',
-    email: 'mike.johnson@example.com',
-    bio: '',
-    profile_picture: '',
-    phone_number: '',
-    game_stop_id: '',
-    is_auth_verified: false,
-    is_identity_verified: false,
-    deposit_limit: 0,
-    betting_limit: 0,
-    payment_id: '',
-    current_balance: 0,
-    created_at: new Date('2024-01-25T14:00:00Z'),
-    updated_at: new Date('2024-01-25T14:00:00Z'),
-  },
-];
 
 // Mock Player Profiles
 export const mockPlayerProfiles: PlayerProfile[] = [
@@ -383,42 +323,6 @@ export const mockGames: Game[] = [
   },
 ];
 
-// Mock Bets
-export const mockBets: Bet[] = [
-  {
-    id: 'bet_1',
-    owner_id: 'user_1',
-    game_id: 'game_1',
-    player_id: 'player_1',
-    created_at: new Date('2024-04-10T15:00:00Z'),
-    updated_at: new Date('2024-04-10T15:00:00Z'),
-  },
-  {
-    id: 'bet_2',
-    owner_id: 'user_2',
-    game_id: 'game_1',
-    player_id: 'player_2',
-    created_at: new Date('2024-04-10T16:30:00Z'),
-    updated_at: new Date('2024-04-10T16:30:00Z'),
-  },
-  {
-    id: 'bet_3',
-    owner_id: 'user_3',
-    game_id: 'game_2',
-    player_id: 'player_3',
-    created_at: new Date('2024-05-15T09:00:00Z'),
-    updated_at: new Date('2024-05-15T09:00:00Z'),
-  },
-  {
-    id: 'bet_4',
-    owner_id: 'user_1',
-    game_id: 'game_2',
-    player_id: 'player_1',
-    created_at: new Date('2024-05-15T11:45:00Z'),
-    updated_at: new Date('2024-05-15T11:45:00Z'),
-  },
-];
-
 // Mock Transactions
 export const mockTransactions: Transaction[] = [
   {
@@ -475,12 +379,11 @@ export const mockTransactions: Transaction[] = [
 
 // Export all mocks as a single object for easy importing
 export const mockData = {
-  users: mockUsers,
   playerProfiles: mockPlayerProfiles,
   players: mockPlayers,
   tournaments: mockTournaments,
   games: mockGames,
-  bets: mockBets,
+  bets: [],
   transactions: mockTransactions,
   playerAttempts: mockPlayerAttempts,
   tournamentHoles: mockTournamentHoles,
@@ -489,15 +392,10 @@ export const mockData = {
   rewardSplits: mockRewardSplits,
 };
 
-// Helper functions to get specific mock data
-export const getMockUserById = (id: string): User | undefined => mockUsers.find(user => user.id === id);
-
 export const getMockPlayerById = (id: string): Player | undefined => mockPlayers.find(player => player.id === id);
 
 export const getMockTournamentById = (id: string): Tournament | undefined => mockTournaments.find(tournament => tournament.id === id);
 
 export const getMockGameById = (id: string): Game | undefined => mockGames.find(game => game.id === id);
-
-export const getMockBetsByUserId = (userId: string): Bet[] => mockBets.filter(bet => bet.owner_id === userId);
 
 export const getMockTransactionsByUserId = (userId: string): Transaction[] => mockTransactions.filter(transaction => transaction.user_id === userId);

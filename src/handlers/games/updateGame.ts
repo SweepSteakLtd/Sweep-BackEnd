@@ -41,11 +41,13 @@ export const updateGameHandler = async (req: Request, res: Response, next: NextF
       'user_id_list',
     ];
 
-    const { id } = req.body;
+    const { id } = req.params;
 
     if (!id) {
-      console.log('[debug]');
-      return res.status(422).send({ error: 'Invalid request body', message: 'required properties missing' });
+      console.log('[debug] missing id in request params');
+      return res
+        .status(422)
+        .send({ error: 'Invalid request body', message: 'required properties missing' });
     }
 
     const updateObject: Partial<Game> = {};
@@ -61,7 +63,10 @@ export const updateGameHandler = async (req: Request, res: Response, next: NextF
     });
 
     if (!Object.keys(updateObject).length) {
-      return res.status(422).send({ error: 'Invalid request body', message: 'required properties missing' });
+      console.log('[debug] no valid properties to update in request body', updateObject);
+      return res
+        .status(422)
+        .send({ error: 'Invalid request body', message: 'required properties missing' });
     }
 
     updateObject['updated_at'] = new Date();

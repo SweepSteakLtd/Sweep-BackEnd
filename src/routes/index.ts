@@ -139,22 +139,22 @@ export const routes: RouteDescription[] = [
       {
         method: 'post',
         name: '/',
-        stack: [createBetHandler],
+        stack: [AuthenticateMiddleware, createBetHandler],
       },
       {
         method: 'get',
         name: '/',
-        stack: [getBetsHandler],
+        stack: [AuthenticateMiddleware, getBetsHandler],
       },
       {
         method: 'put',
         name: '/:id',
-        stack: [updateBetHandler],
+        stack: [AuthenticateMiddleware, updateBetHandler],
       },
       {
         method: 'delete',
         name: '/:id',
-        stack: [deleteBetHandler],
+        stack: [AuthenticateMiddleware, deleteBetHandler],
       },
     ],
   },

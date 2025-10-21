@@ -55,6 +55,9 @@ export const users = pgTable('Users', {
   betting_limit: integer('betting_limit').default(0), // optional, default 0
   payment_id: text('payment_id').default(''), // optional, default ""
   current_balance: integer('current_balance').default(0), // optional, default 0
+  is_admin: boolean('is_admin').default(false), // optional, default false
+  kyc_completed: boolean('kyc_completed').default(false), // optional, default false
+  kyc_instance_id: text('kyc_instance_id').default(''), // optional, default ""
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -128,7 +131,16 @@ export const bets = pgTable('Bet', {
   id: text('id').primaryKey().notNull(), // required
   owner_id: text('owner_id').notNull(), // required
   game_id: text('game_id').notNull(), // required
-  player_id: text('player_id').notNull(), // required
+  team_id: text('team_id').notNull(), // required
+  amount: integer('amount').notNull(), // required
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  updated_at: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const teams = pgTable('Team', {
+  id: text('id').primaryKey().notNull(), // required
+  owner_id: text('owner_id').notNull(), // required
+  player_ids: text('player_ids').array().default([]), // required
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -165,3 +177,6 @@ export type NewBet = typeof bets.$inferInsert;
 
 export type Transaction = typeof transactions.$inferSelect;
 export type NewTransaction = typeof transactions.$inferInsert;
+
+export type Team = typeof teams.$inferSelect;
+export type NewTeam = typeof teams.$inferInsert;
