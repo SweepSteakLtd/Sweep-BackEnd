@@ -4,9 +4,6 @@ import {
   PlayerAttemptData,
   PlayerProfile,
   RewardSplitData,
-  Tournament,
-  TournamentAdsData,
-  TournamentHoleData,
   TournamentPlayerData,
   Transaction,
 } from './index';
@@ -124,54 +121,6 @@ export const mockPlayers: Player[] = [
   },
 ]; //
 
-export const mockTournamentHoles: TournamentHoleData[] = [
-  {
-    id: 'hole_1',
-    name: "The Eagle's Nest",
-    description: 'A challenging par 4 with water hazards on both sides',
-    position: 1,
-    cover_image: 'https://example.com/holes/hole1.jpg',
-    par: 4,
-    distance: 420,
-  },
-  {
-    id: 'hole_2',
-    name: 'Water Hazard Challenge',
-    description: 'Short par 3 over water to an island green',
-    position: 2,
-    cover_image: 'https://example.com/holes/hole2.jpg',
-    par: 3,
-    distance: 165,
-  },
-  {
-    id: 'hole_3',
-    name: 'The Long Drive',
-    description: 'Long par 5 with multiple bunkers and doglegs',
-    position: 3,
-    cover_image: 'https://example.com/holes/hole3.jpg',
-    par: 5,
-    distance: 580,
-  },
-];
-
-// Mock Tournament Ads Data
-export const mockTournamentAds: TournamentAdsData[] = [
-  {
-    id: 'ad_1',
-    name: 'Nike Golf Equipment',
-    description: 'Premium golf clubs and apparel',
-    position: 1,
-    website: 'https://nike.com/golf',
-  },
-  {
-    id: 'ad_2',
-    name: 'Titleist Pro V1',
-    description: 'The #1 ball in golf',
-    position: 2,
-    website: 'https://titleist.com',
-  },
-];
-
 // Mock Tournament Player Data
 export const mockTournamentPlayers: TournamentPlayerData[] = [
   {
@@ -185,46 +134,6 @@ export const mockTournamentPlayers: TournamentPlayerData[] = [
   {
     id: 'player_3',
     level: 3,
-  },
-];
-
-// Mock Tournaments
-export const mockTournaments: Tournament[] = [
-  {
-    id: 'tournament_1',
-    name: 'Masters Championship 2024',
-    starts_at: new Date('2024-04-11T08:00:00Z'),
-    finishes_at: new Date('2024-04-14T18:00:00Z'),
-    description: 'The most prestigious tournament in golf',
-    url: 'https://masters.com',
-    cover_picture: 'https://example.com/tournaments/masters2024.jpg',
-    gallery: ['https://example.com/gallery/masters1.jpg', 'https://example.com/gallery/masters2.jpg', 'https://example.com/gallery/masters3.jpg'],
-    holes: mockTournamentHoles,
-    ads: mockTournamentAds,
-    proposed_entry_fee: 100,
-    maximum_cut_amount: 4,
-    maximum_score_generator: 3,
-    players: mockTournamentPlayers,
-    created_at: new Date('2024-01-01T00:00:00Z'),
-    updated_at: new Date('2024-01-20T10:00:00Z'),
-  },
-  {
-    id: 'tournament_2',
-    name: 'PGA Championship 2024',
-    starts_at: new Date('2024-05-16T08:00:00Z'),
-    finishes_at: new Date('2024-05-19T18:00:00Z'),
-    description: "Major championship featuring the world's best golfers",
-    url: 'https://pga.com',
-    cover_picture: 'https://example.com/tournaments/pga2024.jpg',
-    gallery: [],
-    holes: mockTournamentHoles.slice(0, 2),
-    ads: mockTournamentAds.slice(0, 1),
-    proposed_entry_fee: 75,
-    maximum_cut_amount: 4,
-    maximum_score_generator: 3,
-    players: mockTournamentPlayers.slice(0, 2),
-    created_at: new Date('2024-01-05T00:00:00Z'),
-    updated_at: new Date('2024-01-22T14:00:00Z'),
   },
 ];
 
@@ -381,21 +290,20 @@ export const mockTransactions: Transaction[] = [
 export const mockData = {
   playerProfiles: mockPlayerProfiles,
   players: mockPlayers,
-  tournaments: mockTournaments,
+  tournaments: [],
   games: mockGames,
   bets: [],
   transactions: mockTransactions,
   playerAttempts: mockPlayerAttempts,
-  tournamentHoles: mockTournamentHoles,
-  tournamentAds: mockTournamentAds,
   tournamentPlayers: mockTournamentPlayers,
   rewardSplits: mockRewardSplits,
 };
 
-export const getMockPlayerById = (id: string): Player | undefined => mockPlayers.find(player => player.id === id);
+export const getMockPlayerById = (id: string): Player | undefined =>
+  mockPlayers.find(player => player.id === id);
 
-export const getMockTournamentById = (id: string): Tournament | undefined => mockTournaments.find(tournament => tournament.id === id);
+export const getMockGameById = (id: string): Game | undefined =>
+  mockGames.find(game => game.id === id);
 
-export const getMockGameById = (id: string): Game | undefined => mockGames.find(game => game.id === id);
-
-export const getMockTransactionsByUserId = (userId: string): Transaction[] => mockTransactions.filter(transaction => transaction.user_id === userId);
+export const getMockTransactionsByUserId = (userId: string): Transaction[] =>
+  mockTransactions.filter(transaction => transaction.user_id === userId);

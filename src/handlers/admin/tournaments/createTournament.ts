@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from 'express';
-import { mockTournaments } from '../../../models/__mocks';
 
 /**
  * Create tournament (admin endpoint)
@@ -20,7 +19,7 @@ import { mockTournaments } from '../../../models/__mocks';
  */
 export const createTournamentHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return res.status(201).send({ data: mockTournaments[0], is_mock: true });
+    return res.status(201).send({ data: {}, is_mock: true });
   } catch (error: any) {
     console.log(`CREATE TOURNAMENT ERROR: ${error.message} 🛑`);
     return res.status(500).send({

@@ -56,3 +56,7 @@ export * from './admin/transactions/updateTransaction';
 export * from './admin/users/deleteUser';
 export * from './admin/users/getAllUsers';
 export * from './admin/users/updateUser';
+
+
+// Tournament handlers
+export * from './tournaments/getTournaments';

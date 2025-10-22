@@ -27,6 +27,7 @@ import {
   getGameByIdHandler,
   getPlayerProfilesHandler,
   getPlayersByTournamentHandler,
+  getTournamentsHandler,
   getTransactionsHandler,
   updateBetHandler,
   updateCurrentUserHandler,
@@ -100,6 +101,16 @@ export const routes: RouteDescription[] = [
         method: 'delete',
         name: '/me',
         stack: [AuthenticateMiddleware, deleteCurrentUserHandler],
+      },
+    ],
+  },
+  {
+    apiName: 'tournaments',
+    endpoints: [
+      {
+        method: 'get',
+        name: '/',
+        stack: [AuthenticateMiddleware, getTournamentsHandler],
       },
     ],
   },

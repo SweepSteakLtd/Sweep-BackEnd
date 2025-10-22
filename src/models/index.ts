@@ -9,24 +9,6 @@ export interface PlayerAttemptData {
   attempt: number;
 }
 
-export interface TournamentHoleData {
-  id: string;
-  name: string;
-  description: string;
-  position: number;
-  cover_image: string;
-  par: number;
-  distance: number;
-}
-
-export interface TournamentAdsData {
-  id: string;
-  name: string;
-  description: string;
-  position: number;
-  website: string;
-}
-
 export interface TournamentPlayerData {
   id: string;
   level: number;
@@ -88,6 +70,28 @@ export const players = pgTable('Player', {
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
 
+export const tournamentAd = pgTable('TournamentAd', {
+  id: text('id').primaryKey().notNull(), // required
+  name: text('name').notNull(), // required
+  description: text('description').default(''), // optional, default ""
+  position: integer('position').notNull(), // required
+  website: text('website').default(''), // optional, default ""
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  updated_at: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const tournamentHole = pgTable('TournamentHole', {
+  id: text('id').primaryKey().notNull(), // required
+  name: text('name').notNull(), // required
+  description: text('description').default(''), // optional, default ""
+  position: integer('position').notNull(), // required
+  cover_image: text('cover_image').default('').notNull(), // optional, default ""
+  par: integer('par').notNull(), // required
+  distance: integer('distance').notNull(), // required
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  updated_at: timestamp('updated_at').defaultNow().notNull(),
+});
+
 export const tournaments = pgTable('Tournament', {
   id: text('id').primaryKey().notNull(), // required
   name: text('name').notNull(), // required
@@ -97,12 +101,12 @@ export const tournaments = pgTable('Tournament', {
   url: text('url').default(''), // optional, default ""
   cover_picture: text('cover_picture').default(''), // optional, default ""
   gallery: text('gallery').array().default([]), // optional, default []
-  holes: jsonb('holes').$type<TournamentHoleData[]>().default([]), // optional, default []
-  ads: jsonb('ads').$type<TournamentAdsData[]>().default([]), // optional, default []
+  holes: text('holes').array().default([]), // optional, default []
+  ads: text('ads').array().default([]), // optional, default []
   proposed_entry_fee: integer('proposed_entry_fee').notNull(), // required
   maximum_cut_amount: integer('maximum_cut_amount').notNull(), // required
   maximum_score_generator: integer('maximum_score_generator').notNull(), // required
-  players: jsonb('players').$type<TournamentPlayerData[]>().notNull(), // required
+  players: text('players').array().default([]).notNull(), // required
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -180,3 +184,6 @@ export type NewTransaction = typeof transactions.$inferInsert;
 
 export type Team = typeof teams.$inferSelect;
 export type NewTeam = typeof teams.$inferInsert;
+
+export type TournamentHole = typeof tournamentHole.$inferSelect;
+export type TournamentAd = typeof tournamentAd.$inferSelect;
