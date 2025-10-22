@@ -197,6 +197,17 @@ updateBetHandler.apiDescription = {
       },
     },
   },
+  parameters: [
+    {
+      name: 'id',
+      in: 'path',
+      required: true,
+      schema: {
+        type: 'string',
+      },
+      description: 'ID of the bet to update',
+    },
+  ],
   requestBody: {
     content: {
       'application/json': {

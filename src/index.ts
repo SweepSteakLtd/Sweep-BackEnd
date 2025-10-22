@@ -42,14 +42,21 @@ const applyRootConfiguration = (appObject: Express): Express => {
   // Log routes as they're being registered
   routes.forEach(route =>
     route.endpoints.map(endpoint => {
+      // openapi requires paths to be in {} format
       const fullPath = `/api/${route.apiName}${endpoint.name}`;
       const apiDescription = endpoint.stack.find(item => item.apiDescription)?.apiDescription;
       if (!apiDescription) {
         console.log('[DEBUG] handler missing apiDescription', route.apiName);
       }
 
-      appObject[endpoint.method](fullPath, apiDescription ? oapi.path(apiDescription) : () => {}, endpoint.stack);
-      console.log(`ENV: ${env.CURRENT} PORT: 8080 ROUTE: ${fullPath} METHOD: ${endpoint.method.toUpperCase()}`);
+      appObject[endpoint.method](
+        fullPath,
+        apiDescription ? oapi.path(apiDescription) : () => {},
+        endpoint.stack,
+      );
+      console.log(
+        `ENV: ${env.CURRENT} PORT: 8080 ROUTE: ${fullPath} METHOD: ${endpoint.method.toUpperCase()}`,
+      );
     }),
   );
 

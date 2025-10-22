@@ -11,17 +11,34 @@ import { database } from '../../services';
 export const getGameByIdHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.params.id) {
-      return res.status(422).send({ error: 'Invalid request body', message: 'required properties missing' });
+      return res
+        .status(422)
+        .send({ error: 'Invalid request body', message: 'required properties missing' });
     }
 
-    const existingGame = await database.select().from(games).where(eq(games.id, req.params.id)).limit(1).execute();
+    const existingGame = await database
+      .select()
+      .from(games)
+      .where(eq(games.id, req.params.id))
+      .limit(1)
+      .execute();
 
     if (existingGame.length === 0) {
       return res.status(403).send({ error: 'Missing game', message: "Game doesn't exist" });
     }
 
-    const fetchedTournaments = await database.select().from(tournaments).where(eq(tournaments.id, existingGame[0].tournament_id)).limit(1).execute();
-    const fetchedBets = await database.select().from(bets).where(eq(bets.game_id, existingGame[0].id)).limit(1).execute();
+    const fetchedTournaments = await database
+      .select()
+      .from(tournaments)
+      .where(eq(tournaments.id, existingGame[0].tournament_id))
+      .limit(1)
+      .execute();
+    const fetchedBets = await database
+      .select()
+      .from(bets)
+      .where(eq(bets.game_id, existingGame[0].id))
+      .limit(1)
+      .execute();
 
     const gameData = {
       game: existingGame[0],
@@ -93,6 +110,17 @@ getGameByIdHandler.apiDescription = {
       },
     },
   },
+  parameters: [
+    {
+      name: 'id',
+      in: 'path',
+      required: true,
+      schema: {
+        type: 'string',
+      },
+      description: 'ID of the game to retrieve',
+    },
+  ],
   security: [
     {
       ApiKeyAuth: [],

@@ -1,5 +1,7 @@
 import { createId } from '@paralleldrive/cuid2';
+import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
+import { customAlphabet } from 'nanoid';
 import { Game, games } from '../../models';
 import { database } from '../../services';
 
@@ -19,6 +21,8 @@ import { database } from '../../services';
  * @body owner_id - string - required
  * @body tournament_id - string - required
  * @body user_id_list - array - optional
+ * @body is_featured - boolean - optional
+ * @body type - string - optional
  * @returns Game
  */
 export const createGameHandler = async (req: Request, res: Response, next: NextFunction) => {
@@ -28,7 +32,35 @@ export const createGameHandler = async (req: Request, res: Response, next: NextF
 
     if (!name || !entry_fee || !start_time || !end_time || !tournament_id) {
       console.log('[debug]');
-      return res.status(422).send({ error: 'Invalid request body', message: 'required properties missing' });
+      return res
+        .status(422)
+        .send({ error: 'Invalid request body', message: 'required properties missing' });
+    }
+
+    if (req.body.type && !['public', 'private'].includes(req.body.type)) {
+      return res.status(422).send({
+        error: 'Invalid game type',
+        message: 'type must be either public or private',
+      });
+    }
+    let currentJoinCode: string | undefined;
+    if (req.body.type === 'private') {
+      let exists = true;
+
+      // we should be fine as long as we dont have more then 1 million public games
+      while (exists) {
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        currentJoinCode = customAlphabet(alphabet, 6)();
+
+        const existingGameWithJoinCode = await database
+          .select()
+          .from(games)
+          .where(eq(games.join_code, currentJoinCode))
+          .limit(1)
+          .execute();
+
+        exists = !!existingGameWithJoinCode.length;
+      }
     }
 
     const gameObject: Game = {
@@ -39,7 +71,7 @@ export const createGameHandler = async (req: Request, res: Response, next: NextF
       contact_phone: req.body.contact_phone,
       contact_email: req.body.contact_email,
       contact_visibility: req.body.contact_visibility,
-      join_code: req.body.join_code, // TODO: should this be created on BE or FE. If BE what is the format
+      join_code: currentJoinCode,
       max_participants: req.body.max_participants,
       rewards: req.body.rewards,
       start_time: new Date(start_time),
@@ -47,6 +79,8 @@ export const createGameHandler = async (req: Request, res: Response, next: NextF
       owner_id: res.locals.user.id,
       tournament_id,
       user_id_list: req.body.user_id_list,
+      is_featured: req.body.is_featured,
+      type: req.body.type,
       created_at: new Date(),
       updated_at: new Date(),
     };
@@ -79,7 +113,6 @@ createGameHandler.apiDescription = {
               contact_phone: { type: 'string' },
               contact_email: { type: 'string' },
               contact_visibility: { type: 'boolean' },
-              join_code: { type: 'string' },
               max_participants: { type: 'number' },
               rewards: { type: 'array' },
               start_time: { type: 'string' },
@@ -87,6 +120,8 @@ createGameHandler.apiDescription = {
               owner_id: { type: 'string' },
               tournament_id: { type: 'string' },
               user_id_list: { type: 'array' },
+              is_featured: { type: 'boolean' },
+              type: { type: 'string' },
               created_at: { type: 'string' },
               updated_at: { type: 'string' },
             },

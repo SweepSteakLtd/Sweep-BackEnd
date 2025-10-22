@@ -127,6 +127,8 @@ export const games = pgTable('Game', {
   owner_id: text('owner_id').notNull(), // required
   tournament_id: text('tournament_id').notNull(), // required
   user_id_list: text('user_id_list').array().default([]), // optional, default []
+  is_featured: boolean('is_featured').default(false), // optional, default false
+  type: text('type').default('public'), // optional, default "public"
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });

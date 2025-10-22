@@ -13,7 +13,9 @@ export const deleteGameHandler = async (req: Request, res: Response, next: NextF
     const user = res.locals.user;
 
     if (!req.params.id) {
-      return res.status(422).send({ error: 'Invalid request body', message: 'required properties missing' });
+      return res
+        .status(422)
+        .send({ error: 'Invalid request body', message: 'required properties missing' });
     }
 
     const existingGame = await database
@@ -49,6 +51,17 @@ deleteGameHandler.apiDescription = {
     422: { description: '422 validation Error' },
     500: { description: '500 Internal Server Error' },
   },
+  parameters: [
+    {
+      name: 'id',
+      in: 'path',
+      required: true,
+      schema: {
+        type: 'string',
+      },
+      description: 'ID of the game to delete',
+    },
+  ],
   security: [
     {
       ApiKeyAuth: [],

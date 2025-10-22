@@ -1,5 +1,4 @@
 import {
-  Game,
   Player,
   PlayerAttemptData,
   PlayerProfile,
@@ -171,67 +170,6 @@ export const mockRewardSplits: RewardSplitData[] = [
   },
 ];
 
-// Mock Games
-export const mockGames: Game[] = [
-  {
-    id: 'game_1',
-    name: 'Masters Fantasy League',
-    description: 'Pick your favorite golfers for the Masters tournament',
-    entry_fee: 25,
-    contact_phone: '+1555123456',
-    contact_email: 'admin@mastersfantasy.com',
-    contact_visibility: true,
-    join_code: 'MASTERS2024',
-    max_participants: 50,
-    rewards: mockRewardSplits,
-    start_time: new Date('2024-04-11T08:00:00Z'),
-    end_time: new Date('2024-04-14T18:00:00Z'),
-    owner_id: 'user_1',
-    tournament_id: 'tournament_1',
-    user_id_list: ['user_1', 'user_2', 'user_3'],
-    created_at: new Date('2024-03-01T00:00:00Z'),
-    updated_at: new Date('2024-03-15T10:00:00Z'),
-  },
-  {
-    id: 'game_2',
-    name: 'Weekend Warriors Golf Pool',
-    description: 'Casual betting pool for weekend golfers',
-    entry_fee: 10,
-    contact_phone: '',
-    contact_email: 'pool@weekendwarriors.com',
-    contact_visibility: false,
-    join_code: 'WEEKEND24',
-    max_participants: 20,
-    rewards: mockRewardSplits.slice(0, 3),
-    start_time: new Date('2024-05-16T08:00:00Z'),
-    end_time: new Date('2024-05-19T18:00:00Z'),
-    owner_id: 'user_2',
-    tournament_id: 'tournament_2',
-    user_id_list: ['user_2', 'user_3'],
-    created_at: new Date('2024-04-01T00:00:00Z'),
-    updated_at: new Date('2024-04-10T12:00:00Z'),
-  },
-  {
-    id: 'game_3',
-    name: 'Private Championship Pool',
-    description: '',
-    entry_fee: 50,
-    contact_phone: '',
-    contact_email: '',
-    contact_visibility: false,
-    join_code: '',
-    max_participants: 100,
-    rewards: [],
-    start_time: new Date('2024-06-01T08:00:00Z'),
-    end_time: new Date('2024-06-04T18:00:00Z'),
-    owner_id: 'user_3',
-    tournament_id: 'tournament_1',
-    user_id_list: [],
-    created_at: new Date('2024-05-01T00:00:00Z'),
-    updated_at: new Date('2024-05-01T00:00:00Z'),
-  },
-];
-
 // Mock Transactions
 export const mockTransactions: Transaction[] = [
   {
@@ -291,7 +229,7 @@ export const mockData = {
   playerProfiles: mockPlayerProfiles,
   players: mockPlayers,
   tournaments: [],
-  games: mockGames,
+  games: [],
   bets: [],
   transactions: mockTransactions,
   playerAttempts: mockPlayerAttempts,
@@ -301,9 +239,6 @@ export const mockData = {
 
 export const getMockPlayerById = (id: string): Player | undefined =>
   mockPlayers.find(player => player.id === id);
-
-export const getMockGameById = (id: string): Game | undefined =>
-  mockGames.find(game => game.id === id);
 
 export const getMockTransactionsByUserId = (userId: string): Transaction[] =>
   mockTransactions.filter(transaction => transaction.user_id === userId);

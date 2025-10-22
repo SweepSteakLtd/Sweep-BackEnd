@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from 'express';
-import { mockGames } from '../../../models/__mocks';
 
 /**
  * Update game (admin endpoint)
@@ -22,7 +21,7 @@ import { mockGames } from '../../../models/__mocks';
  */
 export const updateGameAdminHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return res.status(200).send({ data: mockGames[0], is_mock: true });
+    return res.status(200).send({ data: {}, is_mock: true });
   } catch (error: any) {
     console.log(`UPDATE GAME ADMIN ERROR: ${error.message} 🛑`);
     return res.status(500).send({

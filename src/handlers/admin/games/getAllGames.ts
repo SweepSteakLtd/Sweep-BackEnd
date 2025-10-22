@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from 'express';
-import { mockGames } from '../../../models/__mocks';
 
 /**
  * Get all games (admin endpoint)
@@ -8,7 +7,7 @@ import { mockGames } from '../../../models/__mocks';
  */
 export const getAllGamesAdminHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return res.status(200).send({ data: mockGames, is_mock: true });
+    return res.status(200).send({ data: [], is_mock: true });
   } catch (error: any) {
     console.log(`GET ALL GAMES ADMIN ERROR: ${error.message} 🛑`);
     return res.status(500).send({

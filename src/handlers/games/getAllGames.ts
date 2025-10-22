@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { games } from '../../models';
+import { Game, games } from '../../models';
 import { database } from '../../services';
 
 /**
@@ -21,12 +21,22 @@ export const getAllGamesHandler = async (req: Request, res: Response, next: Next
       }
     });
 
-    let finalResult = null;
+    let finalResult: Game[] | null = null;
     if (filters.length > 0) {
-      finalResult = await existingGame.where(filters.length > 1 ? and(...filters) : filters[0]).execute();
+      finalResult = await existingGame
+        .where(filters.length > 1 ? and(...filters) : filters[0])
+        .execute();
     } else {
       finalResult = await existingGame.execute();
     }
+    if (finalResult.length !== 0 && req.query.search_term !== undefined) {
+      finalResult = finalResult.filter(
+        game =>
+          game.name.toLowerCase().includes((req.query.search_term as string).toLowerCase()) ||
+          game.description.toLowerCase().includes((req.query.search_term as string).toLowerCase()),
+      );
+    }
+
     // TODO: should we return finished games or only games in progress?
     return res.status(200).send({ data: finalResult });
   } catch (error: any) {
@@ -79,6 +89,35 @@ getAllGamesHandler.apiDescription = {
       },
     },
   },
+  parameters: [
+    {
+      name: 'search_term',
+      in: 'query',
+      required: false,
+      schema: {
+        type: 'string',
+      },
+      description: 'Search term to filter games by name or description',
+    },
+    {
+      name: 'tournament_id',
+      in: 'query',
+      required: false,
+      schema: {
+        type: 'string',
+      },
+      description: 'Filter games by tournament ID',
+    },
+    {
+      name: 'entry_fee',
+      in: 'query',
+      required: false,
+      schema: {
+        type: 'string',
+      },
+      description: 'Filter games by entry fee',
+    },
+  ],
   security: [
     {
       ApiKeyAuth: [],

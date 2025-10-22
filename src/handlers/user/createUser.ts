@@ -20,9 +20,18 @@ import { database } from '../../services';
  * @body current_balance - number - optional
  * @returns User
  */
-export const createUserHandler = async (req: Request<{}, {}, User>, res: Response, next: NextFunction) => {
+export const createUserHandler = async (
+  req: Request<{}, {}, User>,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-    const isExisting = await database.select().from(users).where(eq(users.email, res.locals.email)).limit(1).execute();
+    const isExisting = await database
+      .select()
+      .from(users)
+      .where(eq(users.email, res.locals.email))
+      .limit(1)
+      .execute();
     const fieldsToValidate = ['first_name', 'last_name', 'phone_number'];
 
     if (isExisting.length > 0) {
@@ -107,6 +116,20 @@ createUserHandler.apiDescription = {
         },
       },
     },
+    403: {
+      description: '403 Forbidden',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
     422: {
       description: '422 Validation Error',
       content: {
@@ -154,4 +177,9 @@ createUserHandler.apiDescription = {
     },
     required: true,
   },
+  security: [
+    {
+      ApiKeyAuth: [],
+    },
+  ],
 };

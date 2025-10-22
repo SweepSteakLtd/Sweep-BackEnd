@@ -12,7 +12,6 @@ import { database } from '../../services';
  * @body contact_phone - string - optional
  * @body contact_email - string - optional
  * @body contact_visibility - boolean - optional
- * @body join_code - string - optional
  * @body max_participants - number - optional
  * @body rewards - array - optional
  * @body start_time - string - optional
@@ -32,13 +31,14 @@ export const updateGameHandler = async (req: Request, res: Response, next: NextF
       'contact_phone',
       'contact_email',
       'contact_visibility',
-      'join_code',
       'max_participants',
       'rewards',
       'start_time',
       'end_time',
       'tournament_id',
       'user_id_list',
+      'is_featured',
+      'type',
     ];
 
     const { id } = req.params;
@@ -94,6 +94,17 @@ updateGameHandler.apiDescription = {
     422: { description: '422 Validation Error' },
     500: { description: '500 Internal Server Error' },
   },
+  parameters: [
+    {
+      name: 'id',
+      in: 'path',
+      required: true,
+      schema: {
+        type: 'string',
+      },
+      description: 'ID of the game to update',
+    },
+  ],
   requestBody: {
     content: {
       'application/json': {
@@ -104,13 +115,14 @@ updateGameHandler.apiDescription = {
           contact_phone: '12345678',
           contact_email: 'example@sweepstake.com',
           contact_visibility: true,
-          join_code: '1337',
           max_participants: 50,
           rewards: [],
           start_time: 'today',
           end_time: 'yesterday',
           owner_id: '42',
           tournament_id: '43',
+          is_featured: true,
+          type: 'public',
           user_id_list: [],
         },
       },

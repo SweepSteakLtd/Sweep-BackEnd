@@ -70,6 +70,17 @@ getBetsHandler.apiDescription = {
       },
     },
   },
+  parameters: [
+    {
+      name: 'game_id',
+      in: 'query',
+      required: false,
+      schema: {
+        type: 'string',
+      },
+      description: 'Filter bets by game ID',
+    },
+  ],
   security: [
     {
       ApiKeyAuth: [],

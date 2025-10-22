@@ -11,3 +11,4 @@ build
 scripts/payment-ids-prod.ts
 scripts/reports
 .DS_Store
+certs
