@@ -197,6 +197,8 @@ createGameHandler.apiDescription = {
           end_time: 'yesterday',
           owner_id: '42',
           tournament_id: '43',
+          type: 'public',
+          is_featured: false,
           user_id_list: [],
         },
       },

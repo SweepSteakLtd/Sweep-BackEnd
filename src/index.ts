@@ -42,7 +42,7 @@ const applyRootConfiguration = (appObject: Express): Express => {
   // Log routes as they're being registered
   routes.forEach(route =>
     route.endpoints.map(endpoint => {
-      // openapi requires paths to be in {} format
+      // TODO: openapi requires paths to be in {} format -> library has problems handling :id format in express 5
       const fullPath = `/api/${route.apiName}${endpoint.name}`;
       const apiDescription = endpoint.stack.find(item => item.apiDescription)?.apiDescription;
       if (!apiDescription) {

@@ -185,7 +185,7 @@ export const routes: RouteDescription[] = [
       {
         method: 'get',
         name: '/',
-        stack: [getTransactionsHandler],
+        stack: [AuthenticateMiddleware, getTransactionsHandler],
       },
     ],
   },

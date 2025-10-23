@@ -1,5 +1,7 @@
+import { and, eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { mockTransactions } from '../../models/__mocks';
+import { Transaction, transactions, User } from '../../models';
+import { database } from '../../services';
 
 /**
  * Get transactions (authenticated endpoint)
@@ -8,7 +10,25 @@ import { mockTransactions } from '../../models/__mocks';
  */
 export const getTransactionsHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return res.status(200).send({ data: mockTransactions, is_mock: true });
+    const user: User = res.locals.user;
+    const type = req.query.type as string;
+    let existingTransactions: Transaction[] = [];
+
+    if (type) {
+      existingTransactions = await database
+        .select()
+        .from(transactions)
+        .where(and(eq(transactions.type, type), eq(transactions.user_id, user.id)))
+        .execute();
+    } else {
+      existingTransactions = await database
+        .select()
+        .from(transactions)
+        .where(eq(transactions.user_id, user.id))
+        .execute();
+    }
+
+    return res.status(200).send({ data: existingTransactions });
   } catch (error: any) {
     console.log(`GET TRANSACTIONS ERROR: ${error.message} 🛑`);
     return res.status(500).send({
@@ -25,7 +45,17 @@ getTransactionsHandler.apiDescription = {
       content: {
         'application/json': {
           schema: {
-            type: 'array',
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              name: { type: 'string' },
+              value: { type: 'string' },
+              type: { type: 'string' },
+              charge_id: { type: 'string' },
+              user_id: { type: 'string' },
+              created_at: { type: 'string' },
+              updated_at: { type: 'string' },
+            },
           },
         },
       },
@@ -59,4 +89,20 @@ getTransactionsHandler.apiDescription = {
       },
     },
   },
+  parameters: [
+    {
+      name: 'type',
+      in: 'query',
+      required: false,
+      schema: {
+        type: 'string',
+      },
+      description: 'By transaction with passed type -> enum will be defined a bit later',
+    },
+  ],
+  security: [
+    {
+      ApiKeyAuth: [],
+    },
+  ],
 };
