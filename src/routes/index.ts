@@ -39,7 +39,11 @@ import {
   updateTransactionHandler,
   updateUserHandler,
 } from '../handlers';
-import { AuthenticateEmailMiddleware, AuthenticateMiddleware } from '../middlewares';
+import {
+  AuthenticateAdminMiddleware,
+  AuthenticateEmailMiddleware,
+  AuthenticateMiddleware,
+} from '../middlewares';
 
 type ApiSecurity = Array<{ [scheme: string]: any }>;
 
@@ -175,7 +179,7 @@ export const routes: RouteDescription[] = [
       {
         method: 'get',
         name: '/',
-        stack: [getPlayerProfilesHandler],
+        stack: [AuthenticateMiddleware, getPlayerProfilesHandler],
       },
     ],
   },
@@ -196,122 +200,122 @@ export const routes: RouteDescription[] = [
       {
         method: 'get',
         name: '/games',
-        stack: [getAllGamesAdminHandler],
+        stack: [AuthenticateAdminMiddleware, getAllGamesAdminHandler],
       },
       {
         method: 'put',
         name: '/games/:id',
-        stack: [updateGameAdminHandler],
+        stack: [AuthenticateAdminMiddleware, updateGameAdminHandler],
       },
       {
         method: 'delete',
         name: '/games/:id',
-        stack: [deleteGameAdminHandler],
+        stack: [AuthenticateAdminMiddleware, deleteGameAdminHandler],
       },
 
       // Player profiles admin endpoints
       {
         method: 'post',
         name: '/player-profiles',
-        stack: [createPlayerProfileHandler],
+        stack: [AuthenticateAdminMiddleware, createPlayerProfileHandler],
       },
       {
         method: 'get',
         name: '/player-profiles',
-        stack: [getAllPlayerProfilesAdminHandler],
+        stack: [AuthenticateAdminMiddleware, getAllPlayerProfilesAdminHandler],
       },
       {
         method: 'put',
         name: '/player-profiles/:id',
-        stack: [updatePlayerProfileHandler],
+        stack: [AuthenticateAdminMiddleware, updatePlayerProfileHandler],
       },
       {
         method: 'delete',
         name: '/player-profiles/:id',
-        stack: [deletePlayerProfileHandler],
+        stack: [AuthenticateAdminMiddleware, deletePlayerProfileHandler],
       },
 
       // Players admin endpoints
       {
         method: 'post',
         name: '/players',
-        stack: [createPlayerHandler],
+        stack: [AuthenticateAdminMiddleware, createPlayerHandler],
       },
       {
         method: 'get',
         name: '/players/tournament/:tournamentId',
-        stack: [getPlayersByTournamentHandler],
+        stack: [AuthenticateAdminMiddleware, getPlayersByTournamentHandler],
       },
       {
         method: 'put',
         name: '/players/:id',
-        stack: [updatePlayerByIdHandler],
+        stack: [AuthenticateAdminMiddleware, updatePlayerByIdHandler],
       },
       {
         method: 'delete',
         name: '/players/:id',
-        stack: [deletePlayerByIdHandler],
+        stack: [AuthenticateAdminMiddleware, deletePlayerByIdHandler],
       },
 
       // Tournaments admin endpoints
       {
         method: 'post',
         name: '/tournaments',
-        stack: [createTournamentHandler],
+        stack: [AuthenticateAdminMiddleware, createTournamentHandler],
       },
       {
         method: 'get',
         name: '/tournaments',
-        stack: [getAllTournamentsHandler],
+        stack: [AuthenticateAdminMiddleware, getAllTournamentsHandler],
       },
       {
         method: 'put',
         name: '/tournaments/:id',
-        stack: [updateTournamentHandler],
+        stack: [AuthenticateAdminMiddleware, updateTournamentHandler],
       },
       {
         method: 'delete',
         name: '/tournaments/:id',
-        stack: [deleteTournamentHandler],
+        stack: [AuthenticateAdminMiddleware, deleteTournamentHandler],
       },
 
       // Transactions admin endpoints
       {
         method: 'post',
         name: '/transactions',
-        stack: [createTransactionHandler],
+        stack: [AuthenticateAdminMiddleware, createTransactionHandler],
       },
       {
         method: 'get',
         name: '/transactions',
-        stack: [getAllTransactionsHandler],
+        stack: [AuthenticateAdminMiddleware, getAllTransactionsHandler],
       },
       {
         method: 'put',
         name: '/transactions/:id',
-        stack: [updateTransactionHandler],
+        stack: [AuthenticateAdminMiddleware, updateTransactionHandler],
       },
       {
         method: 'delete',
         name: '/transactions/:id',
-        stack: [deleteTransactionHandler],
+        stack: [AuthenticateAdminMiddleware, deleteTransactionHandler],
       },
 
       // Users admin endpoints
       {
         method: 'get',
         name: '/users',
-        stack: [getAllUsersHandler],
+        stack: [AuthenticateAdminMiddleware, getAllUsersHandler],
       },
       {
         method: 'put',
         name: '/users/:id',
-        stack: [updateUserHandler],
+        stack: [AuthenticateAdminMiddleware, updateUserHandler],
       },
       {
         method: 'delete',
         name: '/users/:id',
-        stack: [deleteUserHandler],
+        stack: [AuthenticateAdminMiddleware, deleteUserHandler],
       },
     ],
   },

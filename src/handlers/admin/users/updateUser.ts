@@ -1,4 +1,7 @@
+import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
+import { User, users } from '../../../models';
+import { database } from '../../../services';
 
 /**
  * Update user (admin endpoint)
@@ -16,11 +19,71 @@ import { NextFunction, Request, Response } from 'express';
  * @body betting_limit - number - optional
  * @body payment_id - string - optional
  * @body current_balance - number - optional
+ * @body is_admin - boolean - optional
+ * @body kyc_completed - boolean - optional
+ * @body kyc_instance_id - string - optional
  * @returns User
  */
-export const updateUserHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const updateUserHandler = async (
+  req: Request<Partial<User>>,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-    return res.status(200).send({ data: [], is_mock: true });
+    const userId = req.params.id;
+    const propertiesAvailableForUpdate = [
+      'bio',
+      'profile_picture',
+      'game_stop_id',
+      'deposit_limit',
+      'betting_limit',
+      'payment_id',
+      'current_balance',
+      'first_name',
+      'last_name',
+      'phone_number',
+      'is_auth_verified',
+      'is_identity_verified',
+      'is_admin',
+      'kyc_completed',
+      'kyc_instance_id',
+    ];
+
+    if (!userId) {
+      return res
+        .status(422)
+        .send({ error: 'Invalid request params', message: 'user id is required' });
+    }
+
+    const updatedUser: Partial<User> = {};
+
+    Object.entries(req.body).forEach(([key, value]) => {
+      if (propertiesAvailableForUpdate.includes(key)) {
+        updatedUser[key] = value;
+      }
+    });
+
+    if (!Object.keys(updatedUser).length) {
+      return res
+        .status(422)
+        .send({ error: 'Invalid request body', message: 'required properties missing' });
+    }
+    updatedUser['updated_at'] = new Date();
+
+    await database
+      .update(users)
+      .set(updatedUser)
+      .where(eq(users.email, res.locals.user.email))
+      .execute();
+
+    const existingUser = await database
+      .select()
+      .from(users)
+      .where(eq(users.email, res.locals.user.email))
+      .limit(1)
+      .execute();
+
+    return res.status(200).send({ data: existingUser[0] });
   } catch (error: any) {
     console.log(`UPDATE USER ERROR: ${error.message} 🛑`);
     return res.status(500).send({
@@ -38,6 +101,27 @@ updateUserHandler.apiDescription = {
         'application/json': {
           schema: {
             type: 'object',
+            properties: {
+              id: { type: 'string' },
+              first_name: { type: 'string' },
+              last_name: { type: 'string' },
+              email: { type: 'string' },
+              bio: { type: 'string' },
+              profile_picture: { type: 'string' },
+              phone_number: { type: 'string' },
+              game_stop_id: { type: 'string' },
+              is_auth_verified: { type: 'boolean' },
+              is_identity_verified: { type: 'boolean' },
+              deposit_limit: { type: 'number' },
+              betting_limit: { type: 'number' },
+              payment_id: { type: 'string' },
+              current_balance: { type: 'number' },
+              is_admin: { type: 'boolean' },
+              kyc_completed: { type: 'boolean' },
+              kyc_instance_id: { type: 'string' },
+              created_at: { type: 'string' },
+              updated_at: { type: 'string' },
+            },
           },
         },
       },
@@ -86,4 +170,39 @@ updateUserHandler.apiDescription = {
       },
     },
   },
+  security: [
+    {
+      ApiKeyAuth: [],
+    },
+  ],
+  requestBody: {
+    content: {
+      'application/json': {
+        example: {
+          first_name: 'John',
+          last_name: 'Smith',
+          bio: 'Professional golfer',
+          profile_picture: 'https://example.com/new-avatar.jpg',
+          phone_number: '+1234567890',
+          deposit_limit: 2000,
+          is_admin: true,
+          kyc_completed: false,
+          kyc_instance_id: 'abc123',
+          betting_limit: 1000,
+        },
+      },
+    },
+    required: true,
+  },
+  parameters: [
+    {
+      name: 'id',
+      in: 'path',
+      required: true,
+      schema: {
+        type: 'string',
+      },
+      description: 'ID of the user to update',
+    },
+  ],
 };

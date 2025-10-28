@@ -1,4 +1,7 @@
+import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
+import { users } from '../../../models';
+import { database } from '../../../services';
 
 /**
  * Delete user (admin endpoint)
@@ -7,7 +10,17 @@ import { NextFunction, Request, Response } from 'express';
  */
 export const deleteUserHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return res.status(204).send({ data: {}, is_mock: true });
+    const userId = req.params.id;
+
+    if (!userId) {
+      return res
+        .status(422)
+        .send({ error: 'Invalid request params', message: 'user id is required' });
+    }
+
+    await database.delete(users).where(eq(users.id, userId)).execute();
+
+    return res.status(204).send({ data: {} });
   } catch (error: any) {
     console.log(`DELETE USER ERROR: ${error.message} 🛑`);
     return res.status(500).send({

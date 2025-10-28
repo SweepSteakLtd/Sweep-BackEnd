@@ -38,7 +38,7 @@ export * from './admin/player-profiles/updatePlayerProfile';
 export * from './admin/players/createPlayer';
 export * from './admin/players/deletePlayerById';
 export * from './admin/players/getAllPlayers';
-export * from './admin/players/updatePlayerBy';
+export * from './admin/players/updatePlayerById';
 
 // Admin - Tournaments
 export * from './admin/tournaments/createTournament';

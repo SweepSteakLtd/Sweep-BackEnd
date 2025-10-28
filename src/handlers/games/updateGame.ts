@@ -37,7 +37,6 @@ export const updateGameHandler = async (req: Request, res: Response, next: NextF
       'end_time',
       'tournament_id',
       'user_id_list',
-      'is_featured',
       'type',
     ];
 
@@ -119,9 +118,6 @@ updateGameHandler.apiDescription = {
           rewards: [],
           start_time: 'today',
           end_time: 'yesterday',
-          owner_id: '42',
-          tournament_id: '43',
-          is_featured: true,
           type: 'public',
           user_id_list: [],
         },

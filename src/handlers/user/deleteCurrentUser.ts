@@ -19,7 +19,7 @@ export const deleteCurrentUserHandler = async (req: Request, res: Response, next
 };
 
 // for now endpoint is deprecated
-// deleteCurrentUserHandler.apiDescription = {
+// deleteCurrentUserHandler.apiDescription = {get
 //   responses: {
 //     204: {
 //       description: '204 No Content',

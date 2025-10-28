@@ -1,5 +1,7 @@
+import { createId } from '@paralleldrive/cuid2';
 import { NextFunction, Request, Response } from 'express';
-import { mockTransactions } from '../../../models/__mocks';
+import { Transaction, transactions } from '../../../models';
+import { database } from '../../../services';
 
 /**
  * Create transaction (admin endpoint)
@@ -12,7 +14,27 @@ import { mockTransactions } from '../../../models/__mocks';
  */
 export const createTransactionHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return res.status(201).send({ data: mockTransactions[0], is_mock: true });
+    const { name, value, type, charge_id, user_id } = req.body as Partial<Transaction>;
+
+    if (!name || !value || !type || !user_id) {
+      console.log('[debug] missing required transaction properties');
+      return res.status(422).send({ error: 'Invalid request body', message: 'required properties missing' });
+    }
+
+    const transactionObject: Transaction = {
+      id: createId(),
+      name,
+      value,
+      type,
+      charge_id: charge_id || '',
+      user_id,
+      created_at: new Date(),
+      updated_at: new Date(),
+    } as Transaction;
+
+    await database.insert(transactions).values(transactionObject).execute();
+
+    return res.status(201).send({ data: transactionObject });
   } catch (error: any) {
     console.log(`CREATE TRANSACTION ERROR: ${error.message} 🛑`);
     return res.status(500).send({

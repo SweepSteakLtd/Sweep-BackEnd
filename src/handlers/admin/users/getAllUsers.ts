@@ -1,4 +1,7 @@
+import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
+import { users } from '../../../models';
+import { database } from '../../../services';
 
 /**
  * Get all users (admin endpoint)
@@ -7,7 +10,15 @@ import { NextFunction, Request, Response } from 'express';
  */
 export const getAllUsersHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return res.status(200).send({ data: [], is_mock: true });
+    const email = req.query.email as string | undefined;
+
+    const existingUsers = await database
+      .select()
+      .from(users)
+      .where(email ? eq(users.email, email) : undefined)
+      .execute();
+
+    return res.status(200).send({ data: existingUsers });
   } catch (error: any) {
     console.log(`GET ALL USERS ERROR: ${error.message} 🛑`);
     return res.status(500).send({
@@ -58,4 +69,20 @@ getAllUsersHandler.apiDescription = {
       },
     },
   },
+  parameters: [
+    {
+      name: 'email',
+      in: 'query',
+      required: false,
+      schema: {
+        type: 'string',
+      },
+      description: 'Email of the user to fetch',
+    },
+  ],
+  security: [
+    {
+      ApiKeyAuth: [],
+    },
+  ],
 };

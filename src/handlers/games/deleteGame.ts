@@ -34,7 +34,7 @@ export const deleteGameHandler = async (req: Request, res: Response, next: NextF
       .where(and(eq(games.id, req.params.id), eq(games.owner_id, user.id)))
       .execute();
 
-    return res.status(200).send({ data: {} });
+    return res.status(204).send({ data: {} });
   } catch (error: any) {
     console.log(`DELETE GAME ERROR: ${error.message} 🛑`);
     return res.status(500).send({

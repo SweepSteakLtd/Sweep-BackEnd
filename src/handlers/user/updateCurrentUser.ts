@@ -21,7 +21,11 @@ import { database } from '../../services';
  * @body current_balance - number - optional
  * @returns User
  */
-export const updateCurrentUserHandler = async (req: Request<Partial<User>>, res: Response, next: NextFunction) => {
+export const updateCurrentUserHandler = async (
+  req: Request<Partial<User>>,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const propertiesAvailableForUpdate = [
       'bio',
@@ -34,7 +38,6 @@ export const updateCurrentUserHandler = async (req: Request<Partial<User>>, res:
       'first_name',
       'last_name',
       'phone_number',
-      'updated_at',
     ];
 
     const updatedUser: Partial<User> = {
@@ -51,13 +54,24 @@ export const updateCurrentUserHandler = async (req: Request<Partial<User>>, res:
     });
 
     if (!Object.keys(updatedUser).length) {
-      return res.status(422).send({ error: 'Invalid request body', message: 'required properties missing' });
+      return res
+        .status(422)
+        .send({ error: 'Invalid request body', message: 'required properties missing' });
     }
     updatedUser['updated_at'] = new Date();
 
-    await database.update(users).set(updatedUser).where(eq(users.email, res.locals.user.email)).execute();
+    await database
+      .update(users)
+      .set(updatedUser)
+      .where(eq(users.email, res.locals.user.email))
+      .execute();
 
-    const existingUser = await database.select().from(users).where(eq(users.email, res.locals.user.email)).limit(1).execute();
+    const existingUser = await database
+      .select()
+      .from(users)
+      .where(eq(users.email, res.locals.user.email))
+      .limit(1)
+      .execute();
 
     return res.status(200).send({ data: existingUser[0] });
   } catch (error: any) {
