@@ -1,4 +1,7 @@
+import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
+import { tournaments } from '../../../models';
+import { database } from '../../../services';
 
 /**
  * Delete tournament (admin endpoint)
@@ -7,7 +10,21 @@ import { NextFunction, Request, Response } from 'express';
  */
 export const deleteTournamentHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return res.status(204).send({ data: {}, is_mock: true });
+    const { id } = req.params;
+
+    if (!id) {
+      console.log('[debug] missing id in request params');
+      return res.status(422).send({ error: 'Invalid request body', message: 'required properties missing' });
+    }
+
+    const existing = await database.select().from(tournaments).where(eq(tournaments.id, id)).limit(1).execute();
+    if (!existing || existing.length === 0) {
+      return res.status(403).send({ error: 'Missing tournament', message: "Tournament doesn't exist" });
+    }
+
+    await database.delete(tournaments).where(eq(tournaments.id, id)).execute();
+
+    return res.status(204).send({ data: {} });
   } catch (error: any) {
     console.log(`DELETE TOURNAMENT ERROR: ${error.message} 🛑`);
     return res.status(500).send({
