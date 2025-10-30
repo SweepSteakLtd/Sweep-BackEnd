@@ -60,9 +60,101 @@ export const updateTransactionHandler = async (req: Request, res: Response, next
 
 updateTransactionHandler.apiDescription = {
   responses: {
-    200: { description: '200 OK' },
-    403: { description: '403 Forbidden' },
-    422: { description: '422 Validation Error' },
-    500: { description: '500 Internal Server Error' },
+    200: {
+      description: '200 OK',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              name: { type: 'string' },
+              value: { type: 'string' },
+              type: { type: 'string' },
+              charge_id: { type: 'string' },
+              user_id: { type: 'string' },
+              created_at: { type: 'string' },
+              updated_at: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    403: {
+      description: '403 Forbidden',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    422: {
+      description: '422 Validation Error',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+              details: { type: 'array' },
+            },
+          },
+        },
+      },
+    },
+    500: {
+      description: '500 Internal Server Error',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
   },
+  requestBody: {
+    content: {
+      'application/json': {
+        example: {
+          id: 'transaction id',
+          name: 'test transactions',
+          value: 'test value',
+          type: 'debit',
+          charge_id: 'charge id',
+          user_id: 'user that did transaction',
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+      },
+    },
+    required: true,
+  },
+  parameters: [
+    {
+      name: 'id',
+      in: 'param',
+      required: true,
+      schema: {
+        type: 'string',
+      },
+      description: 'update transaction by id',
+    },
+  ],
+  security: [
+    {
+      ApiKeyAuth: [],
+    },
+  ],
 };

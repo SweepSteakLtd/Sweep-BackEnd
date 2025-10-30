@@ -9,7 +9,11 @@ import { database } from '../../../services';
  * @query user_id - optional
  * @returns Transaction[]
  */
-export const getAllTransactionsHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const getAllTransactionsHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const allowedFilters = ['type', 'user_id'];
     const filters: any[] = [];
@@ -25,7 +29,9 @@ export const getAllTransactionsHandler = async (req: Request, res: Response, nex
     let finalResult = null as any;
 
     if (filters.length > 0) {
-      finalResult = await existing.where(filters.length > 1 ? and(...filters) : filters[0]).execute();
+      finalResult = await existing
+        .where(filters.length > 1 ? and(...filters) : filters[0])
+        .execute();
     } else {
       finalResult = await existing.execute();
     }
@@ -42,8 +48,79 @@ export const getAllTransactionsHandler = async (req: Request, res: Response, nex
 
 getAllTransactionsHandler.apiDescription = {
   responses: {
-    200: { description: '200 OK' },
-    403: { description: '403 Forbidden' },
-    500: { description: '500 Internal Server Error' },
+    200: {
+      description: '200 OK',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'array',
+            items: {
+              id: { type: 'string' },
+              name: { type: 'string' },
+              value: { type: 'string' },
+              type: { type: 'string' },
+              charge_id: { type: 'string' },
+              user_id: { type: 'string' },
+              created_at: { type: 'string' },
+              updated_at: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    403: {
+      description: '403 Forbidden',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    500: {
+      description: '500 Internal Server Error',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
   },
+
+  parameters: [
+    {
+      name: 'type',
+      in: 'query',
+      required: false,
+      schema: {
+        type: 'string',
+      },
+      description: 'filter transactions by type of payment used',
+    },
+    {
+      name: 'user_id',
+      in: 'query',
+      required: false,
+      schema: {
+        type: 'string',
+      },
+      description: 'filter transactions by user id',
+    },
+  ],
+  security: [
+    {
+      ApiKeyAuth: [],
+    },
+  ],
 };

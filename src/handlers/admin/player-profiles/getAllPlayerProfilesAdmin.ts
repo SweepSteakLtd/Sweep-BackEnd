@@ -33,41 +33,39 @@ export const getAllPlayerProfilesAdminHandler = async (
 };
 getAllPlayerProfilesAdminHandler.apiDescription = {
   responses: {
-    responses: {
-      200: {
-        description: '200 OK',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'array',
+    200: {
+      description: '200 OK',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'array',
+          },
+        },
+      },
+    },
+    403: {
+      description: '403 Forbidden',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
             },
           },
         },
       },
-      403: {
-        description: '403 Forbidden',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                error: { type: 'string' },
-                message: { type: 'string' },
-              },
-            },
-          },
-        },
-      },
-      500: {
-        description: '500 Internal Server Error',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                error: { type: 'string' },
-                message: { type: 'string' },
-              },
+    },
+    500: {
+      description: '500 Internal Server Error',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
             },
           },
         },
@@ -90,4 +88,20 @@ getAllPlayerProfilesAdminHandler.apiDescription = {
       },
     ],
   },
+  parameters: [
+    {
+      name: 'country',
+      in: 'query',
+      required: false,
+      schema: {
+        type: 'string',
+      },
+      description: 'filter player profiles by country',
+    },
+  ],
+  security: [
+    {
+      ApiKeyAuth: [],
+    },
+  ],
 };

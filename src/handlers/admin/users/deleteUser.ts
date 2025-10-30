@@ -36,4 +36,20 @@ deleteUserHandler.apiDescription = {
     403: { description: '403 Forbidden' },
     500: { description: '500 Internal Server Error' },
   },
+  parameters: [
+    {
+      name: 'id',
+      in: 'param',
+      required: true,
+      schema: {
+        type: 'string',
+      },
+      description: 'Delete user by id',
+    },
+  ],
+  security: [
+    {
+      ApiKeyAuth: [],
+    },
+  ],
 };

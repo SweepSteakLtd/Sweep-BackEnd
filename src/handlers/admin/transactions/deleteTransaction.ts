@@ -50,4 +50,20 @@ deleteTransactionHandler.apiDescription = {
     422: { description: '422 invalid request' },
     500: { description: '500 Internal Server Error' },
   },
+  parameters: [
+    {
+      name: 'id',
+      in: 'param',
+      required: true,
+      schema: {
+        type: 'string',
+      },
+      description: 'Delete transaction by id',
+    },
+  ],
+  security: [
+    {
+      ApiKeyAuth: [],
+    },
+  ],
 };

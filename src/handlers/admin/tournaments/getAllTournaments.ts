@@ -86,8 +86,77 @@ export const getAllTournamentsHandler = async (req: Request, res: Response, next
 };
 getAllTournamentsHandler.apiDescription = {
   responses: {
-    200: { description: '200 OK' },
-    403: { description: '403 Forbidden' },
-    500: { description: '500 Internal Server Error' },
+    responses: {
+      200: {
+        description: '200 OK',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'array',
+            },
+          },
+        },
+      },
+      403: {
+        description: '403 Forbidden',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                error: { type: 'string' },
+                message: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+      500: {
+        description: '500 Internal Server Error',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                error: { type: 'string' },
+                message: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+      parameters: [
+        {
+          name: 'country',
+          in: 'query',
+          required: false,
+          schema: {
+            type: 'string',
+          },
+          description: 'Country of the player profiles to fetch',
+        },
+      ],
+      security: [
+        {
+          ApiKeyAuth: [],
+        },
+      ],
+    },
   },
+  parameters: [
+    {
+      name: 'status',
+      in: 'query',
+      required: false,
+      schema: {
+        type: 'string',
+      },
+      description: 'filter tournaments by status',
+    },
+  ],
+  security: [
+    {
+      ApiKeyAuth: [],
+    },
+  ],
 };
