@@ -7,6 +7,7 @@ import { database } from '../../services';
  * Create a new user
  * @body first_name - string - optional
  * @body last_name - string - optional
+ * @body nickname - string - optional
  * @body email - string - required
  * @body bio - string - optional
  * @body profile_picture - string - optional
@@ -18,6 +19,8 @@ import { database } from '../../services';
  * @body betting_limit - number - optional
  * @body payment_id - string - optional
  * @body current_balance - number - optional
+ * @body is_self_exclusion - boolean - optional
+ * @body exclusion_ending -string - optional
  * @returns User
  */
 export const createUserHandler = async (
@@ -56,6 +59,7 @@ export const createUserHandler = async (
       id: createId(),
       first_name: req.body.first_name,
       last_name: req.body.last_name,
+      nickname: req.body.nickname,
       email: res.locals.email,
       bio: req.body.bio || '',
       profile_picture: req.body.profile_picture || '',
@@ -70,6 +74,8 @@ export const createUserHandler = async (
       is_admin: false,
       kyc_completed: false,
       kyc_instance_id: '',
+      exclusion_ending: new Date(),
+      is_self_excluded: false,
       created_at: new Date(),
       updated_at: new Date(),
     };
@@ -98,6 +104,7 @@ createUserHandler.apiDescription = {
               id: { type: 'string' },
               first_name: { type: 'string' },
               last_name: { type: 'string' },
+              nickname: { type: 'string' },
               email: { type: 'string' },
               bio: { type: 'string' },
               profile_picture: { type: 'string' },
@@ -109,6 +116,8 @@ createUserHandler.apiDescription = {
               betting_limit: { type: 'number' },
               payment_id: { type: 'string' },
               current_balance: { type: 'number' },
+              is_self_exclusion: { type: 'boolean' },
+              exclusion_ending: { type: 'string' },
               created_at: { type: 'string' },
               updated_at: { type: 'string' },
             },
@@ -166,12 +175,14 @@ createUserHandler.apiDescription = {
         example: {
           first_name: 'John',
           last_name: 'Doe',
+          nickname: 'Super cool dude',
           email: 'john.doe@example.com',
           bio: 'Golf enthusiast',
           profile_picture: 'https://example.com/avatar.jpg',
           phone_number: '+1234567890',
           deposit_limit: 1200,
           betting_limit: 2400,
+          is_self_exclusion: false,
         },
       },
     },

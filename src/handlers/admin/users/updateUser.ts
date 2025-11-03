@@ -8,6 +8,7 @@ import { database } from '../../../services';
  * @params id - required
  * @body first_name - string - optional
  * @body last_name - string - optional
+ * @body nickname - string - optional
  * @body email - string - optional
  * @body bio - string - optional
  * @body profile_picture - string - optional
@@ -22,6 +23,8 @@ import { database } from '../../../services';
  * @body is_admin - boolean - optional
  * @body kyc_completed - boolean - optional
  * @body kyc_instance_id - string - optional
+ * @body is_self_exclusion - boolean - optional
+ * @body exclusion_ending - string - optional
  * @returns User
  */
 export const updateUserHandler = async (
@@ -47,6 +50,9 @@ export const updateUserHandler = async (
       'is_admin',
       'kyc_completed',
       'kyc_instance_id',
+      'nickname',
+      'is_self_exclusion',
+      'exclusion_ending',
     ];
 
     if (!userId) {
@@ -62,6 +68,30 @@ export const updateUserHandler = async (
         updatedUser[key] = value;
       }
     });
+
+    if (updatedUser['is_self_excluded'] && updatedUser['exclusion_ending'] === undefined) {
+      return res
+        .status(422)
+        .send({ error: 'Invalid request body', message: 'Exclusion requires end date' });
+    }
+
+    try {
+      if (
+        updatedUser['is_self_excluded'] &&
+        updatedUser['exclusion_ending'] &&
+        new Date(updatedUser['exclusion_ending']) < new Date()
+      ) {
+        return res
+          .status(422)
+          .send({ error: 'Invalid request body', message: 'Exclusion date must be in future' });
+      }
+    } catch (e) {
+      console.log('[DEBUG]: failed to parse exclusion date', e);
+      return res.status(422).send({
+        error: 'Invalid request',
+        message: 'Failed to set exclusion date. Please double check data',
+      });
+    }
 
     if (!Object.keys(updatedUser).length) {
       return res

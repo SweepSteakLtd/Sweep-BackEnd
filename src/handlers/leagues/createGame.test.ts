@@ -3,7 +3,7 @@ jest.mock('../../services');
 
 import { NextFunction, Request, Response } from 'express';
 import { database } from '../../services';
-import { createGameHandler } from './createGame';
+import { createLeagueHandler } from './createLeague';
 
 const mockResponse = () => {
   const res: any = {};
@@ -49,7 +49,7 @@ test('createGameHandler - returns 201 and created game when required fields pres
 
   mockInsertExecute(false);
 
-  await createGameHandler(req, res, mockNext);
+  await createLeagueHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(201);
   expect(res.send).toHaveBeenCalled();
@@ -64,7 +64,7 @@ test('createGameHandler - returns 422 when missing required fields', async () =>
 
   const req = { body: { name: 'Nope' } } as unknown as Request;
 
-  await createGameHandler(req, res, mockNext);
+  await createLeagueHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(422);
   expect(res.send).toHaveBeenCalledWith({ error: 'Invalid request body', message: 'required properties missing' });
@@ -86,7 +86,7 @@ test('createGameHandler - returns 500 on DB error', async () => {
 
   mockInsertExecute(true);
 
-  await createGameHandler(req, res, mockNext);
+  await createLeagueHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(500);
   expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ error: 'Internal Server Error' }));

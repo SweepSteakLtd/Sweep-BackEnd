@@ -17,7 +17,8 @@
     "start:prod": "cross-env APPLIED_ENV=production node build/index.js",
     "build:prod": "cross-env APPLIED_ENV=production tsc",
     "start": "tsc && node build/index.js",
-    "test": "yarn jest"
+    "test": "yarn jest",
+    "ts-check": "yarn tsc --noEmit"
   },
   "author": "koppany kondricz",
   "license": "ISC",

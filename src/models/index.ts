@@ -26,6 +26,7 @@ export const users = pgTable('Users', {
   id: text('id').primaryKey().notNull(), // required
   first_name: text('first_name').default(''), // optional, default ""
   last_name: text('last_name').default(''), // optional, default ""
+  nickname: text('nickname').default(''),
   email: text('email').notNull(), // required
   bio: text('bio').default(''), // optional, default ""
   profile_picture: text('profile_picture').default(''), // optional, default ""
@@ -40,6 +41,8 @@ export const users = pgTable('Users', {
   is_admin: boolean('is_admin').default(false), // optional, default false
   kyc_completed: boolean('kyc_completed').default(false), // optional, default false
   kyc_instance_id: text('kyc_instance_id').default(''), // optional, default ""
+  is_self_excluded: boolean('is_self_excluded').default(false),
+  exclusion_ending: timestamp('exclusion_ending'),
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -111,7 +114,7 @@ export const tournaments = pgTable('Tournament', {
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
 
-export const games = pgTable('Game', {
+export const leagues = pgTable('League', {
   id: text('id').primaryKey().notNull(), // required
   name: text('name').notNull(), // required
   description: text('description').default(''), // optional, default ""
@@ -136,7 +139,7 @@ export const games = pgTable('Game', {
 export const bets = pgTable('Bet', {
   id: text('id').primaryKey().notNull(), // required
   owner_id: text('owner_id').notNull(), // required
-  game_id: text('game_id').notNull(), // required
+  league_id: text('league_id').notNull(), // required
   team_id: text('team_id').notNull(), // required
   amount: integer('amount').notNull(), // required
   created_at: timestamp('created_at').defaultNow().notNull(),
@@ -175,8 +178,8 @@ export type NewPlayer = typeof players.$inferInsert;
 export type Tournament = typeof tournaments.$inferSelect;
 export type NewTournament = typeof tournaments.$inferInsert;
 
-export type Game = typeof games.$inferSelect;
-export type NewGame = typeof games.$inferInsert;
+export type League = typeof leagues.$inferSelect;
+export type NewLeague = typeof leagues.$inferInsert;
 
 export type Bet = typeof bets.$inferSelect;
 export type NewBet = typeof bets.$inferInsert;

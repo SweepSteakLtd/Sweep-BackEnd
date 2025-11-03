@@ -1,14 +1,14 @@
 import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { games } from '../../../models';
+import { leagues } from '../../../models';
 import { database } from '../../../services';
 
 /**
- * Delete game (admin endpoint)
+ * Delete league (admin endpoint)
  * @params id - required
  * @returns void
  */
-export const deleteGameAdminHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteLeagueAdminHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.params.id) {
       return res
@@ -16,18 +16,18 @@ export const deleteGameAdminHandler = async (req: Request, res: Response, next: 
         .send({ error: 'Invalid request body', message: 'required properties missing' });
     }
 
-    const existingGame = await database
+    const existingLeague = await database
       .select()
-      .from(games)
-      .where(eq(games.id, req.params.id))
+      .from(leagues)
+      .where(eq(leagues.id, req.params.id))
       .limit(1)
       .execute();
 
-    if (existingGame.length === 0) {
-      return res.status(403).send({ error: 'Missing game', message: "Game doesn't exist" });
+    if (existingLeague.length === 0) {
+      return res.status(403).send({ error: 'Missing league', message: "League doesn't exist" });
     }
 
-    await database.delete(games).where(eq(games.id, req.params.id)).execute();
+    await database.delete(leagues).where(eq(leagues.id, req.params.id)).execute();
 
     return res.status(204).send({ data: {} });
   } catch (error: any) {
@@ -39,7 +39,7 @@ export const deleteGameAdminHandler = async (req: Request, res: Response, next: 
   }
 };
 
-deleteGameAdminHandler.apiDescription = {
+deleteLeagueAdminHandler.apiDescription = {
   responses: {
     204: { description: '204 No Content' },
     403: { description: '403 Forbidden' },

@@ -1,14 +1,14 @@
 import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { bets, games, tournaments } from '../../models';
+import { bets, leagues, tournaments } from '../../models';
 import { database } from '../../services';
 
 /**
- * Get game by ID (authenticated endpoint)
+ * Get league by ID (authenticated endpoint)
  * @params id - required
- * @returns Game with Tournament and Bets
+ * @returns league with Tournament and Bets
  */
-export const getGameByIdHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const getLeagueByIdHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.params.id) {
       return res
@@ -16,36 +16,36 @@ export const getGameByIdHandler = async (req: Request, res: Response, next: Next
         .send({ error: 'Invalid request body', message: 'required properties missing' });
     }
 
-    const existingGame = await database
+    const existingLeague = await database
       .select()
-      .from(games)
-      .where(eq(games.id, req.params.id))
+      .from(leagues)
+      .where(eq(leagues.id, req.params.id))
       .limit(1)
       .execute();
 
-    if (existingGame.length === 0) {
-      return res.status(403).send({ error: 'Missing game', message: "Game doesn't exist" });
+    if (existingLeague.length === 0) {
+      return res.status(403).send({ error: 'Missing league', message: "league doesn't exist" });
     }
 
     const fetchedTournaments = await database
       .select()
       .from(tournaments)
-      .where(eq(tournaments.id, existingGame[0].tournament_id))
+      .where(eq(tournaments.id, existingLeague[0].tournament_id))
       .limit(1)
       .execute();
     const fetchedBets = await database
       .select()
       .from(bets)
-      .where(eq(bets.game_id, existingGame[0].id))
+      .where(eq(bets.league_id, existingLeague[0].id))
       .limit(1)
       .execute();
 
-    const gameData = {
-      game: existingGame[0],
+    const leagueData = {
+      league: existingLeague[0],
       tournament: fetchedTournaments[0] || {},
       user_bets: fetchedBets,
     };
-    return res.status(200).send({ data: gameData });
+    return res.status(200).send({ data: leagueData });
   } catch (error: any) {
     console.log(`GET GAME BY ID ERROR: ${error.message} 🛑`);
     return res.status(500).send({
@@ -55,7 +55,7 @@ export const getGameByIdHandler = async (req: Request, res: Response, next: Next
   }
 };
 
-getGameByIdHandler.apiDescription = {
+getLeagueByIdHandler.apiDescription = {
   responses: {
     200: {
       description: '200 OK',

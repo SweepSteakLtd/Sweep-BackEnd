@@ -9,6 +9,7 @@ import { database } from '../../services';
  * @body last_name - string - optional
  * @body email - string - optional
  * @body phone_number - string - optional
+ * @body nickname - string - optional
  * -----------------------------
  * @body bio - string - optional
  * @body profile_picture - string - optional
@@ -19,6 +20,8 @@ import { database } from '../../services';
  * @body betting_limit - number - optional
  * @body payment_id - string - optional
  * @body current_balance - number - optional
+ * @body is_self_exclusion - boolean - optional
+ * @body exclusion_ending -string - optional
  * @returns User
  */
 export const updateCurrentUserHandler = async (
@@ -38,6 +41,9 @@ export const updateCurrentUserHandler = async (
       'first_name',
       'last_name',
       'phone_number',
+      'nickname',
+      'is_self_exclusion',
+      'exclusion_ending',
     ];
 
     const updatedUser: Partial<User> = {
@@ -52,6 +58,30 @@ export const updateCurrentUserHandler = async (
         updatedUser[key] = value;
       }
     });
+
+    if (updatedUser['is_self_excluded'] && updatedUser['exclusion_ending'] === undefined) {
+      return res
+        .status(422)
+        .send({ error: 'Invalid request body', message: 'Exclusion requires end date' });
+    }
+
+    try {
+      if (
+        updatedUser['is_self_excluded'] &&
+        updatedUser['exclusion_ending'] &&
+        new Date(updatedUser['exclusion_ending']) < new Date()
+      ) {
+        return res
+          .status(422)
+          .send({ error: 'Invalid request body', message: 'Exclusion date must be in future' });
+      }
+    } catch (e) {
+      console.log('[DEBUG]: failed to parse exclusion date', e);
+      return res.status(422).send({
+        error: 'Invalid request',
+        message: 'Failed to set exclusion date. Please double check data',
+      });
+    }
 
     if (!Object.keys(updatedUser).length) {
       return res
@@ -95,6 +125,7 @@ updateCurrentUserHandler.apiDescription = {
               id: { type: 'string' },
               first_name: { type: 'string' },
               last_name: { type: 'string' },
+              nickname: { type: 'string' },
               email: { type: 'string' },
               bio: { type: 'string' },
               profile_picture: { type: 'string' },
@@ -106,6 +137,8 @@ updateCurrentUserHandler.apiDescription = {
               betting_limit: { type: 'number' },
               payment_id: { type: 'string' },
               current_balance: { type: 'number' },
+              is_self_exclusion: { type: 'boolean' },
+              exclusion_ending: { type: 'string' },
               created_at: { type: 'string' },
               updated_at: { type: 'string' },
             },
@@ -168,11 +201,13 @@ updateCurrentUserHandler.apiDescription = {
         example: {
           first_name: 'John',
           last_name: 'Smith',
+          nickname: 'Super cool dude',
           bio: 'Professional golfer',
           profile_picture: 'https://example.com/new-avatar.jpg',
           phone_number: '+1234567890',
           deposit_limit: 2000,
           betting_limit: 1000,
+          is_self_exclusion: false,
         },
       },
     },

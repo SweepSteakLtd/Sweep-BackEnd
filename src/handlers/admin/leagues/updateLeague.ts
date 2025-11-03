@@ -1,10 +1,10 @@
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { Game, games } from '../../models';
-import { database } from '../../services';
+import { League, leagues } from '../../../models';
+import { database } from '../../../services';
 
 /**
- * Update game (authenticated endpoint)
+ * Update league (admin authenticated endpoint)
  * @params id - required
  * @body name - string - optional
  * @body description - string - optional
@@ -13,15 +13,17 @@ import { database } from '../../services';
  * @body contact_email - string - optional
  * @body contact_visibility - boolean - optional
  * @body max_participants - number - optional
+ * @body owner_id - string - optional
  * @body rewards - array - optional
  * @body start_time - string - optional
  * @body end_time - string - optional
  * @body owner_id - string - optional
  * @body tournament_id - string - optional
  * @body user_id_list - array - optional
- * @returns Game
+ * @body is_featured - boolean - optional
+ * @returns League
  */
-export const updateGameHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const updateLeagueAdminHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = res.locals.user;
     const propertiesAvailableForUpdate = [
@@ -37,6 +39,8 @@ export const updateGameHandler = async (req: Request, res: Response, next: NextF
       'end_time',
       'tournament_id',
       'user_id_list',
+      'is_featured',
+      'owner_id',
       'type',
     ];
 
@@ -49,7 +53,7 @@ export const updateGameHandler = async (req: Request, res: Response, next: NextF
         .send({ error: 'Invalid request body', message: 'required properties missing' });
     }
 
-    const updateObject: Partial<Game> = {};
+    const updateObject: Partial<League> = {};
 
     Object.entries(req.body).forEach(([key, value]) => {
       if (propertiesAvailableForUpdate.includes(key)) {
@@ -71,14 +75,14 @@ export const updateGameHandler = async (req: Request, res: Response, next: NextF
     updateObject['updated_at'] = new Date();
 
     const finishedUpdatedObject = await database
-      .update(games)
+      .update(leagues)
       .set(updateObject)
-      .where(and(eq(games.id, id), eq(games.owner_id, user.id)))
+      .where(eq(leagues.id, id))
       .execute();
 
     return res.status(200).send({ data: finishedUpdatedObject });
   } catch (error: any) {
-    console.log(`UPDATE GAME ERROR: ${error.message} 🛑`);
+    console.log(`UPDATE LEAGUE ADMIN ERROR: ${error.message} 🛑`);
     return res.status(500).send({
       error: 'Internal Server Error',
       message: 'An unexpected error occurred',
@@ -86,7 +90,7 @@ export const updateGameHandler = async (req: Request, res: Response, next: NextF
   }
 };
 
-updateGameHandler.apiDescription = {
+updateLeagueAdminHandler.apiDescription = {
   responses: {
     200: { description: '200 OK' },
     403: { description: '403 Forbidden' },
@@ -101,15 +105,15 @@ updateGameHandler.apiDescription = {
       schema: {
         type: 'string',
       },
-      description: 'ID of the game to update',
+      description: 'ID of the league to update',
     },
   ],
   requestBody: {
     content: {
       'application/json': {
         example: {
-          name: 'ultimate game',
-          description: 'this is newly created game',
+          name: 'ultimate league',
+          description: 'this is newly created league',
           entry_fee: 2555,
           contact_phone: '12345678',
           contact_email: 'example@sweepstake.com',
@@ -118,6 +122,9 @@ updateGameHandler.apiDescription = {
           rewards: [],
           start_time: 'today',
           end_time: 'yesterday',
+          owner_id: '42',
+          tournament_id: '43',
+          is_featured: true,
           type: 'public',
           user_id_list: [],
         },

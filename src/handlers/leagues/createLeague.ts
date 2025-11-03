@@ -2,11 +2,11 @@ import { createId } from '@paralleldrive/cuid2';
 import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { customAlphabet } from 'nanoid';
-import { Game, games } from '../../models';
+import { League, leagues } from '../../models';
 import { database } from '../../services';
 
 /**
- * Create game (authenticated endpoint)
+ * Create league (authenticated endpoint)
  * @body name - string - required
  * @body description - string - optional
  * @body entry_fee - number - required
@@ -23,11 +23,11 @@ import { database } from '../../services';
  * @body user_id_list - array - optional
  * @body is_featured - boolean - optional
  * @body type - string - optional
- * @returns Game
+ * @returns League
  */
-export const createGameHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const createLeagueHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { name, entry_fee, start_time, end_time, tournament_id } = req.body as Game;
+    const { name, entry_fee, start_time, end_time, tournament_id } = req.body as League;
     // TODO: total pot size filter
 
     if (!name || !entry_fee || !start_time || !end_time || !tournament_id) {
@@ -39,7 +39,7 @@ export const createGameHandler = async (req: Request, res: Response, next: NextF
 
     if (req.body.type && !['public', 'private'].includes(req.body.type)) {
       return res.status(422).send({
-        error: 'Invalid game type',
+        error: 'Invalid league type',
         message: 'type must be either public or private',
       });
     }
@@ -47,23 +47,23 @@ export const createGameHandler = async (req: Request, res: Response, next: NextF
     if (req.body.type === 'private') {
       let exists = true;
 
-      // we should be fine as long as we dont have more then 1 million public games
+      // we should be fine as long as we dont have more then 1 million public leagues
       while (exists) {
         const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         currentJoinCode = customAlphabet(alphabet, 6)();
 
-        const existingGameWithJoinCode = await database
+        const existingleagueWithJoinCode = await database
           .select()
-          .from(games)
-          .where(eq(games.join_code, currentJoinCode))
+          .from(leagues)
+          .where(eq(leagues.join_code, currentJoinCode))
           .limit(1)
           .execute();
 
-        exists = !!existingGameWithJoinCode.length;
+        exists = !!existingleagueWithJoinCode.length;
       }
     }
 
-    const gameObject: Game = {
+    const leagueObject: League = {
       id: createId(),
       name,
       description: req.body.description,
@@ -85,11 +85,11 @@ export const createGameHandler = async (req: Request, res: Response, next: NextF
       updated_at: new Date(),
     };
 
-    await database.insert(games).values(gameObject).execute();
+    await database.insert(leagues).values(leagueObject).execute();
 
-    return res.status(201).send({ data: gameObject });
+    return res.status(201).send({ data: leagueObject });
   } catch (error: any) {
-    console.log(`CREATE GAME ERROR: ${error.message} 🛑`);
+    console.log(`CREATE league ERROR: ${error.message} 🛑`);
     return res.status(500).send({
       error: 'Internal Server Error',
       message: 'An unexpected error occurred',
@@ -97,7 +97,7 @@ export const createGameHandler = async (req: Request, res: Response, next: NextF
   }
 };
 
-createGameHandler.apiDescription = {
+createLeagueHandler.apiDescription = {
   responses: {
     201: {
       description: '201 Created',
@@ -177,8 +177,8 @@ createGameHandler.apiDescription = {
     content: {
       'application/json': {
         example: {
-          name: 'ultimate game',
-          description: 'this is newly created game',
+          name: 'ultimate league',
+          description: 'this is newly created league',
           entry_fee: 2555,
           contact_phone: '12345678',
           contact_email: 'example@sweepstake.com',

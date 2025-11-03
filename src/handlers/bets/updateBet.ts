@@ -143,7 +143,7 @@ updateBetHandler.apiDescription = {
             properties: {
               id: { type: 'string' },
               owner_id: { type: 'string' },
-              game_id: { type: 'string' },
+              league_id: { type: 'string' },
               team_id: { type: 'string' },
               amount: { type: 'number' },
               created_at: { type: 'string' },

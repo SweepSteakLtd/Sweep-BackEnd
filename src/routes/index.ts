@@ -1,7 +1,7 @@
 import type { RequestHandler } from 'express';
 import {
   createBetHandler,
-  createGameHandler,
+  createLeagueHandler,
   createPlayerHandler,
   createPlayerProfileHandler,
   createTournamentHandler,
@@ -9,30 +9,31 @@ import {
   createUserHandler,
   deleteBetHandler,
   deleteCurrentUserHandler,
-  deleteGameAdminHandler,
-  deleteGameHandler,
+  deleteLeagueAdminHandler,
+  deleteLeagueHandler,
   deletePlayerByIdHandler,
   deletePlayerProfileHandler,
   deleteTournamentHandler,
   deleteTransactionHandler,
   deleteUserHandler,
-  getAllGamesAdminHandler,
-  getAllGamesHandler,
+  getAllLeaguesAdminHandler,
+  getAllLeaguesHandler,
   getAllPlayerProfilesAdminHandler,
+  getAllTeamsHandler,
   getAllTournamentsHandler,
   getAllTransactionsHandler,
   getAllUsersHandler,
   getBetsHandler,
   getCurrentUserHandler,
-  getGameByIdHandler,
+  getLeagueByIdHandler,
   getPlayerProfilesHandler,
   getPlayersByTournamentHandler,
   getTournamentsHandler,
   getTransactionsHandler,
   updateBetHandler,
   updateCurrentUserHandler,
-  updateGameAdminHandler,
   updateGameHandler,
+  updateLeagueAdminHandler,
   updatePlayerByIdHandler,
   updatePlayerProfileHandler,
   updateTournamentHandler,
@@ -119,22 +120,32 @@ export const routes: RouteDescription[] = [
     ],
   },
   {
-    apiName: 'games',
+    apiName: 'teams',
+    endpoints: [
+      {
+        method: 'get',
+        name: '/',
+        stack: [AuthenticateMiddleware, getAllTeamsHandler],
+      },
+    ],
+  },
+  {
+    apiName: 'leagues',
     endpoints: [
       {
         method: 'post',
         name: '/',
-        stack: [AuthenticateMiddleware, createGameHandler],
+        stack: [AuthenticateMiddleware, createLeagueHandler],
       },
       {
         method: 'get',
         name: '/',
-        stack: [AuthenticateMiddleware, getAllGamesHandler],
+        stack: [AuthenticateMiddleware, getAllLeaguesHandler],
       },
       {
         method: 'get',
         name: '/:id',
-        stack: [AuthenticateMiddleware, getGameByIdHandler],
+        stack: [AuthenticateMiddleware, getLeagueByIdHandler],
       },
       {
         method: 'put',
@@ -144,7 +155,7 @@ export const routes: RouteDescription[] = [
       {
         method: 'delete',
         name: '/:id',
-        stack: [AuthenticateMiddleware, deleteGameHandler],
+        stack: [AuthenticateMiddleware, deleteLeagueHandler],
       },
     ],
   },
@@ -196,21 +207,21 @@ export const routes: RouteDescription[] = [
   {
     apiName: 'admin',
     endpoints: [
-      // Games admin endpoints
+      // League admin endpoints
       {
         method: 'get',
-        name: '/games',
-        stack: [AuthenticateAdminMiddleware, getAllGamesAdminHandler],
+        name: '/leagues',
+        stack: [AuthenticateAdminMiddleware, getAllLeaguesAdminHandler],
       },
       {
         method: 'put',
-        name: '/games/:id',
-        stack: [AuthenticateAdminMiddleware, updateGameAdminHandler],
+        name: '/leagues/:id',
+        stack: [AuthenticateAdminMiddleware, updateLeagueAdminHandler],
       },
       {
         method: 'delete',
-        name: '/games/:id',
-        stack: [AuthenticateAdminMiddleware, deleteGameAdminHandler],
+        name: '/leagues/:id',
+        stack: [AuthenticateAdminMiddleware, deleteLeagueAdminHandler],
       },
 
       // Player profiles admin endpoints

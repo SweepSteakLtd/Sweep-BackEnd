@@ -1,46 +1,50 @@
 import { and, eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { Game, games } from '../../models';
-import { database } from '../../services';
+import { League, leagues } from '../../../models';
+import { database } from '../../../services';
 
 /**
- * Get all games (authenticated endpoint)
- * @returns Game[]
+ * Get all leagues (admin endpoint)
+ * @query owner_id - optional
+ * @query entry_fee - optional
+ * @query tournament_id - optional
+ * @query search_term - optional
+ * @returns League[]
  */
-export const getAllGamesHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const getAllLeaguesAdminHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const existingGame = database.select().from(games);
+    const existingLeague = database.select().from(leagues);
 
-    const allowedFilters = ['entry_fee', 'tournament_id'];
+    const allowedFilters = ['entry_fee', 'owner_id', 'tournament_id'];
     const filters = [];
 
     allowedFilters.forEach(filter => {
       const currentFilter = req.query[filter];
       if (currentFilter) {
-        filters.push(eq(games[filter], currentFilter));
+        filters.push(eq(leagues[filter], currentFilter));
       }
     });
 
-    let finalResult: Game[] | null = null;
+    let finalResult: League[] | null = null;
     if (filters.length > 0) {
-      finalResult = await existingGame
+      finalResult = await existingLeague
         .where(filters.length > 1 ? and(...filters) : filters[0])
         .execute();
     } else {
-      finalResult = await existingGame.execute();
+      finalResult = await existingLeague.execute();
     }
     if (finalResult.length !== 0 && req.query.search_term !== undefined) {
       finalResult = finalResult.filter(
-        game =>
-          game.name.toLowerCase().includes((req.query.search_term as string).toLowerCase()) ||
-          game.description.toLowerCase().includes((req.query.search_term as string).toLowerCase()),
+        league =>
+          league.name.toLowerCase().includes((req.query.search_term as string).toLowerCase()) ||
+          league.description.toLowerCase().includes((req.query.search_term as string).toLowerCase()),
       );
     }
 
-    // TODO: should we return finished games or only games in progress?
+    // TODO: should we return finished leagues or only leagues in progress?
     return res.status(200).send({ data: finalResult });
   } catch (error: any) {
-    console.log(`GET ALL GAMES ERROR: ${error.message} 🛑`);
+    console.log(`GET ALL Leagues ADMIN ERROR: ${error.message} 🛑`);
     return res.status(500).send({
       error: 'Internal Server Error',
       message: 'An unexpected error occurred',
@@ -48,7 +52,7 @@ export const getAllGamesHandler = async (req: Request, res: Response, next: Next
   }
 };
 
-getAllGamesHandler.apiDescription = {
+getAllLeaguesAdminHandler.apiDescription = {
   responses: {
     200: {
       description: '200 OK',
@@ -90,6 +94,15 @@ getAllGamesHandler.apiDescription = {
     },
   },
   parameters: [
+    {
+      name: 'owener_id',
+      in: 'query',
+      required: false,
+      schema: {
+        type: 'string',
+      },
+      description: 'Filter games by owner ID',
+    },
     {
       name: 'search_term',
       in: 'query',

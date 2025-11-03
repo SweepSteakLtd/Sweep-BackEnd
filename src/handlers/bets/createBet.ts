@@ -1,12 +1,12 @@
 import { createId } from '@paralleldrive/cuid2';
 import { eq, inArray } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { Bet, bets, Game, games, players, Team, teams, User } from '../../models';
+import { Bet, bets, League, leagues, players, Team, teams, User } from '../../models';
 import { database } from '../../services';
 
 /**
  * Create bet (authenticated endpoint)
- * @body game_id - string - required
+ * @body league_id - string - required
  * @body player_ids - array<string> - required
  * @body amount - number - required
  * @returns Bet
@@ -14,9 +14,9 @@ import { database } from '../../services';
 export const createBetHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = res.locals.user as User;
-    const { game_id, player_ids, amount } = req.body;
+    const { league_id, player_ids, amount } = req.body;
 
-    if (!game_id || !player_ids || amount === undefined) {
+    if (!league_id || !player_ids || amount === undefined) {
       console.log('DEBUG: Missing required fields in request body');
       return res.status(422).send({
         error: 'Invalid request body',
@@ -60,14 +60,14 @@ export const createBetHandler = async (req: Request, res: Response, next: NextFu
       });
     }
 
-    const existingGame: Game[] = await database
+    const existingGame: League[] = await database
       .select()
-      .from(games)
-      .where(eq(games.id, game_id))
+      .from(leagues)
+      .where(eq(leagues.id, league_id))
       .execute();
 
     if (existingGame.length === 0) {
-      console.log('DEBUG: Invalid game ID', game_id);
+      console.log('DEBUG: Invalid game ID', league_id);
       return res.status(422).send({
         error: 'Invalid game',
         message: `Game with does not exist`,
@@ -75,7 +75,7 @@ export const createBetHandler = async (req: Request, res: Response, next: NextFu
     }
 
     if (existingGame[0].end_time < new Date()) {
-      console.log('DEBUG: Cannot place bet on finished game', game_id);
+      console.log('DEBUG: Cannot place bet on finished game', league_id);
       return res.status(422).send({
         error: 'Game has ended',
         message: `Cannot place bet on a finished game`,
@@ -83,7 +83,7 @@ export const createBetHandler = async (req: Request, res: Response, next: NextFu
     }
 
     if (existingGame[0].start_time < new Date()) {
-      console.log('DEBUG: Cannot place bet on started game', game_id);
+      console.log('DEBUG: Cannot place bet on started game', league_id);
       return res.status(422).send({
         error: 'Game has started',
         message: `Cannot place bet on a game that has started`,
@@ -129,7 +129,7 @@ export const createBetHandler = async (req: Request, res: Response, next: NextFu
     const newBet: Bet = {
       id: createId(),
       owner_id: user.id,
-      game_id,
+      league_id,
       team_id: newTeamId,
       amount,
       created_at: new Date(),
@@ -158,7 +158,7 @@ createBetHandler.apiDescription = {
             properties: {
               id: { type: 'string' },
               owner_id: { type: 'string' },
-              game_id: { type: 'string' },
+              league_id: { type: 'string' },
               team_id: { type: 'string' },
               amount: { type: 'number' },
               created_at: { type: 'string' },
@@ -216,7 +216,7 @@ createBetHandler.apiDescription = {
     content: {
       'application/json': {
         example: {
-          game_id: '12345',
+          league_id: '12345',
           player_ids: ['1', '2', '3'],
           amount: 1000,
         },

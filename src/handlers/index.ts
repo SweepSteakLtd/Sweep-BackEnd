@@ -1,21 +1,24 @@
 // User handlers
 export * from './user/createUser';
+export * from './user/deleteCurrentUser';
 export * from './user/getCurrentUser';
 export * from './user/updateCurrentUser';
-export * from './user/deleteCurrentUser';
 
 // Game handlers
-export * from './games/createGame';
-export * from './games/deleteGame';
-export * from './games/getAllGames';
-export * from './games/getGameById';
-export * from './games/updateGame';
+export * from './leagues/createLeague';
+export * from './leagues/deleteLeague';
+export * from './leagues/getAllLeagues';
+export * from './leagues/getLeagueById';
+export * from './leagues/updateGame';
 
 // Bet handlers
 export * from './bets/createBet';
 export * from './bets/deleteBet';
 export * from './bets/getBets';
 export * from './bets/updateBet';
+
+// Team handlers
+export * from './teams/getAllTeams';
 
 // Player profile handlers
 export * from './player-profiles/getPlayerProfiles';
@@ -24,9 +27,9 @@ export * from './player-profiles/getPlayerProfiles';
 export * from './transactions/getTransactions';
 
 // Admin - Games
-export * from './admin/games/deleteGame';
-export * from './admin/games/getAllGames';
-export * from './admin/games/updateGame';
+export * from './admin/leagues/deleteLeague';
+export * from './admin/leagues/getAllLeagues';
+export * from './admin/leagues/updateLeague';
 
 // Admin - Player Profiles
 export * from './admin/player-profiles/createPlayerProfile';
@@ -56,7 +59,6 @@ export * from './admin/transactions/updateTransaction';
 export * from './admin/users/deleteUser';
 export * from './admin/users/getAllUsers';
 export * from './admin/users/updateUser';
-
 
 // Tournament handlers
 export * from './tournaments/getTournaments';

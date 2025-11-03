@@ -5,16 +5,16 @@ import { database } from '../../services';
 
 /**
  * Get bets (authenticated endpoint)
- * @query game_id - optional
+ * @query league_id - optional
  * @returns Bet[]
  */
 export const getBetsHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const gameId = req.query.game_id as string;
+    const leagueId = req.query.league_id as string;
     let existingBets = [];
     // TODO: would it make sense to fetch user values?
-    if (gameId) {
-      existingBets = await database.select().from(bets).where(eq(bets.game_id, gameId)).execute();
+    if (leagueId) {
+      existingBets = await database.select().from(bets).where(eq(bets.league_id, leagueId)).execute();
     } else {
       existingBets = await database.select().from(bets).execute();
     }
@@ -72,7 +72,7 @@ getBetsHandler.apiDescription = {
   },
   parameters: [
     {
-      name: 'game_id',
+      name: 'league_id',
       in: 'query',
       required: false,
       schema: {

@@ -2,7 +2,7 @@ jest.mock('../../services');
 
 import { NextFunction, Request, Response } from 'express';
 import { database } from '../../services';
-import { deleteGameHandler } from './deleteGame';
+import { deleteLeagueHandler } from './deleteLeague';
 
 const mockResponse = () => {
   const res: any = {};
@@ -41,7 +41,7 @@ test('deleteGameHandler - returns 422 when id missing', async () => {
   (res as any).locals.user = { id: 'u1' };
   const req = { params: {} } as unknown as Request;
 
-  await deleteGameHandler(req, res, mockNext);
+  await deleteLeagueHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(422);
   expect(res.send).toHaveBeenCalledWith({ error: 'Invalid request body', message: 'required properties missing' });
@@ -54,7 +54,7 @@ test('deleteGameHandler - returns 403 when game not found or not owned', async (
 
   mockSelectExecute([]);
 
-  await deleteGameHandler(req, res, mockNext);
+  await deleteLeagueHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(403);
   expect(res.send).toHaveBeenCalledWith({ error: 'Missing game', message: "Game doesn't exist" });
@@ -68,7 +68,7 @@ test('deleteGameHandler - deletes and returns 200 when game exists and owned', a
   mockSelectExecute([{ id: 'g1', owner_id: 'owner-1' }]);
   mockDeleteExecute(false);
 
-  await deleteGameHandler(req, res, mockNext);
+  await deleteLeagueHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(200);
   expect(res.send).toHaveBeenCalledWith({ data: {} });
@@ -82,7 +82,7 @@ test('deleteGameHandler - returns 500 on DB delete error', async () => {
   mockSelectExecute([{ id: 'g1', owner_id: 'owner-1' }]);
   mockDeleteExecute(true);
 
-  await deleteGameHandler(req, res, mockNext);
+  await deleteLeagueHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(500);
   expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ error: 'Internal Server Error' }));

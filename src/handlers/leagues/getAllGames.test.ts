@@ -2,7 +2,7 @@ jest.mock('../../services');
 
 import { NextFunction, Request, Response } from 'express';
 import { database } from '../../services';
-import { getAllGamesHandler } from './getAllGames';
+import { getAllLeaguesHandler } from './getAllLeagues';
 
 const mockResponse = () => {
   const res: any = {};
@@ -42,7 +42,7 @@ test('getAllGamesHandler - returns 200 with all games when no filters', async ()
   const games = [{ id: 'g1' }, { id: 'g2' }];
   mockSelectExecute(games);
 
-  await getAllGamesHandler(req, res, mockNext);
+  await getAllLeaguesHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(200);
   expect(res.send).toHaveBeenCalledWith({ data: games });
@@ -55,7 +55,7 @@ test('getAllGamesHandler - returns 200 with filtered games', async () => {
   const games = [{ id: 'g1', tournament_id: 't1' }];
   mockSelectExecute(games, true);
 
-  await getAllGamesHandler(req, res, mockNext);
+  await getAllLeaguesHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(200);
   expect(res.send).toHaveBeenCalledWith({ data: games });
@@ -67,7 +67,7 @@ test('getAllGamesHandler - returns 500 on DB error', async () => {
 
   mockSelectExecute(null, false, true);
 
-  await getAllGamesHandler(req, res, mockNext);
+  await getAllLeaguesHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(500);
   expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ error: 'Internal Server Error' }));

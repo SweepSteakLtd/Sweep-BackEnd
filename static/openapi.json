@@ -1,0 +1,1329 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Golf Betting API",
+    "description": "Complete API collection for Golf Betting Platform with authentication and comprehensive examples",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    }
+  ],
+  "paths": {
+    "/api/users": {
+      "post": {
+        "summary": "Create User",
+        "tags": [
+          "Public Endpoints",
+          "Users"
+        ],
+        "responses": {
+          "201": {
+            "description": "201 Created",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "user123",
+                  "first_name": "John",
+                  "last_name": "Doe",
+                  "email": "john.doe@example.com",
+                  "bio": "Golf enthusiast",
+                  "profile_picture": "https://example.com/avatar.jpg",
+                  "phone_number": "+1234567890",
+                  "game_stop_id": "gs123",
+                  "is_auth_verified": false,
+                  "is_identity_verified": false,
+                  "deposit_limit": 0,
+                  "betting_limit": 0,
+                  "payment_id": "",
+                  "current_balance": 0,
+                  "created_at": "2024-01-01T00:00:00Z",
+                  "updated_at": "2024-01-01T00:00:00Z"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 Validation Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Validation Error",
+                  "message": "Invalid request data",
+                  "details": [
+                    "Field 'email' is required",
+                    "Field 'id' is required"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Internal Server Error",
+                  "message": "An unexpected error occurred"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "id": "user123",
+                "first_name": "John",
+                "last_name": "Doe",
+                "email": "john.doe@example.com",
+                "bio": "Golf enthusiast",
+                "profile_picture": "https://example.com/avatar.jpg",
+                "phone_number": "+1234567890",
+                "game_stop_id": "gs123"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/users/me": {
+      "get": {
+        "summary": "Get Current User",
+        "tags": [
+          "Authenticated User Endpoints",
+          "Current User"
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "user123",
+                  "first_name": "John",
+                  "last_name": "Doe",
+                  "email": "john.doe@example.com",
+                  "bio": "Golf enthusiast",
+                  "profile_picture": "https://example.com/avatar.jpg",
+                  "phone_number": "+1234567890",
+                  "game_stop_id": "gs123",
+                  "is_auth_verified": true,
+                  "is_identity_verified": true,
+                  "deposit_limit": 1000,
+                  "betting_limit": 500,
+                  "payment_id": "pay123",
+                  "current_balance": 250,
+                  "created_at": "2024-01-01T00:00:00Z",
+                  "updated_at": "2024-01-01T00:00:00Z"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Forbidden",
+                  "message": "Insufficient permissions"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Internal Server Error",
+                  "message": "An unexpected error occurred"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Update Current User",
+        "tags": [
+          "Authenticated User Endpoints",
+          "Current User"
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "user123",
+                  "first_name": "John",
+                  "last_name": "Smith",
+                  "email": "john.doe@example.com",
+                  "bio": "Professional golfer",
+                  "profile_picture": "https://example.com/new-avatar.jpg",
+                  "phone_number": "+1234567890",
+                  "game_stop_id": "gs123",
+                  "is_auth_verified": true,
+                  "is_identity_verified": true,
+                  "deposit_limit": 2000,
+                  "betting_limit": 1000,
+                  "payment_id": "pay123",
+                  "current_balance": 250,
+                  "created_at": "2024-01-01T00:00:00Z",
+                  "updated_at": "2024-01-01T00:00:00Z"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Forbidden",
+                  "message": "Insufficient permissions"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 Validation Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Validation Error",
+                  "message": "Invalid request data",
+                  "details": [
+                    "Field 'deposit_limit' must be a number"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Internal Server Error",
+                  "message": "An unexpected error occurred"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "first_name": "John",
+                "last_name": "Smith",
+                "bio": "Professional golfer",
+                "profile_picture": "https://example.com/new-avatar.jpg",
+                "phone_number": "+1234567890",
+                "deposit_limit": 2000,
+                "betting_limit": 1000
+              }
+            }
+          },
+          "required": true
+        }
+      },
+      "delete": {
+        "summary": "Delete Current User",
+        "tags": [
+          "Authenticated User Endpoints",
+          "Current User"
+        ],
+        "responses": {
+          "204": {
+            "description": "204 No Content"
+          },
+          "403": {
+            "description": "403 Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Forbidden",
+                  "message": "Insufficient permissions"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Internal Server Error",
+                  "message": "An unexpected error occurred"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/api/transactions": {
+      "get": {
+        "summary": "Get Transactions",
+        "tags": [
+          "Authenticated User Endpoints",
+          "Transactions"
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "id": "txn123",
+                    "name": "Deposit",
+                    "value": "100.00",
+                    "type": "deposit",
+                    "charge_id": "ch_123",
+                    "user_id": "user123",
+                    "created_at": "2024-01-01T00:00:00Z",
+                    "updated_at": "2024-01-01T00:00:00Z"
+                  }
+                ]
+              }
+            }
+          },
+          "403": {
+            "description": "403 Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Forbidden",
+                  "message": "Insufficient permissions"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Internal Server Error",
+                  "message": "An unexpected error occurred"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "description": "Filter by transaction type",
+            "schema": {
+              "type": "string",
+              "example": "deposit"
+            }
+          }
+        ]
+      }
+    },
+    "/api/games": {
+      "get": {
+        "summary": "Get All Games",
+        "tags": [
+          "Authenticated User Endpoints",
+          "Games"
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "id": "game123",
+                    "name": "Masters Tournament Pool",
+                    "description": "Betting pool for the Masters",
+                    "entry_fee": 50,
+                    "contact_phone": "+1234567890",
+                    "contact_email": "contact@example.com",
+                    "contact_visibility": true,
+                    "join_code": "MASTERS2024",
+                    "max_participants": 100,
+                    "rewards": [
+                      {
+                        "position": 1,
+                        "percentage": 50,
+                        "type": "cash",
+                        "product_id": ""
+                      }
+                    ],
+                    "start_time": "2024-04-11T08:00:00Z",
+                    "end_time": "2024-04-14T20:00:00Z",
+                    "owner_id": "user123",
+                    "tournament_id": "tournament123",
+                    "user_id_list": [
+                      "user123",
+                      "user456"
+                    ],
+                    "created_at": "2024-01-01T00:00:00Z",
+                    "updated_at": "2024-01-01T00:00:00Z"
+                  }
+                ]
+              }
+            }
+          },
+          "403": {
+            "description": "403 Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Forbidden",
+                  "message": "Insufficient permissions"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Internal Server Error",
+                  "message": "An unexpected error occurred"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tournament_id",
+            "in": "query",
+            "required": false,
+            "description": "Filter by tournament ID",
+            "schema": {
+              "type": "string",
+              "example": "tournament123"
+            }
+          },
+          {
+            "name": "entry_fee",
+            "in": "query",
+            "required": false,
+            "description": "Filter by entry fee",
+            "schema": {
+              "type": "string",
+              "example": "50"
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create Game",
+        "tags": [
+          "Authenticated User Endpoints",
+          "Games"
+        ],
+        "responses": {
+          "201": {
+            "description": "201 Created",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "game123",
+                  "name": "Masters Tournament Pool",
+                  "description": "Betting pool for the Masters",
+                  "entry_fee": 50,
+                  "contact_phone": "+1234567890",
+                  "contact_email": "contact@example.com",
+                  "contact_visibility": true,
+                  "join_code": "MASTERS2024",
+                  "max_participants": 100,
+                  "rewards": [
+                    {
+                      "position": 1,
+                      "percentage": 50,
+                      "type": "cash",
+                      "product_id": ""
+                    }
+                  ],
+                  "start_time": "2024-04-11T08:00:00Z",
+                  "end_time": "2024-04-14T20:00:00Z",
+                  "owner_id": "user123",
+                  "tournament_id": "tournament123",
+                  "user_id_list": [
+                    "user123"
+                  ],
+                  "created_at": "2024-01-01T00:00:00Z",
+                  "updated_at": "2024-01-01T00:00:00Z"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Forbidden",
+                  "message": "Insufficient permissions"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 Validation Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Validation Error",
+                  "message": "Invalid request data",
+                  "details": [
+                    "Field 'tournament_id' is required",
+                    "Field 'entry_fee' is required"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Internal Server Error",
+                  "message": "An unexpected error occurred"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "name": "Masters Tournament Pool",
+                "description": "Betting pool for the Masters",
+                "entry_fee": 50,
+                "contact_phone": "+1234567890",
+                "contact_email": "contact@example.com",
+                "contact_visibility": true,
+                "join_code": "MASTERS2024",
+                "max_participants": 100,
+                "rewards": [
+                  {
+                    "position": 1,
+                    "percentage": 50,
+                    "type": "cash",
+                    "product_id": ""
+                  }
+                ],
+                "start_time": "2024-04-11T08:00:00Z",
+                "end_time": "2024-04-14T20:00:00Z",
+                "tournament_id": "tournament123"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/games/game123": {
+      "get": {
+        "summary": "Get Game by ID",
+        "tags": [
+          "Authenticated User Endpoints",
+          "Games"
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "content": {
+              "application/json": {
+                "example": {
+                  "game": {
+                    "id": "game123",
+                    "name": "Masters Tournament Pool",
+                    "description": "Betting pool for the Masters",
+                    "entry_fee": 50,
+                    "contact_phone": "+1234567890",
+                    "contact_email": "contact@example.com",
+                    "contact_visibility": true,
+                    "join_code": "MASTERS2024",
+                    "max_participants": 100,
+                    "rewards": [],
+                    "start_time": "2024-04-11T08:00:00Z",
+                    "end_time": "2024-04-14T20:00:00Z",
+                    "owner_id": "user123",
+                    "tournament_id": "tournament123",
+                    "user_id_list": [
+                      "user123",
+                      "user456"
+                    ],
+                    "created_at": "2024-01-01T00:00:00Z",
+                    "updated_at": "2024-01-01T00:00:00Z"
+                  },
+                  "tournament": {
+                    "id": "tournament123",
+                    "name": "Masters Tournament",
+                    "starts_at": "2024-04-11T08:00:00Z",
+                    "finishes_at": "2024-04-14T20:00:00Z",
+                    "description": "The Masters Tournament",
+                    "url": "https://masters.com",
+                    "cover_picture": "https://example.com/masters.jpg",
+                    "gallery": [],
+                    "holes": [],
+                    "ads": [],
+                    "proposed_entry_fee": 50,
+                    "maximum_cut_amount": 1000,
+                    "maximum_score_generator": 300,
+                    "players": [],
+                    "created_at": "2024-01-01T00:00:00Z",
+                    "updated_at": "2024-01-01T00:00:00Z"
+                  },
+                  "user_bets": [
+                    {
+                      "id": "bet123",
+                      "owner_id": "user123",
+                      "game_id": "game123",
+                      "player_id": "player123",
+                      "created_at": "2024-01-01T00:00:00Z",
+                      "updated_at": "2024-01-01T00:00:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Forbidden",
+                  "message": "Insufficient permissions"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Internal Server Error",
+                  "message": "An unexpected error occurred"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/api/bets": {
+      "get": {
+        "summary": "Get Bets",
+        "tags": [
+          "Authenticated User Endpoints",
+          "Bets"
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "id": "bet123",
+                    "owner_id": "user123",
+                    "game_id": "game123",
+                    "player_id": "player123",
+                    "created_at": "2024-01-01T00:00:00Z",
+                    "updated_at": "2024-01-01T00:00:00Z"
+                  }
+                ]
+              }
+            }
+          },
+          "403": {
+            "description": "403 Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Forbidden",
+                  "message": "Insufficient permissions"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Internal Server Error",
+                  "message": "An unexpected error occurred"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "game_id",
+            "in": "query",
+            "required": false,
+            "description": "Filter by game ID",
+            "schema": {
+              "type": "string",
+              "example": "game123"
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create Bet",
+        "tags": [
+          "Authenticated User Endpoints",
+          "Bets"
+        ],
+        "responses": {
+          "201": {
+            "description": "201 Created",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "bet123",
+                  "owner_id": "user123",
+                  "game_id": "game123",
+                  "player_id": "player123",
+                  "created_at": "2024-01-01T00:00:00Z",
+                  "updated_at": "2024-01-01T00:00:00Z"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Forbidden",
+                  "message": "Insufficient permissions"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 Validation Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Validation Error",
+                  "message": "Invalid request data",
+                  "details": [
+                    "Field 'player_id' is required"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Internal Server Error",
+                  "message": "An unexpected error occurred"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "game_id": "game123",
+                "player_id": "player123"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/player-profiles": {
+      "get": {
+        "summary": "Get Player Profiles",
+        "tags": [
+          "Authenticated User Endpoints",
+          "Player Profiles"
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "id": "profile123",
+                    "external_id": "ext123",
+                    "first_name": "Tiger",
+                    "last_name": "Woods",
+                    "country": "USA",
+                    "age": 48,
+                    "ranking": 1,
+                    "created_at": "2024-01-01T00:00:00Z",
+                    "updated_at": "2024-01-01T00:00:00Z"
+                  }
+                ]
+              }
+            }
+          },
+          "403": {
+            "description": "403 Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Forbidden",
+                  "message": "Insufficient permissions"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Internal Server Error",
+                  "message": "An unexpected error occurred"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "country",
+            "in": "query",
+            "required": false,
+            "description": "Filter by country",
+            "schema": {
+              "type": "string",
+              "example": "USA"
+            }
+          }
+        ]
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "summary": "Get All Users",
+        "tags": [
+          "Super Admin Endpoints",
+          "Users Management"
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "id": "user123",
+                    "first_name": "John",
+                    "last_name": "Doe",
+                    "email": "john.doe@example.com",
+                    "bio": "Golf enthusiast",
+                    "profile_picture": "https://example.com/avatar.jpg",
+                    "phone_number": "+1234567890",
+                    "game_stop_id": "gs123",
+                    "is_auth_verified": true,
+                    "is_identity_verified": true,
+                    "deposit_limit": 1000,
+                    "betting_limit": 500,
+                    "payment_id": "pay123",
+                    "current_balance": 250,
+                    "created_at": "2024-01-01T00:00:00Z",
+                    "updated_at": "2024-01-01T00:00:00Z"
+                  }
+                ]
+              }
+            }
+          },
+          "403": {
+            "description": "403 Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Forbidden",
+                  "message": "Insufficient permissions"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Internal Server Error",
+                  "message": "An unexpected error occurred"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/api/admin/users/user123": {
+      "put": {
+        "summary": "Update User",
+        "tags": [
+          "Super Admin Endpoints",
+          "Users Management"
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "user123",
+                  "first_name": "John",
+                  "last_name": "Smith",
+                  "email": "john.doe@example.com",
+                  "bio": "Professional golfer",
+                  "profile_picture": "https://example.com/new-avatar.jpg",
+                  "phone_number": "+1234567890",
+                  "game_stop_id": "gs123",
+                  "is_auth_verified": true,
+                  "is_identity_verified": true,
+                  "deposit_limit": 2000,
+                  "betting_limit": 1000,
+                  "payment_id": "pay123",
+                  "current_balance": 250,
+                  "created_at": "2024-01-01T00:00:00Z",
+                  "updated_at": "2024-01-01T00:00:00Z"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Forbidden",
+                  "message": "Insufficient permissions"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 Validation Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Validation Error",
+                  "message": "Invalid request data",
+                  "details": [
+                    "Field 'deposit_limit' must be a number"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Internal Server Error",
+                  "message": "An unexpected error occurred"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "first_name": "John",
+                "last_name": "Smith",
+                "bio": "Professional golfer",
+                "profile_picture": "https://example.com/new-avatar.jpg",
+                "phone_number": "+1234567890",
+                "deposit_limit": 2000,
+                "betting_limit": 1000
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/admin/tournaments": {
+      "get": {
+        "summary": "Get All Tournaments",
+        "tags": [
+          "Super Admin Endpoints",
+          "Tournaments Management"
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "id": "tournament123",
+                    "name": "Masters Tournament",
+                    "starts_at": "2024-04-11T08:00:00Z",
+                    "finishes_at": "2024-04-14T20:00:00Z",
+                    "description": "The Masters Tournament",
+                    "url": "https://masters.com",
+                    "cover_picture": "https://example.com/masters.jpg",
+                    "gallery": [
+                      "https://example.com/gallery1.jpg"
+                    ],
+                    "holes": [
+                      {
+                        "id": "hole1",
+                        "name": "Hole 1",
+                        "description": "First hole",
+                        "position": 1,
+                        "cover_image": "https://example.com/hole1.jpg",
+                        "par": 4,
+                        "distance": 445
+                      }
+                    ],
+                    "ads": [
+                      {
+                        "id": "ad1",
+                        "name": "Sponsor Ad",
+                        "description": "Advertisement",
+                        "position": 1,
+                        "website": "https://sponsor.com"
+                      }
+                    ],
+                    "proposed_entry_fee": 50,
+                    "maximum_cut_amount": 1000,
+                    "maximum_score_generator": 300,
+                    "players": [
+                      {
+                        "id": "player123",
+                        "level": 1
+                      }
+                    ],
+                    "created_at": "2024-01-01T00:00:00Z",
+                    "updated_at": "2024-01-01T00:00:00Z"
+                  }
+                ]
+              }
+            }
+          },
+          "403": {
+            "description": "403 Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Forbidden",
+                  "message": "Insufficient permissions"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Internal Server Error",
+                  "message": "An unexpected error occurred"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create Tournament",
+        "tags": [
+          "Super Admin Endpoints",
+          "Tournaments Management"
+        ],
+        "responses": {
+          "201": {
+            "description": "201 Created",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "tournament123",
+                  "name": "Masters Tournament",
+                  "starts_at": "2024-04-11T08:00:00Z",
+                  "finishes_at": "2024-04-14T20:00:00Z",
+                  "description": "The Masters Tournament",
+                  "url": "https://masters.com",
+                  "cover_picture": "https://example.com/masters.jpg",
+                  "gallery": [
+                    "https://example.com/gallery1.jpg"
+                  ],
+                  "holes": [
+                    {
+                      "id": "hole1",
+                      "name": "Hole 1",
+                      "description": "First hole",
+                      "position": 1,
+                      "cover_image": "https://example.com/hole1.jpg",
+                      "par": 4,
+                      "distance": 445
+                    }
+                  ],
+                  "ads": [
+                    {
+                      "id": "ad1",
+                      "name": "Sponsor Ad",
+                      "description": "Advertisement",
+                      "position": 1,
+                      "website": "https://sponsor.com"
+                    }
+                  ],
+                  "proposed_entry_fee": 50,
+                  "maximum_cut_amount": 1000,
+                  "maximum_score_generator": 300,
+                  "players": [
+                    {
+                      "id": "player123",
+                      "level": 1
+                    }
+                  ],
+                  "created_at": "2024-01-01T00:00:00Z",
+                  "updated_at": "2024-01-01T00:00:00Z"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 Forbidden",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Forbidden",
+                  "message": "Insufficient permissions"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 Validation Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Validation Error",
+                  "message": "Invalid request data",
+                  "details": [
+                    "Field 'starts_at' is required",
+                    "Field 'finishes_at' is required"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Internal Server Error",
+                  "message": "An unexpected error occurred"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "name": "Masters Tournament",
+                "starts_at": "2024-04-11T08:00:00Z",
+                "finishes_at": "2024-04-14T20:00:00Z",
+                "description": "The Masters Tournament",
+                "url": "https://masters.com",
+                "cover_picture": "https://example.com/masters.jpg",
+                "gallery": [
+                  "https://example.com/gallery1.jpg"
+                ],
+                "holes": [
+                  {
+                    "id": "hole1",
+                    "name": "Hole 1",
+                    "description": "First hole",
+                    "position": 1,
+                    "cover_image": "https://example.com/hole1.jpg",
+                    "par": 4,
+                    "distance": 445
+                  }
+                ],
+                "ads": [
+                  {
+                    "id": "ad1",
+                    "name": "Sponsor Ad",
+                    "description": "Advertisement",
+                    "position": 1,
+                    "website": "https://sponsor.com"
+                  }
+                ],
+                "proposed_entry_fee": 50,
+                "maximum_cut_amount": 1000,
+                "maximum_score_generator": 300,
+                "players": [
+                  {
+                    "id": "player123",
+                    "level": 1
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-auth-id"
+      }
+    },
+    "schemas": {}
+  },
+  "tags": [
+    {
+      "name": "Public Endpoints"
+    },
+    {
+      "name": "Users"
+    },
+    {
+      "name": "Authenticated User Endpoints"
+    },
+    {
+      "name": "Current User"
+    },
+    {
+      "name": "Transactions"
+    },
+    {
+      "name": "Games"
+    },
+    {
+      "name": "Bets"
+    },
+    {
+      "name": "Player Profiles"
+    },
+    {
+      "name": "Super Admin Endpoints"
+    },
+    {
+      "name": "Users Management"
+    },
+    {
+      "name": "Tournaments Management"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ]
+}
