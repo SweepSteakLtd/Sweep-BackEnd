@@ -9,7 +9,7 @@ import { database } from '../../services';
 export const getCurrentUserHandler = async (_: Request, res: Response, next: NextFunction) => {
   try {
     if (res.locals.user) {
-      const depositLimit = database
+      const depositLimit = await database
         .select(depositLimits)
         .from(depositLimits)
         .where(eq(depositLimits.owner_id, res.locals.user.id))
