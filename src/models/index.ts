@@ -170,6 +170,8 @@ export const bets = pgTable('Bet', {
 export const teams = pgTable('Team', {
   id: text('id').primaryKey().notNull(), // required
   owner_id: text('owner_id').notNull(), // required
+  name: text('name').default(null),
+  position: text('position').default(null),
   player_ids: text('player_ids').array().default([]), // required
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
@@ -178,7 +180,7 @@ export const teams = pgTable('Team', {
 export const transactions = pgTable('Transaction', {
   id: text('id').primaryKey().notNull(), // required
   name: text('name').notNull(), // required
-  value: text('value').notNull(), // required
+  value: integer('value').notNull(), // required
   type: text('type').notNull(), // required
   charge_id: text('charge_id').default(''), // optional, default ""
   user_id: text('user_id').notNull(), // required

@@ -16,6 +16,7 @@ import {
   deleteTournamentHandler,
   deleteTransactionHandler,
   deleteUserHandler,
+  getActivityHandler,
   getAllLeaguesAdminHandler,
   getAllLeaguesHandler,
   getAllPlayerProfilesAdminHandler,
@@ -201,6 +202,16 @@ export const routes: RouteDescription[] = [
         method: 'get',
         name: '/',
         stack: [AuthenticateMiddleware, getTransactionsHandler],
+      },
+    ],
+  },
+  {
+    apiName: 'activities',
+    endpoints: [
+      {
+        method: 'get',
+        name: '/',
+        stack: [AuthenticateMiddleware, getActivityHandler],
       },
     ],
   },

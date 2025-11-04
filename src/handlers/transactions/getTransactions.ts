@@ -3,6 +3,11 @@ import { NextFunction, Request, Response } from 'express';
 import { Transaction, transactions, User } from '../../models';
 import { database } from '../../services';
 
+export enum TransactionType {
+  withdrawal = 'withdrawal',
+  deposit = 'deposit',
+}
+
 /**
  * Get transactions (authenticated endpoint)
  * @query type - optional
@@ -28,7 +33,9 @@ export const getTransactionsHandler = async (req: Request, res: Response, next: 
         .execute();
     }
 
-    return res.status(200).send({ data: existingTransactions });
+    return res.status(200).send({
+      data: { deposited: 0, withdrawn: 0, netProfit: 0, transactions: existingTransactions },
+    });
   } catch (error: any) {
     console.log(`GET TRANSACTIONS ERROR: ${error.message} 🛑`);
     return res.status(500).send({

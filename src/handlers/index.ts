@@ -26,6 +26,9 @@ export * from './player-profiles/getPlayerProfiles';
 // Transaction handlers
 export * from './transactions/getTransactions';
 
+// Activity handlers
+export * from './activities/getActivities';
+
 // Admin - Games
 export * from './admin/leagues/deleteLeague';
 export * from './admin/leagues/getAllLeagues';

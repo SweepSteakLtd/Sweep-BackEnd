@@ -120,6 +120,8 @@ export const createBetHandler = async (req: Request, res: Response, next: NextFu
       id: newTeamId,
       owner_id: user.id,
       player_ids,
+      name: null, // TODO: what should this be?
+      position: null, // TODO: what should this be? 
       created_at: new Date(),
       updated_at: new Date(),
     };

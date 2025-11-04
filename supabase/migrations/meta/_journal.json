@@ -71,6 +71,20 @@
       "when": 1762286884477,
       "tag": "0009_windy_psylocke",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1762288790275,
+      "tag": "0010_red_invisible_woman",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1762291700985,
+      "tag": "0011_optimal_nuke",
+      "breakpoints": true
     }
   ]
 }
