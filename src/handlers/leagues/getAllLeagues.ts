@@ -12,7 +12,7 @@ export const getAllLeaguesHandler = async (req: Request, res: Response, next: Ne
     const existingleague = database.select().from(leagues);
 
     const allowedFilters = ['entry_fee', 'tournament_id'];
-    const filters = [];
+    const filters = [eq(leagues.owner_id, res.locals.user.id)];
 
     allowedFilters.forEach(filter => {
       const currentFilter = req.query[filter];
@@ -22,18 +22,18 @@ export const getAllLeaguesHandler = async (req: Request, res: Response, next: Ne
     });
 
     let finalResult: League[] | null = null;
-    if (filters.length > 0) {
-      finalResult = await existingleague
-        .where(filters.length > 1 ? and(...filters) : filters[0])
-        .execute();
-    } else {
-      finalResult = await existingleague.execute();
-    }
+
+    finalResult = await existingleague
+      .where(filters.length > 1 ? and(...filters) : filters[0])
+      .execute();
+
     if (finalResult.length !== 0 && req.query.search_term !== undefined) {
       finalResult = finalResult.filter(
         league =>
           league.name.toLowerCase().includes((req.query.search_term as string).toLowerCase()) ||
-          league.description.toLowerCase().includes((req.query.search_term as string).toLowerCase()),
+          league.description
+            .toLowerCase()
+            .includes((req.query.search_term as string).toLowerCase()),
       );
     }
 
