@@ -21,6 +21,16 @@ export interface RewardSplitData {
   product_id: string;
 }
 
+export interface Address {
+  street_name: string;
+  street_number: number;
+  unit?: string;
+  postal_code: string;
+  city: string;
+  state_province?: string; // region, optional in some countries
+  country_code: string;
+}
+
 // Main Tables
 export const users = pgTable('Users', {
   id: text('id').primaryKey().notNull(), // required
@@ -34,7 +44,7 @@ export const users = pgTable('Users', {
   game_stop_id: text('game_stop_id').default(''), // optional, default ""
   is_auth_verified: boolean('is_auth_verified').default(false), // optional, default false
   is_identity_verified: boolean('is_identity_verified').default(false), // optional, default false
-  deposit_limit: integer('deposit_limit').default(0), // optional, default 0
+  deposit_id: text('deposit_id').notNull(), // optional, default 0
   betting_limit: integer('betting_limit').default(0), // optional, default 0
   payment_id: text('payment_id').default(''), // optional, default ""
   current_balance: integer('current_balance').default(0), // optional, default 0
@@ -43,6 +53,17 @@ export const users = pgTable('Users', {
   kyc_instance_id: text('kyc_instance_id').default(''), // optional, default ""
   is_self_excluded: boolean('is_self_excluded').default(false),
   exclusion_ending: timestamp('exclusion_ending'),
+  address: jsonb('address').$type<Address | null>().default(null),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  updated_at: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const depositLimits = pgTable('depositLimits', {
+  id: text('id').primaryKey().notNull(), // required
+  owner_id: text('owner_id').default('').notNull(),
+  monthly: integer('monthly').default(null),
+  weekly: integer('weekly').default(null),
+  daily: integer('daily').default(null),
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -192,3 +213,5 @@ export type NewTeam = typeof teams.$inferInsert;
 
 export type TournamentHole = typeof tournamentHole.$inferSelect;
 export type TournamentAd = typeof tournamentAd.$inferSelect;
+
+export type Deposit = typeof depositLimits.$inferSelect;

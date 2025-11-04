@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { User, users } from '../../models';
+import { Deposit, depositLimits, User, users } from '../../models';
 import { database } from '../../services';
 
 /**
@@ -16,7 +16,7 @@ import { database } from '../../services';
  * @body game_stop_id - string - optional
  * @body is_auth_verified - boolean - optional
  * @body is_identity_verified - boolean - optional
- * @body deposit_limit - number - optional
+ * @body deposit_limit - object - optional
  * @body betting_limit - number - optional
  * @body payment_id - string - optional
  * @body current_balance - number - optional
@@ -90,6 +90,27 @@ export const updateCurrentUserHandler = async (
     }
     updatedUser['updated_at'] = new Date();
 
+    if (req.body.deposit_limit) {
+      const existingDeposit: Deposit[] = await database
+        .select(depositLimits)
+        .from(depositLimits)
+        .where(eq(depositLimits.owner_id, res.locals.user.id))
+        .execute();
+
+      const { weekly, daily, monthly } = req.body.deposit_limit;
+      await database
+        .update(depositLimits)
+        .set({
+          ...existingDeposit,
+          weekly,
+          daily,
+          monthly,
+          updated_at: updatedUser['updated_at'],
+        })
+        .where(eq(depositLimits.owner_id, res.locals.user.id))
+        .execute();
+    }
+
     await database
       .update(users)
       .set(updatedUser)
@@ -133,12 +154,31 @@ updateCurrentUserHandler.apiDescription = {
               game_stop_id: { type: 'string' },
               is_auth_verified: { type: 'boolean' },
               is_identity_verified: { type: 'boolean' },
-              deposit_limit: { type: 'number' },
+              deposit_limit: {
+                type: 'object',
+                properties: {
+                  daily: { type: 'number' },
+                  weekly: { type: 'number' },
+                  monthly: { type: 'number' },
+                },
+              },
               betting_limit: { type: 'number' },
               payment_id: { type: 'string' },
               current_balance: { type: 'number' },
               is_self_exclusion: { type: 'boolean' },
               exclusion_ending: { type: 'string' },
+              address: {
+                type: 'object',
+                properties: {
+                  street_name: { type: 'string' },
+                  street_number: { type: 'number' },
+                  unit: { type: 'string' },
+                  postal_code: { type: 'string' },
+                  city: { type: 'string' },
+                  state_province: { type: 'string' },
+                  country_code: { type: 'string' },
+                },
+              },
               created_at: { type: 'string' },
               updated_at: { type: 'string' },
             },

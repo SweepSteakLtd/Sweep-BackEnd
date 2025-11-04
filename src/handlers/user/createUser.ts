@@ -1,7 +1,7 @@
 import { createId } from '@paralleldrive/cuid2';
 import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { User, users } from '../../models';
+import { Deposit, depositLimits, User, users } from '../../models';
 import { database } from '../../services';
 /**
  * Create a new user
@@ -23,11 +23,7 @@ import { database } from '../../services';
  * @body exclusion_ending -string - optional
  * @returns User
  */
-export const createUserHandler = async (
-  req: Request<{}, {}, User>,
-  res: Response,
-  next: NextFunction,
-) => {
+export const createUserHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const isExisting = await database
       .select()
@@ -54,6 +50,20 @@ export const createUserHandler = async (
         });
       }
     }
+    const newUserId = createId();
+    const depositId = createId();
+
+    const depositLimit: Deposit = {
+      id: depositId,
+      owner_id: newUserId,
+      monthly: req.body.deposit_limit.monthly,
+      daily: req.body.deposit_limit.daily,
+      weekly: req.body.deposit_limit.weekly,
+      created_at: new Date(),
+      updated_at: new Date(),
+    };
+
+    await database.insert(depositLimits).values(depositLimit).execute();
 
     const userObject: User = {
       id: createId(),
@@ -67,7 +77,7 @@ export const createUserHandler = async (
       game_stop_id: req.body.game_stop_id || '',
       is_auth_verified: req.body.is_auth_verified || false,
       is_identity_verified: req.body.is_identity_verified || false,
-      deposit_limit: req.body.deposit_limit || 0,
+      deposit_id: depositId,
       betting_limit: req.body.betting_limit || 0,
       payment_id: req.body.payment_id || '',
       current_balance: req.body.current_balance || 0,
@@ -76,11 +86,15 @@ export const createUserHandler = async (
       kyc_instance_id: '',
       exclusion_ending: new Date(),
       is_self_excluded: false,
+      address: req.body.address,
       created_at: new Date(),
       updated_at: new Date(),
     };
 
-    await database.insert(users).values(userObject).execute();
+    await database
+      .insert(users)
+      .values({ ...userObject, deposit_limit: depositLimit })
+      .execute();
     console.log('[DEBUG] New user created with ID:', userObject.id);
     return res.status(201).send({ data: userObject });
   } catch (error: any) {
@@ -112,12 +126,31 @@ createUserHandler.apiDescription = {
               game_stop_id: { type: 'string' },
               is_auth_verified: { type: 'boolean' },
               is_identity_verified: { type: 'boolean' },
-              deposit_limit: { type: 'number' },
+              deposit_limit: {
+                type: 'object',
+                properties: {
+                  daily: { type: 'number' },
+                  weekly: { type: 'number' },
+                  monthly: { type: 'number' },
+                },
+              },
               betting_limit: { type: 'number' },
               payment_id: { type: 'string' },
               current_balance: { type: 'number' },
               is_self_exclusion: { type: 'boolean' },
               exclusion_ending: { type: 'string' },
+              address: {
+                type: 'object',
+                properties: {
+                  street_name: { type: 'string' },
+                  street_number: { type: 'number' },
+                  unit: { type: 'string' },
+                  postal_code: { type: 'string' },
+                  city: { type: 'string' },
+                  state_province: { type: 'string' },
+                  country_code: { type: 'string' },
+                },
+              },
               created_at: { type: 'string' },
               updated_at: { type: 'string' },
             },
@@ -180,7 +213,7 @@ createUserHandler.apiDescription = {
           bio: 'Golf enthusiast',
           profile_picture: 'https://example.com/avatar.jpg',
           phone_number: '+1234567890',
-          deposit_limit: 1200,
+          deposit_limit: { daily: null, weekly: null, monthly: null },
           betting_limit: 2400,
           is_self_exclusion: false,
         },
