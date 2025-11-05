@@ -20,7 +20,6 @@ import { database } from '../../services';
  * @body betting_limit - number - optional
  * @body payment_id - string - optional
  * @body current_balance - number - optional
- * @body is_self_exclusion - boolean - optional
  * @body exclusion_ending -string - optional
  * @returns User
  */
@@ -38,7 +37,6 @@ export const updateCurrentUserHandler = async (req: Request, res: Response, next
       'last_name',
       'phone_number',
       'nickname',
-      'is_self_exclusion',
       'exclusion_ending',
     ];
 
@@ -59,18 +57,8 @@ export const updateCurrentUserHandler = async (req: Request, res: Response, next
       }
     });
 
-    if (updatedUser['is_self_excluded'] && updatedUser['exclusion_ending'] === undefined) {
-      return res
-        .status(422)
-        .send({ error: 'Invalid request body', message: 'Exclusion requires end date' });
-    }
-
     try {
-      if (
-        updatedUser['is_self_excluded'] &&
-        updatedUser['exclusion_ending'] &&
-        updatedUser['exclusion_ending'] < new Date()
-      ) {
+      if (updatedUser['exclusion_ending'] && updatedUser['exclusion_ending'] < new Date()) {
         return res
           .status(422)
           .send({ error: 'Invalid request body', message: 'Exclusion date must be in future' });
@@ -81,6 +69,10 @@ export const updateCurrentUserHandler = async (req: Request, res: Response, next
         error: 'Invalid request',
         message: 'Failed to set exclusion date. Please double check data',
       });
+    }
+
+    if (updatedUser['exclusion_ending']) {
+      updatedUser['is_self_excluded'] = true;
     }
 
     if (!Object.keys(updatedUser).length) {
@@ -251,7 +243,6 @@ updateCurrentUserHandler.apiDescription = {
             monthly: 300,
           },
           betting_limit: 1000,
-          is_self_exclusion: false,
         },
       },
     },

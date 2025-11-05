@@ -23,15 +23,10 @@ import { database } from '../../../services';
  * @body is_admin - boolean - optional
  * @body kyc_completed - boolean - optional
  * @body kyc_instance_id - string - optional
- * @body is_self_exclusion - boolean - optional
  * @body exclusion_ending - string - optional
  * @returns User
  */
-export const updateUserHandler = async (
-  req: Request<Partial<User>>,
-  res: Response,
-  next: NextFunction,
-) => {
+export const updateUserHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.params.id;
     const propertiesAvailableForUpdate = [
@@ -51,7 +46,6 @@ export const updateUserHandler = async (
       'kyc_completed',
       'kyc_instance_id',
       'nickname',
-      'is_self_exclusion',
       'exclusion_ending',
     ];
 
@@ -69,15 +63,8 @@ export const updateUserHandler = async (
       }
     });
 
-    if (updatedUser['is_self_excluded'] && updatedUser['exclusion_ending'] === undefined) {
-      return res
-        .status(422)
-        .send({ error: 'Invalid request body', message: 'Exclusion requires end date' });
-    }
-
     try {
       if (
-        updatedUser['is_self_excluded'] &&
         updatedUser['exclusion_ending'] &&
         new Date(updatedUser['exclusion_ending']) < new Date()
       ) {
@@ -91,6 +78,10 @@ export const updateUserHandler = async (
         error: 'Invalid request',
         message: 'Failed to set exclusion date. Please double check data',
       });
+    }
+
+    if (updatedUser['exclusion_ending']) {
+      updatedUser['is_self_excluded'] = true;
     }
 
     if (!Object.keys(updatedUser).length) {
@@ -214,7 +205,11 @@ updateUserHandler.apiDescription = {
           bio: 'Professional golfer',
           profile_picture: 'https://example.com/new-avatar.jpg',
           phone_number: '+1234567890',
-          deposit_limit: 2000,
+          deposit_limit: {
+            daily: 100,
+            weekly: 200,
+            monthly: 300,
+          },
           is_admin: true,
           kyc_completed: false,
           kyc_instance_id: 'abc123',
