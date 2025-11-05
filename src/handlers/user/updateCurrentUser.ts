@@ -24,11 +24,7 @@ import { database } from '../../services';
  * @body exclusion_ending -string - optional
  * @returns User
  */
-export const updateCurrentUserHandler = async (
-  req: Request<Partial<User>>,
-  res: Response,
-  next: NextFunction,
-) => {
+export const updateCurrentUserHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const propertiesAvailableForUpdate = [
       'bio',
@@ -55,7 +51,11 @@ export const updateCurrentUserHandler = async (
 
     Object.entries(req.body).forEach(([key, value]) => {
       if (propertiesAvailableForUpdate.includes(key)) {
-        updatedUser[key] = value;
+        if (key === 'exclusion_ending') {
+          updatedUser[key] = new Date(value as string);
+        } else {
+          updatedUser[key] = value;
+        }
       }
     });
 
@@ -69,7 +69,7 @@ export const updateCurrentUserHandler = async (
       if (
         updatedUser['is_self_excluded'] &&
         updatedUser['exclusion_ending'] &&
-        new Date(updatedUser['exclusion_ending']) < new Date()
+        updatedUser['exclusion_ending'] < new Date()
       ) {
         return res
           .status(422)
@@ -245,7 +245,11 @@ updateCurrentUserHandler.apiDescription = {
           bio: 'Professional golfer',
           profile_picture: 'https://example.com/new-avatar.jpg',
           phone_number: '+1234567890',
-          deposit_limit: 2000,
+          deposit_limit: {
+            daily: 100,
+            weekly: 200,
+            monthly: 300,
+          },
           betting_limit: 1000,
           is_self_exclusion: false,
         },
