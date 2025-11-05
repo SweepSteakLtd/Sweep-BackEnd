@@ -175,7 +175,7 @@ export const mockTransactions: Transaction[] = [
   {
     id: 'txn_1',
     name: 'Entry Fee Payment',
-    value: '25.00',
+    value: 25.00,
     type: 'debit',
     charge_id: 'ch_abc123def456',
     user_id: 'user_1',
@@ -185,7 +185,7 @@ export const mockTransactions: Transaction[] = [
   {
     id: 'txn_2',
     name: 'Account Deposit',
-    value: '100.00',
+    value: 100.00,
     type: 'credit',
     charge_id: 'ch_def456ghi789',
     user_id: 'user_2',
@@ -195,7 +195,7 @@ export const mockTransactions: Transaction[] = [
   {
     id: 'txn_3',
     name: 'Winnings Payout',
-    value: '150.00',
+    value: 15000,
     type: 'credit',
     charge_id: 'ch_ghi789jkl012',
     user_id: 'user_1',
@@ -205,7 +205,7 @@ export const mockTransactions: Transaction[] = [
   {
     id: 'txn_4',
     name: 'Entry Fee Payment',
-    value: '10.00',
+    value: 1000,
     type: 'debit',
     charge_id: '',
     user_id: 'user_3',
@@ -215,7 +215,7 @@ export const mockTransactions: Transaction[] = [
   {
     id: 'txn_5',
     name: 'Refund Processing',
-    value: '25.00',
+    value: 2500,
     type: 'credit',
     charge_id: 'ch_jkl012mno345',
     user_id: 'user_2',
