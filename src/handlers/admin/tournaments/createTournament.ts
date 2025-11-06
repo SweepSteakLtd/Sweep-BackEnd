@@ -2,6 +2,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { NextFunction, Request, Response } from 'express';
 import { Tournament, tournaments } from '../../../models';
 import { database } from '../../../services';
+import { apiKeyAuth, dataWrapper, standardResponses, tournamentSchema } from '../../schemas';
 
 /**
  * Create tournament (admin endpoint)
@@ -95,104 +96,99 @@ export const createTournamentHandler = async (req: Request, res: Response, next:
   }
 };
 createTournamentHandler.apiDescription = {
+  summary: 'Create tournament (Admin)',
+  description:
+    'Admin endpoint to create a new golf tournament with schedule, fees, and player assignments.',
+  operationId: 'adminCreateTournament',
+  tags: ['admin', 'tournaments'],
   responses: {
     201: {
-      description: '201 Created',
+      description: 'Tournament created successfully',
       content: {
         'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              name: { type: 'string' },
-              description: { type: 'string' },
-              starts_at: { type: 'string' },
-              finishes_at: { type: 'string' },
-              proposed_entry_fee: { type: 'integer' },
-              maximum_cut_amount: { type: 'integer' },
-              maximum_score_generator: { type: 'integer' },
-              players: { type: 'array' },
-              url: { type: 'string' },
-              cover_picture: { type: 'string' },
-              gallery: { type: 'array' },
-              holes: { type: 'array' },
-              ads: { type: 'array' },
-              created_at: { type: 'string' },
-              updated_at: { type: 'string' },
-            },
-          },
+          schema: dataWrapper(tournamentSchema),
         },
       },
     },
-    403: {
-      description: '403 Forbidden',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-    422: {
-      description: '422 Validation Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-              details: { type: 'array' },
-            },
-          },
-        },
-      },
-    },
-    500: {
-      description: '500 Internal Server Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
+    422: standardResponses[422],
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
   requestBody: {
+    description: 'Tournament creation details.',
+    required: true,
     content: {
       'application/json': {
-        example: {
-          name: 'super cool tournament',
-          starts_at: new Date(),
-          finishes_at: new Date(),
-          proposed_entry_fee: 10,
-          maximum_cut_amount: 200,
-          maximum_score_generator: 10,
-          players: ['player id'],
-          description: 'this is description of super cool tournament',
-          url: 'https://www.google.com',
-          cover_picture: 'test image',
-          gallery: ['image src'],
-          holes: ['hole id'],
-          ads: ['ad id'],
+        schema: {
+          type: 'object',
+          required: [
+            'name',
+            'starts_at',
+            'finishes_at',
+            'proposed_entry_fee',
+            'maximum_cut_amount',
+            'maximum_score_generator',
+            'players',
+          ],
+          properties: {
+            name: { type: 'string', minLength: 1, maxLength: 200, description: 'Tournament name' },
+            starts_at: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Tournament start date/time',
+            },
+            finishes_at: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Tournament end date/time',
+            },
+            proposed_entry_fee: { type: 'integer', minimum: 0, description: 'Suggested entry fee' },
+            maximum_cut_amount: {
+              type: 'integer',
+              minimum: 0,
+              description: 'Maximum players making the cut',
+            },
+            maximum_score_generator: {
+              type: 'integer',
+              minimum: 0,
+              description: 'Maximum score generator value',
+            },
+            players: {
+              type: 'array',
+              items: { type: 'string' },
+              minItems: 1,
+              description: 'Array of player IDs',
+            },
+            description: { type: 'string', nullable: true, description: 'Tournament description' },
+            url: {
+              type: 'string',
+              format: 'uri',
+              nullable: true,
+              description: 'Tournament website URL',
+            },
+            cover_picture: { type: 'string', nullable: true, description: 'Cover image URL' },
+            gallery: {
+              type: 'array',
+              items: { type: 'string' },
+              nullable: true,
+              description: 'Gallery image URLs',
+            },
+            holes: {
+              type: 'array',
+              items: { type: 'string' },
+              nullable: true,
+              description: 'Hole IDs',
+            },
+            ads: {
+              type: 'array',
+              items: { type: 'string' },
+              nullable: true,
+              description: 'Advertisement IDs',
+            },
+          },
         },
       },
     },
-    required: true,
   },
-  security: [
-    {
-      ApiKeyAuth: [],
-    },
-  ],
+  security: [apiKeyAuth],
 };

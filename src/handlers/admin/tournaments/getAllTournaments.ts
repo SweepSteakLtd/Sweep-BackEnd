@@ -2,6 +2,7 @@ import { inArray } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { players, tournamentAd, tournamentHole, tournaments } from '../../../models';
 import { database } from '../../../services';
+import { apiKeyAuth, arrayDataWrapper, standardResponses, tournamentSchema } from '../../schemas';
 
 /**
  * Get all tournaments (admin endpoint)
@@ -85,63 +86,22 @@ export const getAllTournamentsHandler = async (req: Request, res: Response, next
   }
 };
 getAllTournamentsHandler.apiDescription = {
+  summary: 'Get all tournaments (Admin)',
+  description:
+    'Admin endpoint to retrieve all tournaments with optional status filtering. Returns tournaments with resolved holes, ads, and players.',
+  operationId: 'adminGetAllTournaments',
+  tags: ['admin', 'tournaments'],
   responses: {
-    responses: {
-      200: {
-        description: '200 OK',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'array',
-            },
-          },
+    200: {
+      description: 'Tournaments retrieved successfully',
+      content: {
+        'application/json': {
+          schema: arrayDataWrapper(tournamentSchema),
         },
       },
-      403: {
-        description: '403 Forbidden',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                error: { type: 'string' },
-                message: { type: 'string' },
-              },
-            },
-          },
-        },
-      },
-      500: {
-        description: '500 Internal Server Error',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                error: { type: 'string' },
-                message: { type: 'string' },
-              },
-            },
-          },
-        },
-      },
-      parameters: [
-        {
-          name: 'country',
-          in: 'query',
-          required: false,
-          schema: {
-            type: 'string',
-          },
-          description: 'Country of the player profiles to fetch',
-        },
-      ],
-      security: [
-        {
-          ApiKeyAuth: [],
-        },
-      ],
     },
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
   parameters: [
     {
@@ -150,13 +110,11 @@ getAllTournamentsHandler.apiDescription = {
       required: false,
       schema: {
         type: 'string',
+        enum: ['upcoming', 'ongoing', 'finished'],
       },
-      description: 'filter tournaments by status',
+      description: 'Filter tournaments by status (upcoming, ongoing, or finished)',
+      example: 'ongoing',
     },
   ],
-  security: [
-    {
-      ApiKeyAuth: [],
-    },
-  ],
+  security: [apiKeyAuth],
 };

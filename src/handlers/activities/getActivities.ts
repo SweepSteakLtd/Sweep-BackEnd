@@ -2,6 +2,7 @@ import { and, eq, gte } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { Transaction, transactions, User } from '../../models';
 import { database } from '../../services';
+import { apiKeyAuth, dataWrapper, standardResponses, transactionSummarySchema } from '../schemas';
 import { TransactionType } from '../transactions/getTransactions';
 
 /**
@@ -54,28 +55,89 @@ export const getActivityHandler = async (req: Request, res: Response, next: Next
 };
 
 getActivityHandler.apiDescription = {
+  summary: 'Get user activity summary',
+  description:
+    'Retrieves user activity summary with calculated statistics. Returns deposited amount, withdrawn amount, net profit, and transaction list. Optionally filter by timestamp.',
+  operationId: 'getActivities',
+  tags: ['activities'],
   responses: {
     200: {
-      description: '200 OK',
+      description: 'Activities retrieved successfully',
       content: {
         'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              deposited: { type: 'number' },
-              withdrawn: { type: 'number' },
-              net_profit: { type: 'number' },
-              transactions: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string' },
-                  name: { type: 'string' },
-                  value: { type: 'number' },
-                  type: { type: 'string' },
-                  charge_id: { type: 'string' },
-                  user_id: { type: 'string' },
-                  created_at: { type: 'string' },
-                  updated_at: { type: 'string' },
+          schema: dataWrapper(transactionSummarySchema),
+          examples: {
+            allActivities: {
+              summary: 'All user activities',
+              value: {
+                data: {
+                  deposited: 1500,
+                  withdrawn: 750,
+                  netProfit: -750,
+                  transactions: [
+                    {
+                      id: 'txn_abc123',
+                      name: 'Initial deposit',
+                      value: 1000,
+                      type: 'deposit',
+                      charge_id: 'ch_xyz789',
+                      user_id: 'user_abc123',
+                      created_at: '2025-01-15T10:00:00Z',
+                      updated_at: '2025-01-15T10:00:00Z',
+                    },
+                    {
+                      id: 'txn_def456',
+                      name: 'Second deposit',
+                      value: 500,
+                      type: 'deposit',
+                      charge_id: 'ch_def012',
+                      user_id: 'user_abc123',
+                      created_at: '2025-01-18T14:20:00Z',
+                      updated_at: '2025-01-18T14:20:00Z',
+                    },
+                    {
+                      id: 'txn_ghi789',
+                      name: 'Winnings withdrawal',
+                      value: 750,
+                      type: 'withdrawal',
+                      charge_id: 'ch_ghi345',
+                      user_id: 'user_abc123',
+                      created_at: '2025-01-20T16:00:00Z',
+                      updated_at: '2025-01-20T16:00:00Z',
+                    },
+                  ],
+                },
+              },
+            },
+            filteredByTimestamp: {
+              summary: 'Activities since specific timestamp',
+              value: {
+                data: {
+                  deposited: 500,
+                  withdrawn: 750,
+                  netProfit: 250,
+                  transactions: [
+                    {
+                      id: 'txn_def456',
+                      name: 'Second deposit',
+                      value: 500,
+                      type: 'deposit',
+                      charge_id: 'ch_def012',
+                      user_id: 'user_abc123',
+                      created_at: '2025-01-18T14:20:00Z',
+                      updated_at: '2025-01-18T14:20:00Z',
+                    },
+                    {
+                      id: 'txn_ghi789',
+                      name: 'Winnings withdrawal',
+                      value: 750,
+                      type: 'withdrawal',
+                      charge_id: 'ch_ghi345',
+                      user_id: 'user_abc123',
+                      created_at: '2025-01-20T16:00:00Z',
+                      updated_at: '2025-01-20T16:00:00Z',
+                    },
+                  ],
                 },
               },
             },
@@ -83,34 +145,8 @@ getActivityHandler.apiDescription = {
         },
       },
     },
-    403: {
-      description: '403 Forbidden',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-    500: {
-      description: '500 Internal Server Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
   parameters: [
     {
@@ -119,13 +155,12 @@ getActivityHandler.apiDescription = {
       required: false,
       schema: {
         type: 'string',
+        pattern: '^[0-9]+$',
       },
-      description: 'filter activities by timestamp',
+      description:
+        'Filter activities since this Unix timestamp in milliseconds. Only transactions created after this time will be included.',
+      example: '1705584000000',
     },
   ],
-  security: [
-    {
-      ApiKeyAuth: [],
-    },
-  ],
+  security: [apiKeyAuth],
 };

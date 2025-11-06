@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { PlayerProfile, playerProfiles, User } from '../../models';
 import { database } from '../../services';
+import { apiKeyAuth, arrayDataWrapper, playerProfileSchema, standardResponses } from '../schemas';
 
 /**
  * Get player profiles (authenticated endpoint)
@@ -35,59 +36,71 @@ export const getPlayerProfilesHandler = async (req: Request, res: Response, next
 };
 
 getPlayerProfilesHandler.apiDescription = {
+  summary: 'Get player profiles',
+  description:
+    'Retrieves player profiles with optional country filtering. Returns biographical information for professional golfers.',
+  operationId: 'getPlayerProfiles',
+  tags: ['player-profiles'],
   responses: {
     200: {
-      description: '200 OK',
+      description: 'Player profiles retrieved successfully',
       content: {
         'application/json': {
-          schema: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                id: { type: 'string' },
-                external_id: { type: 'string' },
-                first_name: { type: 'string' },
-                last_name: { type: 'string' },
-                country: { type: 'string' },
-                age: { type: 'integer' },
-                ranking: { type: 'integer' },
-                created_at: { type: 'string' },
-                updated_at: { type: 'string' },
+          schema: arrayDataWrapper(playerProfileSchema),
+          examples: {
+            allProfiles: {
+              summary: 'Multiple player profiles',
+              value: {
+                data: [
+                  {
+                    id: 'profile_abc123',
+                    external_id: 'ext_tiger_woods',
+                    first_name: 'Tiger',
+                    last_name: 'Woods',
+                    country: 'USA',
+                    age: 48,
+                    ranking: 1250,
+                    created_at: '2025-01-01T00:00:00Z',
+                    updated_at: '2025-01-20T10:00:00Z',
+                  },
+                  {
+                    id: 'profile_def456',
+                    external_id: 'ext_rory_mcilroy',
+                    first_name: 'Rory',
+                    last_name: 'McIlroy',
+                    country: 'NIR',
+                    age: 34,
+                    ranking: 3,
+                    created_at: '2025-01-01T00:00:00Z',
+                    updated_at: '2025-01-20T10:00:00Z',
+                  },
+                ],
+              },
+            },
+            filteredByCountry: {
+              summary: 'Players from specific country',
+              value: {
+                data: [
+                  {
+                    id: 'profile_abc123',
+                    external_id: 'ext_tiger_woods',
+                    first_name: 'Tiger',
+                    last_name: 'Woods',
+                    country: 'USA',
+                    age: 48,
+                    ranking: 1250,
+                    created_at: '2025-01-01T00:00:00Z',
+                    updated_at: '2025-01-20T10:00:00Z',
+                  },
+                ],
               },
             },
           },
         },
       },
     },
-    403: {
-      description: '403 Forbidden',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-    500: {
-      description: '500 Internal Server Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
   parameters: [
     {
@@ -96,13 +109,11 @@ getPlayerProfilesHandler.apiDescription = {
       required: false,
       schema: {
         type: 'string',
+        pattern: '^[A-Z]{2,3}$',
       },
-      description: 'filter player profiles by country',
+      description: 'Filter player profiles by ISO country code (2-3 letter code)',
+      example: 'USA',
     },
   ],
-  security: [
-    {
-      ApiKeyAuth: [],
-    },
-  ],
+  security: [apiKeyAuth],
 };

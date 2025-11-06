@@ -38,7 +38,4 @@ export const database = {
       }),
     }),
   }),
-
-
 } as any;
-

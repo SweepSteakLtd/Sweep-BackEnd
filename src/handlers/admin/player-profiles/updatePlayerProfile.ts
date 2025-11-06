@@ -2,6 +2,12 @@ import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { PlayerProfile, playerProfiles } from '../../../models';
 import { database } from '../../../services';
+import {
+  apiKeyAuth,
+  arrayDataWrapper,
+  playerProfileSchema,
+  standardResponses,
+} from '../../schemas';
 
 /**
  * Update player profile (admin endpoint)
@@ -76,90 +82,89 @@ export const updatePlayerProfileHandler = async (
   }
 };
 updatePlayerProfileHandler.apiDescription = {
+  summary: 'Update player profile (Admin)',
+  description: 'Admin endpoint to update player profile information by ID.',
+  operationId: 'adminUpdatePlayerProfile',
+  tags: ['admin', 'player-profiles'],
   responses: {
     200: {
-      description: '200 Created',
+      description: 'Player profile updated successfully',
       content: {
         'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              external_id: { type: 'string' },
-              first_name: { type: 'string' },
-              last_name: { type: 'string' },
-              country: { type: 'string' },
-              age: { type: 'number' },
-              ranking: { type: 'number' },
-              created_at: { type: 'string' },
-              updated_at: { type: 'string' },
+          schema: arrayDataWrapper(playerProfileSchema),
+          examples: {
+            success: {
+              summary: 'Updated player profile',
+              value: {
+                data: [
+                  {
+                    id: 'profile_abc123',
+                    external_id: 'ext_tiger_woods',
+                    first_name: 'Tiger',
+                    last_name: 'Woods',
+                    country: 'USA',
+                    age: 49,
+                    ranking: 1100,
+                    created_at: '2025-01-20T10:00:00Z',
+                    updated_at: '2025-01-22T14:30:00Z',
+                  },
+                ],
+              },
             },
           },
         },
       },
     },
-    403: {
-      description: '403 Forbidden',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-    422: {
-      description: '422 Validation Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-              details: { type: 'array' },
-            },
-          },
-        },
-      },
-    },
-    500: {
-      description: '500 Internal Server Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
+    422: standardResponses[422],
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
-  requestBody: {
-    content: {
-      'application/json': {
-        example: {
-          external_id: 'ext-12345',
-          first_name: 'John',
-          last_name: 'Doe',
-          country: 'USA',
-          age: 25,
-          ranking: 1500,
-        },
-      },
-    },
-    required: true,
-  },
-  security: [
+  parameters: [
     {
-      ApiKeyAuth: [],
+      name: 'id',
+      in: 'path',
+      required: true,
+      schema: {
+        type: 'string',
+        format: 'uuid',
+      },
+      description: 'Unique identifier of the player profile to update',
+      example: 'profile_abc123',
     },
   ],
+  requestBody: {
+    description: 'Player profile update details. At least one field must be provided.',
+    required: false,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          minProperties: 1,
+          properties: {
+            external_id: { type: 'string', nullable: true, description: 'External API identifier' },
+            first_name: { type: 'string', minLength: 1, maxLength: 100, description: 'First name' },
+            last_name: { type: 'string', minLength: 1, maxLength: 100, description: 'Last name' },
+            country: { type: 'string', pattern: '^[A-Z]{2,3}$', description: 'ISO country code' },
+            age: { type: 'integer', minimum: 16, maximum: 100, description: 'Age in years' },
+            ranking: { type: 'integer', minimum: 1, description: 'World ranking position' },
+          },
+        },
+        examples: {
+          updateRanking: {
+            summary: 'Update ranking',
+            value: {
+              ranking: 1100,
+            },
+          },
+          updateAge: {
+            summary: 'Update age',
+            value: {
+              age: 49,
+            },
+          },
+        },
+      },
+    },
+  },
+  security: [apiKeyAuth],
 };

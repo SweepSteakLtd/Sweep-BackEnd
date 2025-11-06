@@ -5,6 +5,7 @@ import openapi from '@wesleytodd/openapi';
 import BP from 'body-parser';
 import cors from 'cors';
 import express, { Express, Request, Response } from 'express';
+import { version } from '../package.json';
 import { config, env } from './config';
 import { routes } from './routes';
 
@@ -19,7 +20,7 @@ const options = {
     openapi: '3.0.0',
     info: {
       title: 'sweepstake API',
-      version: '1.0.0',
+      version: version,
       description: 'API documentation for the sweepstake application',
     },
   },
@@ -61,9 +62,20 @@ const applyRootConfiguration = (appObject: Express): Express => {
   );
 
   appObject.get(`/`, (req: Request, res: Response) => {
-    res.send(`API ROOT: ENV: ${env.CURRENT} + NodeJS: ${config.NODE_JS_VERSION}`);
+    res.send(
+      `API ROOT: ENV: ${env.CURRENT} + NodeJS: ${config.NODE_JS_VERSION} + API Version: ${version}`,
+    );
   });
   console.log(`ENV: ${env.CURRENT} PORT: 8080 ROUTE: / METHOD: GET`);
+
+  appObject.get(`/version`, (req: Request, res: Response) => {
+    res.json({
+      version: version,
+      environment: env.CURRENT,
+      nodeVersion: config.NODE_JS_VERSION,
+    });
+  });
+  console.log(`ENV: ${env.CURRENT} PORT: 8080 ROUTE: /version METHOD: GET`);
 
   return appObject;
 };
@@ -74,6 +86,7 @@ app.use('/swaggerui', oapi.swaggerui());
 console.log('SERVER APP GENERATED');
 app.listen(parseInt(process.env.PORT) || 8080, async () => {
   console.log(`APP LISTENING ON PORT ${process.env.PORT || 8080}, environment: ${env.CURRENT}`);
+  console.log(`API Version: ${version}`);
   console.log(`Running on Node.js version: ${config.NODE_JS_VERSION}`);
   console.log('All routes registered and server ready!');
 });

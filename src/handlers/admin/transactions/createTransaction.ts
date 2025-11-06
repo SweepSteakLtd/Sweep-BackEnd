@@ -2,6 +2,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { NextFunction, Request, Response } from 'express';
 import { Transaction, transactions } from '../../../models';
 import { database } from '../../../services';
+import { apiKeyAuth, dataWrapper, standardResponses, transactionSchema } from '../../schemas';
 
 /**
  * Create transaction (admin endpoint)
@@ -46,91 +47,49 @@ export const createTransactionHandler = async (req: Request, res: Response, next
   }
 };
 createTransactionHandler.apiDescription = {
+  summary: 'Create transaction (Admin)',
+  description: 'Admin endpoint to manually create a transaction record for a user.',
+  operationId: 'adminCreateTransaction',
+  tags: ['admin', 'transactions'],
   responses: {
     201: {
-      description: '201 Created',
+      description: 'Transaction created successfully',
       content: {
         'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              name: { type: 'string' },
-              value: { type: 'string' },
-              type: { type: 'string' },
-              charge_id: { type: 'string' },
-              user_id: { type: 'string' },
-              created_at: { type: 'string' },
-              updated_at: { type: 'string' },
-            },
-          },
+          schema: dataWrapper(transactionSchema),
         },
       },
     },
-    403: {
-      description: '403 Forbidden',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-    422: {
-      description: '422 Validation Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-              details: { type: 'array' },
-            },
-          },
-        },
-      },
-    },
-    500: {
-      description: '500 Internal Server Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
+    422: standardResponses[422],
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
   requestBody: {
+    description: 'Transaction creation details.',
+    required: true,
     content: {
       'application/json': {
-        example: {
-          id: 'transaction id',
-          name: 'test transactions',
-          value: 'test value',
-          type: 'debit',
-          charge_id: 'charge id',
-          user_id: 'user that did transaction',
-          created_at: new Date(),
-          updated_at: new Date(),
+        schema: {
+          type: 'object',
+          required: ['name', 'value', 'type', 'user_id'],
+          properties: {
+            name: { type: 'string', minLength: 1, description: 'Transaction name' },
+            value: { type: 'string', minLength: 1, description: 'Transaction value/amount' },
+            type: { type: 'string', enum: ['debit', 'credit'], description: 'Transaction type' },
+            charge_id: {
+              type: 'string',
+              nullable: true,
+              description: 'Payment processor charge ID',
+            },
+            user_id: {
+              type: 'string',
+              format: 'uuid',
+              description: 'User ID for this transaction',
+            },
+          },
         },
       },
     },
-    required: true,
   },
-  security: [
-    {
-      ApiKeyAuth: [],
-    },
-  ],
+  security: [apiKeyAuth],
 };

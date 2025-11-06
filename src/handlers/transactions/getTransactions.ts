@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { Transaction, transactions, User } from '../../models';
 import { database } from '../../services';
+import { apiKeyAuth, dataWrapper, standardResponses, transactionSummarySchema } from '../schemas';
 
 export enum TransactionType {
   withdrawal = 'withdrawal',
@@ -46,55 +47,78 @@ export const getTransactionsHandler = async (req: Request, res: Response, next: 
 };
 
 getTransactionsHandler.apiDescription = {
+  summary: 'Get user transactions',
+  description:
+    'Retrieves all transactions for the authenticated user with optional filtering by transaction type. Returns summary statistics (deposited, withdrawn, netProfit) along with transaction list.',
+  operationId: 'getTransactions',
+  tags: ['transactions'],
   responses: {
     200: {
-      description: '200 OK',
+      description: 'Transactions retrieved successfully',
       content: {
         'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              name: { type: 'string' },
-              value: { type: 'string' },
-              type: { type: 'string' },
-              charge_id: { type: 'string' },
-              user_id: { type: 'string' },
-              created_at: { type: 'string' },
-              updated_at: { type: 'string' },
+          schema: dataWrapper(transactionSummarySchema),
+          examples: {
+            allTransactions: {
+              summary: 'All user transactions',
+              value: {
+                data: {
+                  deposited: 500,
+                  withdrawn: 250,
+                  netProfit: -250,
+                  transactions: [
+                    {
+                      id: 'txn_abc123',
+                      name: 'Initial deposit',
+                      value: 500,
+                      type: 'deposit',
+                      charge_id: 'ch_xyz789',
+                      user_id: 'user_abc123',
+                      created_at: '2025-01-15T10:00:00Z',
+                      updated_at: '2025-01-15T10:00:00Z',
+                    },
+                    {
+                      id: 'txn_def456',
+                      name: 'Withdrawal request',
+                      value: 250,
+                      type: 'withdrawal',
+                      charge_id: 'ch_abc456',
+                      user_id: 'user_abc123',
+                      created_at: '2025-01-20T14:30:00Z',
+                      updated_at: '2025-01-20T14:30:00Z',
+                    },
+                  ],
+                },
+              },
+            },
+            filteredDeposits: {
+              summary: 'Only deposit transactions',
+              value: {
+                data: {
+                  deposited: 0,
+                  withdrawn: 0,
+                  netProfit: 0,
+                  transactions: [
+                    {
+                      id: 'txn_abc123',
+                      name: 'Initial deposit',
+                      value: 500,
+                      type: 'deposit',
+                      charge_id: 'ch_xyz789',
+                      user_id: 'user_abc123',
+                      created_at: '2025-01-15T10:00:00Z',
+                      updated_at: '2025-01-15T10:00:00Z',
+                    },
+                  ],
+                },
+              },
             },
           },
         },
       },
     },
-    403: {
-      description: '403 Forbidden',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-    500: {
-      description: '500 Internal Server Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
   parameters: [
     {
@@ -103,13 +127,11 @@ getTransactionsHandler.apiDescription = {
       required: false,
       schema: {
         type: 'string',
+        enum: ['deposit', 'withdrawal'],
       },
-      description: 'By transaction with passed type -> enum will be defined a bit later',
+      description: 'Filter transactions by type. If omitted, returns all transactions.',
+      example: 'deposit',
     },
   ],
-  security: [
-    {
-      ApiKeyAuth: [],
-    },
-  ],
+  security: [apiKeyAuth],
 };

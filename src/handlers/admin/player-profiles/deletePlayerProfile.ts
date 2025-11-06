@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { playerProfiles } from '../../../models';
 import { database } from '../../../services';
+import { apiKeyAuth, standardResponses } from '../../schemas';
 
 /**
  * Delete player profile (admin endpoint)
@@ -36,10 +37,18 @@ export const deletePlayerProfileHandler = async (
 };
 
 deletePlayerProfileHandler.apiDescription = {
+  summary: 'Delete player profile (Admin)',
+  description:
+    'Admin endpoint to permanently delete a player profile by ID. This operation cannot be undone.',
+  operationId: 'adminDeletePlayerProfile',
+  tags: ['admin', 'player-profiles'],
   responses: {
-    204: { description: '204 No Content' },
-    403: { description: '403 Forbidden' },
-    500: { description: '500 Internal Server Error' },
+    204: {
+      description: 'Player profile deleted successfully - No content returned',
+    },
+    422: standardResponses[422],
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
   parameters: [
     {
@@ -48,13 +57,11 @@ deletePlayerProfileHandler.apiDescription = {
       required: true,
       schema: {
         type: 'string',
+        format: 'uuid',
       },
-      description: 'ID of the playerProfile to delete',
+      description: 'Unique identifier of the player profile to delete',
+      example: 'profile_abc123',
     },
   ],
-  security: [
-    {
-      ApiKeyAuth: [],
-    },
-  ],
+  security: [apiKeyAuth],
 };

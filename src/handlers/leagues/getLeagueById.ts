@@ -2,6 +2,14 @@ import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { bets, leagues, tournaments } from '../../models';
 import { database } from '../../services';
+import {
+  apiKeyAuth,
+  betSchema,
+  dataWrapper,
+  leagueSchema,
+  standardResponses,
+  tournamentSchema,
+} from '../schemas';
 
 /**
  * Get league by ID (authenticated endpoint)
@@ -56,59 +64,93 @@ export const getLeagueByIdHandler = async (req: Request, res: Response, next: Ne
 };
 
 getLeagueByIdHandler.apiDescription = {
+  summary: 'Get league by ID',
+  description:
+    'Retrieves detailed information about a specific league, including its associated tournament and user bets.',
+  operationId: 'getLeagueById',
+  tags: ['leagues'],
   responses: {
     200: {
-      description: '200 OK',
+      description: 'League retrieved successfully',
       content: {
         'application/json': {
-          schema: {
+          schema: dataWrapper({
             type: 'object',
-          },
-        },
-      },
-    },
-    403: {
-      description: '403 Forbidden',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
+            required: ['league', 'tournament', 'user_bets'],
             properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
+              league: leagueSchema,
+              tournament: tournamentSchema,
+              user_bets: {
+                type: 'array',
+                items: betSchema,
+              },
+            },
+          }),
+          examples: {
+            success: {
+              summary: 'League with tournament and bets',
+              value: {
+                data: {
+                  league: {
+                    id: 'league_abc123',
+                    name: 'Masters Championship League',
+                    description: 'Compete for the top spot',
+                    entry_fee: 100,
+                    contact_phone: '+12345678901',
+                    contact_email: 'organizer@sweepstake.com',
+                    contact_visibility: true,
+                    join_code: null,
+                    max_participants: 50,
+                    rewards: [{ position: 1, percentage: 50, type: 'cash', product_id: '' }],
+                    start_time: '2025-04-10T12:00:00Z',
+                    end_time: '2025-04-14T18:00:00Z',
+                    type: 'public',
+                    user_id_list: [],
+                    tournament_id: 'tournament_masters2025',
+                    owner_id: 'user_xyz789',
+                    created_at: '2025-01-15T10:30:00Z',
+                    updated_at: '2025-01-15T10:30:00Z',
+                  },
+                  tournament: {
+                    id: 'tournament_masters2025',
+                    name: 'The Masters 2025',
+                    starts_at: '2025-04-10T12:00:00Z',
+                    finishes_at: '2025-04-14T18:00:00Z',
+                    description: 'Annual golf tournament',
+                    url: 'https://www.masters.com',
+                    cover_picture: null,
+                    gallery: [],
+                    holes: [],
+                    ads: [],
+                    proposed_entry_fee: 100,
+                    maximum_cut_amount: null,
+                    maximum_score_generator: null,
+                    players: [],
+                    created_at: '2025-01-01T00:00:00Z',
+                    updated_at: '2025-01-01T00:00:00Z',
+                  },
+                  user_bets: [
+                    {
+                      id: 'bet_xyz456',
+                      owner_id: 'user_abc789',
+                      league_id: 'league_abc123',
+                      team_id: 'team_def012',
+                      amount: 100,
+                      status: 'pending',
+                      created_at: '2025-01-16T09:00:00Z',
+                      updated_at: '2025-01-16T09:00:00Z',
+                    },
+                  ],
+                },
+              },
             },
           },
         },
       },
     },
-    422: {
-      description: '422 validation Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-    500: {
-      description: '500 Internal Server Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
+    422: standardResponses[422],
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
   parameters: [
     {
@@ -117,13 +159,11 @@ getLeagueByIdHandler.apiDescription = {
       required: true,
       schema: {
         type: 'string',
+        format: 'uuid',
       },
-      description: 'ID of the game to retrieve',
+      description: 'Unique identifier of the league to retrieve',
+      example: 'league_abc123',
     },
   ],
-  security: [
-    {
-      ApiKeyAuth: [],
-    },
-  ],
+  security: [apiKeyAuth],
 };

@@ -34,7 +34,10 @@ test('getGameByIdHandler - returns 422 when id missing', async () => {
   await getLeagueByIdHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(422);
-  expect(res.send).toHaveBeenCalledWith({ error: 'Invalid request body', message: 'required properties missing' });
+  expect(res.send).toHaveBeenCalledWith({
+    error: 'Invalid request body',
+    message: 'required properties missing',
+  });
 });
 
 test('getGameByIdHandler - returns 403 when game not found', async () => {
@@ -46,7 +49,10 @@ test('getGameByIdHandler - returns 403 when game not found', async () => {
   await getLeagueByIdHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(403);
-  expect(res.send).toHaveBeenCalledWith({ error: 'Missing game', message: "Game doesn't exist" });
+  expect(res.send).toHaveBeenCalledWith({
+    error: 'Missing league',
+    message: "league doesn't exist",
+  });
 });
 
 test('getGameByIdHandler - returns 200 with game, tournament and bets', async () => {
@@ -62,7 +68,9 @@ test('getGameByIdHandler - returns 200 with game, tournament and bets', async ()
   await getLeagueByIdHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(200);
-  expect(res.send).toHaveBeenCalledWith({ data: { game: existingGame[0], tournament: tournament[0], user_bets: bets } });
+  expect(res.send).toHaveBeenCalledWith({
+    data: { league: existingGame[0], tournament: tournament[0], user_bets: bets },
+  });
 });
 
 test('getGameByIdHandler - returns 500 on DB error', async () => {
@@ -84,5 +92,7 @@ test('getGameByIdHandler - returns 500 on DB error', async () => {
   await getLeagueByIdHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(500);
-  expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ error: 'Internal Server Error' }));
+  expect(res.send).toHaveBeenCalledWith(
+    expect.objectContaining({ error: 'Internal Server Error' }),
+  );
 });

@@ -1,0 +1,38 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Check if there are any commits to push
+if ! git rev-parse --verify HEAD >/dev/null 2>&1; then
+  echo "No commits yet, skipping version bump"
+  exit 0
+fi
+
+# Check if we're pushing to a remote
+remote="$1"
+url="$2"
+
+echo "📦 Auto-bumping version before push..."
+
+# Bump patch version (only updates package.json, no git operations)
+npm version patch --no-git-tag-version
+
+# Check if package.json was actually modified
+if git diff --name-only | grep -q "package.json"; then
+  echo "✓ Version bumped in package.json"
+
+  # Stage the version change
+  git add package.json
+
+  # Amend the last commit with the version change
+  git commit --amend --no-edit --no-verify
+
+  echo "✓ Version change added to commit"
+
+  # Get the new version
+  NEW_VERSION=$(node -p "require('./package.json').version")
+  echo "🚀 New version: $NEW_VERSION"
+else
+  echo "⚠ Version was already up to date"
+fi
+
+echo "✓ Pre-push hook completed"

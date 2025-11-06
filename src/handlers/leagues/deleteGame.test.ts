@@ -32,7 +32,9 @@ const mockDeleteExecute = (shouldThrow = false) => {
       }),
     }));
   } else {
-    jest.spyOn(database as any, 'delete').mockImplementation(() => ({ where: () => ({ execute: async () => ({}) }) }));
+    jest
+      .spyOn(database as any, 'delete')
+      .mockImplementation(() => ({ where: () => ({ execute: async () => ({}) }) }));
   }
 };
 
@@ -44,7 +46,10 @@ test('deleteGameHandler - returns 422 when id missing', async () => {
   await deleteLeagueHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(422);
-  expect(res.send).toHaveBeenCalledWith({ error: 'Invalid request body', message: 'required properties missing' });
+  expect(res.send).toHaveBeenCalledWith({
+    error: 'Invalid request body',
+    message: 'required properties missing',
+  });
 });
 
 test('deleteGameHandler - returns 403 when game not found or not owned', async () => {
@@ -57,7 +62,10 @@ test('deleteGameHandler - returns 403 when game not found or not owned', async (
   await deleteLeagueHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(403);
-  expect(res.send).toHaveBeenCalledWith({ error: 'Missing game', message: "Game doesn't exist" });
+  expect(res.send).toHaveBeenCalledWith({
+    error: 'Missing league',
+    message: "league doesn't exist",
+  });
 });
 
 test('deleteGameHandler - deletes and returns 200 when game exists and owned', async () => {
@@ -70,7 +78,7 @@ test('deleteGameHandler - deletes and returns 200 when game exists and owned', a
 
   await deleteLeagueHandler(req, res, mockNext);
 
-  expect(res.status).toHaveBeenCalledWith(200);
+  expect(res.status).toHaveBeenCalledWith(204);
   expect(res.send).toHaveBeenCalledWith({ data: {} });
 });
 
@@ -85,5 +93,7 @@ test('deleteGameHandler - returns 500 on DB delete error', async () => {
   await deleteLeagueHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(500);
-  expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ error: 'Internal Server Error' }));
+  expect(res.send).toHaveBeenCalledWith(
+    expect.objectContaining({ error: 'Internal Server Error' }),
+  );
 });

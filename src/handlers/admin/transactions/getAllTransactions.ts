@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { transactions } from '../../../models';
 import { database } from '../../../services';
+import { apiKeyAuth, arrayDataWrapper, standardResponses, transactionSchema } from '../../schemas';
 
 /**
  * Get all transactions (admin endpoint)
@@ -47,57 +48,23 @@ export const getAllTransactionsHandler = async (
 };
 
 getAllTransactionsHandler.apiDescription = {
+  summary: 'Get all transactions (Admin)',
+  description:
+    'Admin endpoint to retrieve all transactions with optional filtering by type or user.',
+  operationId: 'adminGetAllTransactions',
+  tags: ['admin', 'transactions'],
   responses: {
     200: {
-      description: '200 OK',
+      description: 'Transactions retrieved successfully',
       content: {
         'application/json': {
-          schema: {
-            type: 'array',
-            items: {
-              id: { type: 'string' },
-              name: { type: 'string' },
-              value: { type: 'string' },
-              type: { type: 'string' },
-              charge_id: { type: 'string' },
-              user_id: { type: 'string' },
-              created_at: { type: 'string' },
-              updated_at: { type: 'string' },
-            },
-          },
+          schema: arrayDataWrapper(transactionSchema),
         },
       },
     },
-    403: {
-      description: '403 Forbidden',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-    500: {
-      description: '500 Internal Server Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
-
   parameters: [
     {
       name: 'type',
@@ -105,8 +72,10 @@ getAllTransactionsHandler.apiDescription = {
       required: false,
       schema: {
         type: 'string',
+        enum: ['debit', 'credit'],
       },
-      description: 'filter transactions by type of payment used',
+      description: 'Filter transactions by type',
+      example: 'debit',
     },
     {
       name: 'user_id',
@@ -114,13 +83,11 @@ getAllTransactionsHandler.apiDescription = {
       required: false,
       schema: {
         type: 'string',
+        format: 'uuid',
       },
-      description: 'filter transactions by user id',
+      description: 'Filter transactions by user ID',
+      example: 'user_abc123',
     },
   ],
-  security: [
-    {
-      ApiKeyAuth: [],
-    },
-  ],
+  security: [apiKeyAuth],
 };

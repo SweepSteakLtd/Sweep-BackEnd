@@ -2,6 +2,7 @@ import { eq, inArray } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { Player, players, Tournament, tournaments } from '../../../models';
 import { database } from '../../../services';
+import { apiKeyAuth, arrayDataWrapper, playerSchema, standardResponses } from '../../schemas';
 
 /**
  * Get players by tournament (admin endpoint)
@@ -51,25 +52,71 @@ export const getPlayersByTournamentHandler = async (
 };
 
 getPlayersByTournamentHandler.apiDescription = {
+  summary: 'Get players by tournament (Admin)',
+  description:
+    'Admin endpoint to retrieve players filtered by tournament ID or all players if no tournament ID provided.',
+  operationId: 'adminGetPlayersByTournament',
+  tags: ['admin', 'players'],
   responses: {
-    200: { description: '200 OK' },
-    403: { description: '403 Forbidden' },
-    500: { description: '500 Internal Server Error' },
+    200: {
+      description: 'Players retrieved successfully',
+      content: {
+        'application/json': {
+          schema: arrayDataWrapper(playerSchema),
+          examples: {
+            tournamentPlayers: {
+              summary: 'Players from specific tournament',
+              value: {
+                data: [
+                  {
+                    id: 'player_abc123',
+                    external_id: 'ext_player_001',
+                    level: 4,
+                    current_score: -5,
+                    position: 12,
+                    attempts: { '1': 3, '2': 4, '3': 3 },
+                    missed_cut: false,
+                    odds: 15.5,
+                    profile_id: 'profile_tiger_woods',
+                    created_at: '2025-01-10T00:00:00Z',
+                    updated_at: '2025-01-20T10:00:00Z',
+                  },
+                  {
+                    id: 'player_def456',
+                    external_id: 'ext_player_002',
+                    level: 5,
+                    current_score: -8,
+                    position: 3,
+                    attempts: { '1': 2, '2': 3, '3': 4 },
+                    missed_cut: false,
+                    odds: 8.2,
+                    profile_id: 'profile_rory_mcilroy',
+                    created_at: '2025-01-10T00:00:00Z',
+                    updated_at: '2025-01-20T10:00:00Z',
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+    422: standardResponses[422],
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
   parameters: [
     {
       name: 'tournament_id',
-      in: 'param',
+      in: 'path',
       required: false,
       schema: {
         type: 'string',
+        format: 'uuid',
       },
-      description: 'Filter players by tournament ID',
+      description: 'Filter players by tournament ID. If not provided, returns all players.',
+      example: 'tournament_masters2025',
     },
   ],
-  security: [
-    {
-      ApiKeyAuth: [],
-    },
-  ],
+  security: [apiKeyAuth],
 };

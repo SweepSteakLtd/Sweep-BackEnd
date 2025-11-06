@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { database } from '../../services';
+import { apiKeyAuth, standardResponses } from '../schemas';
 
 /**
  * Delete bet (authenticated endpoint)
@@ -30,46 +31,17 @@ export const deleteBetHandler = async (req: Request, res: Response, next: NextFu
 };
 
 deleteBetHandler.apiDescription = {
+  summary: 'Delete a bet',
+  description: 'Deletes an existing bet. Returns 204 No Content on successful deletion.',
+  operationId: 'deleteBet',
+  tags: ['bets'],
   responses: {
     204: {
-      description: '204 deleted',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {},
-          },
-        },
-      },
+      description: 'Bet deleted successfully - No content returned',
     },
-    403: {
-      description: '403 Forbidden',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-    500: {
-      description: '500 Internal Server Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
+    422: standardResponses[422],
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
   parameters: [
     {
@@ -78,13 +50,11 @@ deleteBetHandler.apiDescription = {
       required: true,
       schema: {
         type: 'string',
+        format: 'uuid',
       },
-      description: 'ID of the bet to delete',
+      description: 'Unique identifier of the bet to delete',
+      example: 'bet_abc123',
     },
   ],
-  security: [
-    {
-      ApiKeyAuth: [],
-    },
-  ],
+  security: [apiKeyAuth],
 };

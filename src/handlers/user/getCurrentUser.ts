@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { depositLimits } from '../../models';
 import { database } from '../../services';
+import { apiKeyAuth, dataWrapper, standardResponses, userSchema } from '../schemas';
 /**
  * Get current user (authenticated endpoint)
  * @returns User
@@ -29,89 +30,79 @@ export const getCurrentUserHandler = async (_: Request, res: Response, next: Nex
 };
 
 getCurrentUserHandler.apiDescription = {
+  summary: 'Get current user',
+  description:
+    'Retrieves the profile of the currently authenticated user, including their deposit limits.',
+  operationId: 'getCurrentUser',
+  tags: ['users'],
   responses: {
     200: {
-      description: '200 OK',
+      description: 'User profile retrieved successfully',
       content: {
         'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              first_name: { type: 'string' },
-              last_name: { type: 'string' },
-              nickname: { type: 'string' },
-              email: { type: 'string' },
-              bio: { type: 'string' },
-              profile_picture: { type: 'string' },
-              phone_number: { type: 'string' },
-              game_stop_id: { type: 'string' },
-              is_auth_verified: { type: 'boolean' },
-              is_identity_verified: { type: 'boolean' },
-              deposit_limit: {
-                type: 'object',
-                properties: {
-                  daily: { type: 'number' },
-                  weekly: { type: 'number' },
-                  monthly: { type: 'number' },
+          schema: dataWrapper(userSchema),
+          examples: {
+            success: {
+              summary: 'Current user profile',
+              value: {
+                data: {
+                  id: 'user_abc123',
+                  first_name: 'John',
+                  last_name: 'Doe',
+                  nickname: 'Johnny',
+                  email: 'john.doe@example.com',
+                  bio: 'Golf enthusiast and sports bettor',
+                  profile_picture: 'https://example.com/avatar.jpg',
+                  phone_number: '+12345678901',
+                  game_stop_id: null,
+                  is_auth_verified: true,
+                  is_identity_verified: true,
+                  deposit_limit: {
+                    daily: 100,
+                    weekly: 500,
+                    monthly: 2000,
+                  },
+                  betting_limit: 1000,
+                  payment_id: 'pay_xyz789',
+                  current_balance: 250.5,
+                  is_self_excluded: false,
+                  is_admin: false,
+                  kyc_completed: true,
+                  kyc_instance_id: 'kyc_abc456',
+                  exclusion_ending: null,
+                  address: {
+                    street_name: 'Main St',
+                    street_number: 123,
+                    unit: 'Apt 4B',
+                    postal_code: '12345',
+                    city: 'New York',
+                    state_province: 'NY',
+                    country_code: 'US',
+                  },
+                  created_at: '2025-01-15T10:30:00Z',
+                  updated_at: '2025-01-20T14:15:00Z',
                 },
               },
-              betting_limit: { type: 'number' },
-              payment_id: { type: 'string' },
-              current_balance: { type: 'number' },
-              is_self_exclusion: { type: 'boolean' },
-              exclusion_ending: { type: 'string' },
-              created_at: { type: 'string' },
-              updated_at: { type: 'string' },
-              address: {
-                type: 'object',
-                properties: {
-                  street_name: { type: 'string' },
-                  street_number: { type: 'number' },
-                  unit: { type: 'string' },
-                  postal_code: { type: 'string' },
-                  city: { type: 'string' },
-                  state_province: { type: 'string' },
-                  country_code: { type: 'string' },
-                },
-              },
             },
           },
         },
       },
     },
-    403: {
-      description: '403 Forbidden',
+    401: {
+      description: 'Unauthorized - User not authenticated',
       content: {
         'application/json': {
           schema: {
             type: 'object',
             properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
+              message: { type: 'string', example: 'Failed getting the user' },
             },
           },
         },
       },
     },
-    500: {
-      description: '500 Internal Server Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
-  security: [
-    {
-      ApiKeyAuth: [],
-    },
-  ],
+  security: [apiKeyAuth],
 };

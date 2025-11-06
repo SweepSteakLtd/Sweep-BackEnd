@@ -2,6 +2,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { NextFunction, Request, Response } from 'express';
 import { Player, players } from '../../../models';
 import { database } from '../../../services';
+import { apiKeyAuth, dataWrapper, playerSchema, standardResponses } from '../../schemas';
 
 /**
  * Create player (admin endpoint)
@@ -55,94 +56,114 @@ export const createPlayerHandler = async (req: Request, res: Response, next: Nex
   }
 };
 createPlayerHandler.apiDescription = {
+  summary: 'Create player (Admin)',
+  description: 'Admin endpoint to create a new player with profile association.',
+  operationId: 'adminCreatePlayer',
+  tags: ['admin', 'players'],
   responses: {
     201: {
-      description: '201 Created',
+      description: 'Player created successfully',
       content: {
         'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              external_id: { type: 'string' },
-              level: { type: 'integer' },
-              current_score: { type: 'integer' },
-              position: { type: 'integer' },
-              attempts: { type: 'array' },
-              missed_cut: { type: 'boolean' },
-              odds: { type: 'integer' },
-              profile_id: { type: 'string' },
-              created_at: { type: 'string' },
-              updated_at: { type: 'string' },
+          schema: dataWrapper(playerSchema),
+          examples: {
+            success: {
+              summary: 'Created player',
+              value: {
+                data: {
+                  id: 'player_abc123',
+                  external_id: 'ext_player_001',
+                  level: 4,
+                  current_score: 0,
+                  position: null,
+                  attempts: {},
+                  missed_cut: false,
+                  odds: 15.5,
+                  profile_id: 'profile_tiger_woods',
+                  created_at: '2025-01-20T10:00:00Z',
+                  updated_at: '2025-01-20T10:00:00Z',
+                },
+              },
             },
           },
         },
       },
     },
-    403: {
-      description: '403 Forbidden',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-    422: {
-      description: '422 Validation Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-              details: { type: 'array' },
-            },
-          },
-        },
-      },
-    },
-    500: {
-      description: '500 Internal Server Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
+    422: standardResponses[422],
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
   requestBody: {
+    description: 'Player creation details. All fields except optional ones are required.',
+    required: true,
     content: {
       'application/json': {
-        example: {
-          external_id: 'www.google.com',
-          level: 1,
-          current_score: 5,
-          position: 1,
-          attempts: [],
-          missed_cut: true,
-          odds: 0.2,
-          profile_id: 'profile id',
+        schema: {
+          type: 'object',
+          required: ['external_id', 'level', 'profile_id'],
+          properties: {
+            external_id: {
+              type: 'string',
+              minLength: 1,
+              description: 'External API identifier for this player',
+            },
+            level: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 5,
+              description: 'Player skill level (1-5)',
+            },
+            current_score: {
+              type: 'integer',
+              nullable: true,
+              description: 'Current tournament score',
+            },
+            position: {
+              type: 'integer',
+              nullable: true,
+              minimum: 1,
+              description: 'Current leaderboard position',
+            },
+            attempts: {
+              type: 'object',
+              nullable: true,
+              description: 'Hole-by-hole attempt counts',
+            },
+            missed_cut: {
+              type: 'boolean',
+              default: false,
+              description: 'Whether player missed the cut',
+            },
+            odds: {
+              type: 'number',
+              nullable: true,
+              minimum: 0,
+              description: 'Betting odds for this player',
+            },
+            profile_id: {
+              type: 'string',
+              format: 'uuid',
+              description: 'Reference to player profile',
+            },
+          },
+        },
+        examples: {
+          newPlayer: {
+            summary: 'Create new player for tournament',
+            value: {
+              external_id: 'ext_player_001',
+              level: 4,
+              current_score: 0,
+              position: null,
+              attempts: {},
+              missed_cut: false,
+              odds: 15.5,
+              profile_id: 'profile_tiger_woods',
+            },
+          },
         },
       },
     },
-    required: true,
   },
-  security: [
-    {
-      ApiKeyAuth: [],
-    },
-  ],
+  security: [apiKeyAuth],
 };

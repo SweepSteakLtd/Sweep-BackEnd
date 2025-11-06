@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { Tournament, tournaments } from '../../../models';
 import { database } from '../../../services';
+import { dataWrapper, standardResponses, tournamentSchema } from '../../schemas';
 
 /**
  * Update tournament (admin endpoint)
@@ -86,100 +87,49 @@ export const updateTournamentHandler = async (req: Request, res: Response, next:
 };
 
 updateTournamentHandler.apiDescription = {
+  summary: 'Update tournament (Admin)',
+  description: 'Admin endpoint to update tournament information by ID.',
+  operationId: 'adminUpdateTournament',
+  tags: ['admin', 'tournaments'],
   responses: {
-    201: {
-      description: '201 Created',
+    200: {
+      description: 'Tournament updated successfully',
       content: {
         'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              name: { type: 'string' },
-              description: { type: 'string' },
-              starts_at: { type: 'string' },
-              finishes_at: { type: 'string' },
-              proposed_entry_fee: { type: 'integer' },
-              maximum_cut_amount: { type: 'integer' },
-              maximum_score_generator: { type: 'integer' },
-              players: { type: 'array' },
-              url: { type: 'string' },
-              cover_picture: { type: 'string' },
-              gallery: { type: 'array' },
-              holes: { type: 'array' },
-              ads: { type: 'array' },
-              created_at: { type: 'string' },
-              updated_at: { type: 'string' },
-            },
-          },
+          schema: dataWrapper(tournamentSchema),
         },
       },
     },
-    403: {
-      description: '403 Forbidden',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-    422: {
-      description: '422 Validation Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-              details: { type: 'array' },
-            },
-          },
-        },
-      },
-    },
-    500: {
-      description: '500 Internal Server Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
+    422: standardResponses[422],
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
   requestBody: {
+    description: 'Tournament update details. At least one field must be provided.',
+    required: false,
     content: {
       'application/json': {
-        example: {
-          name: 'super cool tournament',
-          starts_at: new Date(),
-          finishes_at: new Date(),
-          proposed_entry_fee: 10,
-          maximum_cut_amount: 200,
-          maximum_score_generator: 10,
-          players: ['player id'],
-          description: 'this is description of super cool tournament',
-          url: 'https://www.google.com',
-          cover_picture: 'test image',
-          gallery: ['image src'],
-          holes: ['hole id'],
-          ads: ['ad id'],
+        schema: {
+          type: 'object',
+          minProperties: 1,
+          properties: {
+            name: { type: 'string', minLength: 1, maxLength: 200 },
+            starts_at: { type: 'string', format: 'date-time' },
+            finishes_at: { type: 'string', format: 'date-time' },
+            proposed_entry_fee: { type: 'integer', minimum: 0 },
+            maximum_cut_amount: { type: 'integer', minimum: 0 },
+            maximum_score_generator: { type: 'integer', minimum: 0 },
+            players: { type: 'array', items: { type: 'string' } },
+            description: { type: 'string', nullable: true },
+            url: { type: 'string', format: 'uri', nullable: true },
+            cover_picture: { type: 'string', nullable: true },
+            gallery: { type: 'array', items: { type: 'string' }, nullable: true },
+            holes: { type: 'array', items: { type: 'string' }, nullable: true },
+            ads: { type: 'array', items: { type: 'string' }, nullable: true },
+          },
         },
       },
     },
-    required: true,
   },
   parameters: [
     {

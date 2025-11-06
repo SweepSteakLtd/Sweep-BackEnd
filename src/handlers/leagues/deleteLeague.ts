@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { leagues } from '../../models';
 import { database } from '../../services';
+import { apiKeyAuth, standardResponses } from '../schemas';
 
 /**
  * Delete league (authenticated endpoint)
@@ -45,11 +46,18 @@ export const deleteLeagueHandler = async (req: Request, res: Response, next: Nex
 };
 
 deleteLeagueHandler.apiDescription = {
+  summary: 'Delete a league',
+  description:
+    'Deletes a league owned by the authenticated user. Only the league owner can delete their league.',
+  operationId: 'deleteLeague',
+  tags: ['leagues'],
   responses: {
-    204: { description: '204 No Content' },
-    403: { description: '403 Forbidden' },
-    422: { description: '422 validation Error' },
-    500: { description: '500 Internal Server Error' },
+    204: {
+      description: 'League deleted successfully - No content returned',
+    },
+    422: standardResponses[422],
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
   parameters: [
     {
@@ -58,13 +66,11 @@ deleteLeagueHandler.apiDescription = {
       required: true,
       schema: {
         type: 'string',
+        format: 'uuid',
       },
-      description: 'ID of the league to delete',
+      description: 'Unique identifier of the league to delete',
+      example: 'league_abc123',
     },
   ],
-  security: [
-    {
-      ApiKeyAuth: [],
-    },
-  ],
+  security: [apiKeyAuth],
 };

@@ -9,7 +9,7 @@ export * from './leagues/createLeague';
 export * from './leagues/deleteLeague';
 export * from './leagues/getAllLeagues';
 export * from './leagues/getLeagueById';
-export * from './leagues/updateGame';
+export * from './leagues/updateLeague';
 
 // Bet handlers
 export * from './bets/createBet';
@@ -44,7 +44,6 @@ export * from './admin/player-profiles/updatePlayerProfile';
 export * from './admin/players/createPlayer';
 export * from './admin/players/deletePlayerById';
 export * from './admin/players/getAllPlayers';
-export * from './admin/players/updatePlayerById';
 
 // Admin - Tournaments
 export * from './admin/tournaments/createTournament';

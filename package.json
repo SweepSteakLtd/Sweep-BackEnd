@@ -18,7 +18,13 @@
     "build:prod": "cross-env APPLIED_ENV=production tsc",
     "start": "tsc && node build/index.js",
     "test": "yarn jest",
-    "ts-check": "yarn tsc --noEmit"
+    "ts-check": "yarn tsc --noEmit",
+    "format": "prettier --write \"src/**/*.{ts,js,json}\" \"*.{ts,js,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,js,json}\" \"*.{ts,js,json}\"",
+    "version:patch": "npm version patch",
+    "version:minor": "npm version minor",
+    "version:major": "npm version major",
+    "prepare": "husky"
   },
   "author": "koppany kondricz",
   "license": "ISC",
@@ -53,6 +59,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.3",
     "glob": "^10.3.10",
+    "husky": "^9.1.7",
     "jest": "^30.2.0",
     "nodemon": "^3.1.10",
     "prettier": "^3.6.2",

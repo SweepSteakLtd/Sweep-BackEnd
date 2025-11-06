@@ -175,7 +175,7 @@ export const mockTransactions: Transaction[] = [
   {
     id: 'txn_1',
     name: 'Entry Fee Payment',
-    value: 25.00,
+    value: 25.0,
     type: 'debit',
     charge_id: 'ch_abc123def456',
     user_id: 'user_1',
@@ -185,7 +185,7 @@ export const mockTransactions: Transaction[] = [
   {
     id: 'txn_2',
     name: 'Account Deposit',
-    value: 100.00,
+    value: 100.0,
     type: 'credit',
     charge_id: 'ch_def456ghi789',
     user_id: 'user_2',

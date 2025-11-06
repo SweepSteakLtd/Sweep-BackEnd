@@ -160,8 +160,8 @@
           ]
         }
       ]
-    },    {
-
+    },
+    {
       "name": "Authenticated User Endpoints",
       "auth": {
         "type": "apikey",
@@ -526,8 +526,8 @@
               ]
             }
           ]
-        },        {
-
+        },
+        {
           "name": "Transactions",
           "item": [
             {
@@ -996,8 +996,8 @@
               ]
             }
           ]
-        },        
-{
+        },
+        {
           "name": "Bets",
           "item": [
             {
@@ -1377,8 +1377,8 @@
           ]
         }
       ]
-    },    {
-
+    },
+    {
       "name": "Super Admin Endpoints",
       "auth": {
         "type": "apikey",

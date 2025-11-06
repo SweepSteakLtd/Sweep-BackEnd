@@ -33,9 +33,8 @@ import {
   getTransactionsHandler,
   updateBetHandler,
   updateCurrentUserHandler,
-  updateGameHandler,
   updateLeagueAdminHandler,
-  updatePlayerByIdHandler,
+  updateLeagueHandler,
   updatePlayerProfileHandler,
   updateTournamentHandler,
   updateTransactionHandler,
@@ -151,7 +150,7 @@ export const routes: RouteDescription[] = [
       {
         method: 'put',
         name: '/:id',
-        stack: [AuthenticateMiddleware, updateGameHandler],
+        stack: [AuthenticateMiddleware, updateLeagueHandler],
       },
       {
         method: 'delete',
@@ -268,11 +267,11 @@ export const routes: RouteDescription[] = [
         name: '/players/tournament/:tournamentId',
         stack: [AuthenticateAdminMiddleware, getPlayersByTournamentHandler],
       },
-      {
-        method: 'put',
-        name: '/players/:id',
-        stack: [AuthenticateAdminMiddleware, updatePlayerByIdHandler],
-      },
+      // {
+      //   method: 'put',
+      //   name: '/players/:id',
+      //   stack: [AuthenticateAdminMiddleware, updatePlayerByIdHandler],
+      // },
       {
         method: 'delete',
         name: '/players/:id',

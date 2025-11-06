@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { tournaments } from '../../../models';
 import { database } from '../../../services';
+import { apiKeyAuth, standardResponses } from '../../schemas';
 
 /**
  * Delete tournament (admin endpoint)
@@ -44,25 +45,31 @@ export const deleteTournamentHandler = async (req: Request, res: Response, next:
 };
 
 deleteTournamentHandler.apiDescription = {
+  summary: 'Delete tournament (Admin)',
+  description:
+    'Admin endpoint to permanently delete a tournament by ID. This operation cannot be undone.',
+  operationId: 'adminDeleteTournament',
+  tags: ['admin', 'tournaments'],
   responses: {
-    204: { description: '204 No Content' },
-    403: { description: '403 Forbidden' },
-    500: { description: '500 Internal Server Error' },
+    204: {
+      description: 'Tournament deleted successfully - No content returned',
+    },
+    422: standardResponses[422],
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
   parameters: [
     {
       name: 'id',
-      in: 'param',
+      in: 'path',
       required: true,
       schema: {
         type: 'string',
+        format: 'uuid',
       },
-      description: 'delete tournament by id',
+      description: 'Unique identifier of the tournament to delete',
+      example: 'tournament_masters2025',
     },
   ],
-  security: [
-    {
-      ApiKeyAuth: [],
-    },
-  ],
+  security: [apiKeyAuth],
 };

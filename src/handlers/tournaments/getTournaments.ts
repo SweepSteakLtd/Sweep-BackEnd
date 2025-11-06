@@ -2,6 +2,7 @@ import { inArray } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { players, Tournament, tournamentAd, tournamentHole, tournaments } from '../../models';
 import { database } from '../../services';
+import { apiKeyAuth } from '../schemas';
 
 /**
  * Get all tournaments (auth endpoint)
@@ -48,9 +49,14 @@ export const getTournamentsHandler = async (req: Request, res: Response, next: N
   }
 };
 getTournamentsHandler.apiDescription = {
+  summary: 'Get all tournaments',
+  description:
+    'Retrieves all tournaments with complete details including holes, ads, and players. Each tournament includes its full nested data.',
+  operationId: 'getTournaments',
+  tags: ['tournaments'],
   responses: {
     200: {
-      description: '200 OK',
+      description: 'Tournaments retrieved successfully',
       content: {
         'application/json': {
           schema: {
@@ -320,9 +326,5 @@ getTournamentsHandler.apiDescription = {
       },
     },
   },
-  security: [
-    {
-      ApiKeyAuth: [],
-    },
-  ],
+  security: [apiKeyAuth],
 };

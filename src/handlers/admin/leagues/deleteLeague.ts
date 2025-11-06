@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { leagues } from '../../../models';
 import { database } from '../../../services';
+import { apiKeyAuth, standardResponses } from '../../schemas';
 
 /**
  * Delete league (admin endpoint)
@@ -10,28 +11,42 @@ import { database } from '../../../services';
  */
 export const deleteLeagueAdminHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!req.params.id) {
+    const leagueId = req.params.id;
+
+    // Validate id parameter
+    if (!leagueId) {
+      console.log('[DEBUG] missing id in request params');
       return res
         .status(422)
-        .send({ error: 'Invalid request body', message: 'required properties missing' });
+        .send({ error: 'Invalid request body', message: 'Missing required parameter: id' });
+    }
+
+    // Validate id is non-empty string
+    if (typeof leagueId !== 'string' || leagueId.trim().length === 0) {
+      console.log('[DEBUG] Invalid id: must be non-empty string');
+      return res.status(422).send({
+        error: 'Invalid request body',
+        message: 'id must be a non-empty string',
+      });
     }
 
     const existingLeague = await database
       .select()
       .from(leagues)
-      .where(eq(leagues.id, req.params.id))
+      .where(eq(leagues.id, leagueId))
       .limit(1)
       .execute();
 
     if (existingLeague.length === 0) {
-      return res.status(403).send({ error: 'Missing league', message: "League doesn't exist" });
+      console.log('[DEBUG] League not found:', leagueId);
+      return res.status(404).send({ error: 'League not found', message: "League doesn't exist" });
     }
 
-    await database.delete(leagues).where(eq(leagues.id, req.params.id)).execute();
+    await database.delete(leagues).where(eq(leagues.id, leagueId)).execute();
 
     return res.status(204).send({ data: {} });
   } catch (error: any) {
-    console.log(`DELETE GAME ADMIN ERROR: ${error.message} 🛑`);
+    console.log(`DELETE LEAGUE ADMIN ERROR: ${error.message} 🛑`);
     return res.status(500).send({
       error: 'Internal Server Error',
       message: 'An unexpected error occurred',
@@ -40,10 +55,18 @@ export const deleteLeagueAdminHandler = async (req: Request, res: Response, next
 };
 
 deleteLeagueAdminHandler.apiDescription = {
+  summary: 'Delete league (Admin)',
+  description:
+    'Admin endpoint to permanently delete a league by ID. This operation cannot be undone.',
+  operationId: 'adminDeleteLeague',
+  tags: ['admin', 'leagues'],
   responses: {
-    204: { description: '204 No Content' },
-    403: { description: '403 Forbidden' },
-    500: { description: '500 Internal Server Error' },
+    204: {
+      description: 'League deleted successfully - No content returned',
+    },
+    422: standardResponses[422],
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
   parameters: [
     {
@@ -52,13 +75,11 @@ deleteLeagueAdminHandler.apiDescription = {
       required: true,
       schema: {
         type: 'string',
+        format: 'uuid',
       },
-      description: 'ID of the game to delete',
+      description: 'Unique identifier of the league to delete',
+      example: 'league_abc123',
     },
   ],
-  security: [
-    {
-      ApiKeyAuth: [],
-    },
-  ],
+  security: [apiKeyAuth],
 };

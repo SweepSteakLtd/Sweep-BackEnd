@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { transactions } from '../../../models';
 import { database } from '../../../services';
+import { apiKeyAuth, standardResponses } from '../../schemas';
 
 /**
  * Delete transaction (admin endpoint)
@@ -44,26 +45,31 @@ export const deleteTransactionHandler = async (req: Request, res: Response, next
 };
 
 deleteTransactionHandler.apiDescription = {
+  summary: 'Delete transaction (Admin)',
+  description:
+    'Admin endpoint to permanently delete a transaction by ID. This operation cannot be undone.',
+  operationId: 'adminDeleteTransaction',
+  tags: ['admin', 'transactions'],
   responses: {
-    204: { description: '204 No Content' },
-    403: { description: '403 Forbidden' },
-    422: { description: '422 invalid request' },
-    500: { description: '500 Internal Server Error' },
+    204: {
+      description: 'Transaction deleted successfully - No content returned',
+    },
+    422: standardResponses[422],
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
   parameters: [
     {
       name: 'id',
-      in: 'param',
+      in: 'path',
       required: true,
       schema: {
         type: 'string',
+        format: 'uuid',
       },
-      description: 'Delete transaction by id',
+      description: 'Unique identifier of the transaction to delete',
+      example: 'transaction_abc123',
     },
   ],
-  security: [
-    {
-      ApiKeyAuth: [],
-    },
-  ],
+  security: [apiKeyAuth],
 };

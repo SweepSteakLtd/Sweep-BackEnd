@@ -2,6 +2,12 @@ import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { playerProfiles } from '../../../models';
 import { database } from '../../../services';
+import {
+  apiKeyAuth,
+  arrayDataWrapper,
+  playerProfileSchema,
+  standardResponses,
+} from '../../schemas';
 
 /**
  * Get all player profiles (admin endpoint)
@@ -32,61 +38,70 @@ export const getAllPlayerProfilesAdminHandler = async (
   }
 };
 getAllPlayerProfilesAdminHandler.apiDescription = {
+  summary: 'Get all player profiles (Admin)',
+  description: 'Admin endpoint to retrieve all player profiles with optional country filtering.',
+  operationId: 'adminGetAllPlayerProfiles',
+  tags: ['admin', 'player-profiles'],
   responses: {
     200: {
-      description: '200 OK',
+      description: 'Player profiles retrieved successfully',
       content: {
         'application/json': {
-          schema: {
-            type: 'array',
-          },
-        },
-      },
-    },
-    403: {
-      description: '403 Forbidden',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
+          schema: arrayDataWrapper(playerProfileSchema),
+          examples: {
+            allProfiles: {
+              summary: 'Multiple player profiles',
+              value: {
+                data: [
+                  {
+                    id: 'profile_abc123',
+                    external_id: 'ext_tiger_woods',
+                    first_name: 'Tiger',
+                    last_name: 'Woods',
+                    country: 'USA',
+                    age: 48,
+                    ranking: 1250,
+                    created_at: '2025-01-01T00:00:00Z',
+                    updated_at: '2025-01-20T10:00:00Z',
+                  },
+                  {
+                    id: 'profile_def456',
+                    external_id: 'ext_rory_mcilroy',
+                    first_name: 'Rory',
+                    last_name: 'McIlroy',
+                    country: 'NIR',
+                    age: 34,
+                    ranking: 3,
+                    created_at: '2025-01-01T00:00:00Z',
+                    updated_at: '2025-01-20T10:00:00Z',
+                  },
+                ],
+              },
+            },
+            filteredByCountry: {
+              summary: 'Players from specific country',
+              value: {
+                data: [
+                  {
+                    id: 'profile_abc123',
+                    external_id: 'ext_tiger_woods',
+                    first_name: 'Tiger',
+                    last_name: 'Woods',
+                    country: 'USA',
+                    age: 48,
+                    ranking: 1250,
+                    created_at: '2025-01-01T00:00:00Z',
+                    updated_at: '2025-01-20T10:00:00Z',
+                  },
+                ],
+              },
             },
           },
         },
       },
     },
-    500: {
-      description: '500 Internal Server Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-    parameters: [
-      {
-        name: 'country',
-        in: 'query',
-        required: false,
-        schema: {
-          type: 'string',
-        },
-        description: 'Country of the player profiles to fetch',
-      },
-    ],
-    security: [
-      {
-        ApiKeyAuth: [],
-      },
-    ],
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
   parameters: [
     {
@@ -95,13 +110,11 @@ getAllPlayerProfilesAdminHandler.apiDescription = {
       required: false,
       schema: {
         type: 'string',
+        pattern: '^[A-Z]{2,3}$',
       },
-      description: 'filter player profiles by country',
+      description: 'Filter player profiles by ISO country code (2-3 letter code)',
+      example: 'USA',
     },
   ],
-  security: [
-    {
-      ApiKeyAuth: [],
-    },
-  ],
+  security: [apiKeyAuth],
 };

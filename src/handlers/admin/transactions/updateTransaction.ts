@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { Transaction, transactions } from '../../../models';
 import { database } from '../../../services';
+import { apiKeyAuth, dataWrapper, standardResponses, transactionSchema } from '../../schemas';
 
 /**
  * Update transaction (admin endpoint)
@@ -59,102 +60,54 @@ export const updateTransactionHandler = async (req: Request, res: Response, next
 };
 
 updateTransactionHandler.apiDescription = {
+  summary: 'Update transaction (Admin)',
+  description: 'Admin endpoint to update transaction information by ID.',
+  operationId: 'adminUpdateTransaction',
+  tags: ['admin', 'transactions'],
   responses: {
     200: {
-      description: '200 OK',
+      description: 'Transaction updated successfully',
       content: {
         'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              name: { type: 'string' },
-              value: { type: 'string' },
-              type: { type: 'string' },
-              charge_id: { type: 'string' },
-              user_id: { type: 'string' },
-              created_at: { type: 'string' },
-              updated_at: { type: 'string' },
-            },
-          },
+          schema: dataWrapper(transactionSchema),
         },
       },
     },
-    403: {
-      description: '403 Forbidden',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-    422: {
-      description: '422 Validation Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-              details: { type: 'array' },
-            },
-          },
-        },
-      },
-    },
-    500: {
-      description: '500 Internal Server Error',
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              error: { type: 'string' },
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-  },
-  requestBody: {
-    content: {
-      'application/json': {
-        example: {
-          id: 'transaction id',
-          name: 'test transactions',
-          value: 'test value',
-          type: 'debit',
-          charge_id: 'charge id',
-          user_id: 'user that did transaction',
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-      },
-    },
-    required: true,
+    422: standardResponses[422],
+    403: standardResponses[403],
+    500: standardResponses[500],
   },
   parameters: [
     {
       name: 'id',
-      in: 'param',
+      in: 'path',
       required: true,
       schema: {
         type: 'string',
+        format: 'uuid',
       },
-      description: 'update transaction by id',
+      description: 'Unique identifier of the transaction to update',
+      example: 'transaction_abc123',
     },
   ],
-  security: [
-    {
-      ApiKeyAuth: [],
+  requestBody: {
+    description: 'Transaction update details. At least one field must be provided.',
+    required: false,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          minProperties: 1,
+          properties: {
+            name: { type: 'string', minLength: 1 },
+            value: { type: 'string', minLength: 1 },
+            type: { type: 'string', enum: ['debit', 'credit'] },
+            charge_id: { type: 'string', nullable: true },
+            user_id: { type: 'string', format: 'uuid' },
+          },
+        },
+      },
     },
-  ],
+  },
+  security: [apiKeyAuth],
 };

@@ -70,5 +70,7 @@ test('getAllGamesHandler - returns 500 on DB error', async () => {
   await getAllLeaguesHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(500);
-  expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ error: 'Internal Server Error' }));
+  expect(res.send).toHaveBeenCalledWith(
+    expect.objectContaining({ error: 'Internal Server Error' }),
+  );
 });
