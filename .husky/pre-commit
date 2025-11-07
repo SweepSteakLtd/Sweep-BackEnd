@@ -23,8 +23,6 @@ if git diff --name-only | grep -q "package.json"; then
   # Stage the version change
   git add package.json
 
-  # Amend the last commit with the version change
-  git commit --amend --no-edit --no-verify
 
   echo "✓ Version change added to commit"
 
@@ -35,4 +33,4 @@ else
   echo "⚠ Version was already up to date"
 fi
 
-echo "✓ Pre-push hook completed"
+echo "✓ pre commit hook completed"
