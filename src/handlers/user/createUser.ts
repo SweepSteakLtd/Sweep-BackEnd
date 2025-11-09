@@ -1,8 +1,9 @@
 import { createId } from '@paralleldrive/cuid2';
 import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
+import { handleGBGError, verifyIdentity } from '../../integrations/GBG/GBG';
 import { Deposit, depositLimits, User, users } from '../../models';
-import { database } from '../../services';
+import { database, fetchRemoteConfig } from '../../services';
 import {
   addressSchema,
   apiKeyAuth,
@@ -16,22 +17,24 @@ import { validatePhoneNumber } from '../validators/phoneValidator';
 import { Validators as StringValidators, validateEmail } from '../validators/stringValidator';
 /**
  * Create a new user
- * @body first_name - string - optional
- * @body last_name - string - optional
+ * @body first_name - string - required
+ * @body last_name - string - required
  * @body nickname - string - optional
- * @body email - string - required
+ * @body email - string - required (from auth)
  * @body bio - string - optional
  * @body profile_picture - string - optional
- * @body phone_number - string - optional
+ * @body phone_number - string - required
+ * @body date_of_birth - string - optional (YYYY-MM-DD format, required for GBG verification)
  * @body game_stop_id - string - optional
  * @body is_auth_verified - boolean - optional
  * @body is_identity_verified - boolean - optional
- * @body deposit_limit - number - optional
+ * @body deposit_limit - object - required
  * @body betting_limit - number - optional
  * @body payment_id - string - optional
  * @body current_balance - number - optional
+ * @body address - object - optional (triggers GBG verification if provided)
  * @body is_self_exclusion - boolean - optional
- * @body exclusion_ending -string - optional
+ * @body exclusion_ending - string - optional
  * @returns User
  */
 export const createUserHandler = async (req: Request, res: Response, next: NextFunction) => {
@@ -176,6 +179,52 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
       });
     }
 
+    // Validate optional date_of_birth
+    if (req.body.date_of_birth !== undefined && req.body.date_of_birth !== null) {
+      if (typeof req.body.date_of_birth !== 'string') {
+        console.log('[DEBUG] Invalid date_of_birth: must be a string');
+        return res.status(422).send({
+          error: 'Invalid request body',
+          message: 'date_of_birth must be a string in YYYY-MM-DD format',
+        });
+      }
+
+      // Validate date format (YYYY-MM-DD)
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(req.body.date_of_birth)) {
+        console.log('[DEBUG] Invalid date_of_birth format');
+        return res.status(422).send({
+          error: 'Invalid request body',
+          message: 'date_of_birth must be in YYYY-MM-DD format',
+        });
+      }
+
+      // Validate it's a valid date
+      const dobDate = new Date(req.body.date_of_birth);
+      if (isNaN(dobDate.getTime())) {
+        console.log('[DEBUG] Invalid date_of_birth: not a valid date');
+        return res.status(422).send({
+          error: 'Invalid request body',
+          message: 'date_of_birth must be a valid date',
+        });
+      }
+
+      // Validate user is at least 18 years old
+      const today = new Date();
+      const age = today.getFullYear() - dobDate.getFullYear();
+      const monthDiff = today.getMonth() - dobDate.getMonth();
+      const dayDiff = today.getDate() - dobDate.getDate();
+      const actualAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age;
+
+      if (actualAge < 18) {
+        console.log('[DEBUG] User must be at least 18 years old');
+        return res.status(422).send({
+          error: 'Invalid request body',
+          message: 'User must be at least 18 years old',
+        });
+      }
+    }
+
     // Validate optional address
     if (req.body.address !== undefined && req.body.address !== null) {
       if (typeof req.body.address !== 'object') {
@@ -186,8 +235,8 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
         });
       }
 
-      // Validate required address fields based on addressSchema
-      const requiredAddressFields = ['street_name', 'postal_code', 'city', 'country_code'];
+      // Validate required address fields
+      const requiredAddressFields = ['line1', 'line2', 'town', 'postcode', 'country'];
       for (const field of requiredAddressFields) {
         if (!req.body.address[field]) {
           console.log(`[DEBUG] Invalid address.${field}: required field missing`);
@@ -198,98 +247,136 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
         }
       }
 
-      // Validate street_name is a string
-      if (
-        typeof req.body.address.street_name !== 'string' ||
-        req.body.address.street_name.trim() === ''
-      ) {
-        console.log('[DEBUG] Invalid address.street_name: must be non-empty string');
+      // Validate line1 is a string
+      if (typeof req.body.address.line1 !== 'string' || req.body.address.line1.trim() === '') {
+        console.log('[DEBUG] Invalid address.line1: must be non-empty string');
         return res.status(422).send({
           error: 'Invalid request body',
-          message: 'address.street_name must be a non-empty string',
+          message: 'address.line1 must be a non-empty string',
         });
       }
 
-      // Validate street_number if provided
-      if (req.body.address.street_number !== undefined && req.body.address.street_number !== null) {
+      // Validate line2 is a string
+      if (typeof req.body.address.line2 !== 'string' || req.body.address.line2.trim() === '') {
+        console.log('[DEBUG] Invalid address.line2: must be non-empty string');
+        return res.status(422).send({
+          error: 'Invalid request body',
+          message: 'address.line2 must be a non-empty string',
+        });
+      }
+
+      // Validate line3 if provided
+      if (req.body.address.line3 !== undefined && req.body.address.line3 !== null) {
+        if (typeof req.body.address.line3 !== 'string') {
+          console.log('[DEBUG] Invalid address.line3: must be a string');
+          return res.status(422).send({
+            error: 'Invalid request body',
+            message: 'address.line3 must be a string',
+          });
+        }
+      }
+
+      // Validate town is a string
+      if (typeof req.body.address.town !== 'string' || req.body.address.town.trim() === '') {
+        console.log('[DEBUG] Invalid address.town: must be non-empty string');
+        return res.status(422).send({
+          error: 'Invalid request body',
+          message: 'address.town must be a non-empty string',
+        });
+      }
+
+      // Validate county if provided
+      if (req.body.address.county !== undefined && req.body.address.county !== null) {
+        if (typeof req.body.address.county !== 'string' || req.body.address.county.trim() === '') {
+          console.log('[DEBUG] Invalid address.county: must be non-empty string');
+          return res.status(422).send({
+            error: 'Invalid request body',
+            message: 'address.county must be a non-empty string',
+          });
+        }
+      }
+
+      // Validate postcode is a string
+      if (
+        typeof req.body.address.postcode !== 'string' ||
+        req.body.address.postcode.trim() === ''
+      ) {
+        console.log('[DEBUG] Invalid address.postcode: must be non-empty string');
+        return res.status(422).send({
+          error: 'Invalid request body',
+          message: 'address.postcode must be a non-empty string',
+        });
+      }
+
+      // Validate country format (ISO 3166-1 alpha-2)
+      if (typeof req.body.address.country !== 'string') {
+        console.log('[DEBUG] Invalid address.country: must be a string');
+        return res.status(422).send({
+          error: 'Invalid request body',
+          message: 'address.country must be a string',
+        });
+      }
+    }
+
+    // ========================================================================
+    // GBG Identity Verification
+    // ========================================================================
+    let isIdentityVerified = req.body.is_identity_verified || false;
+    let kycCompleted = false;
+    let kycInstanceId = '';
+    let manualReviewRequested = false;
+
+    // Fetch Remote Config for GBG Resource ID
+    const remoteConfig = await fetchRemoteConfig();
+    console.log('[DEBUG] GBG Resource ID from Remote Config:', remoteConfig.gbg_resource_id);
+
+    // Perform GBG verification if address is provided
+    if (req.body.address && req.body.address !== null) {
+      console.log('[DEBUG] Starting GBG identity verification for new user');
+      const { first_name, last_name, birthday, address } = req.body;
+      try {
+        const verificationResult = await verifyIdentity(
+          {
+            first_name: first_name,
+            last_name: last_name,
+            birthday: birthday,
+            address: address,
+            email: res.locals.email,
+            phone_number: (res.locals as User).phone_number,
+          },
+          remoteConfig.gbg_resource_id,
+        );
+
         if (
-          typeof req.body.address.street_number !== 'number' ||
-          isNaN(req.body.address.street_number)
+          verificationResult.decision === 'Decision: Pass 1+1' ||
+          verificationResult.decision === 'Decision: Pass 2+2'
         ) {
-          console.log('[DEBUG] Invalid address.street_number: must be a number');
+          isIdentityVerified = true;
+          kycCompleted = true;
+          console.log('[DEBUG] GBG verification successful');
+        } else if (verificationResult.decision === 'Decision: Manual review') {
+          manualReviewRequested = true;
+        } else {
+          console.log('[DEBUG] GBG verification failed or requires review');
           return res.status(422).send({
-            error: 'Invalid request body',
-            message: 'address.street_number must be a number',
+            error: 'Failed KYC verification',
+            message: 'Cannot create account as user is not passing KYC verification',
           });
         }
-      }
 
-      // Validate postal_code is a string
-      if (
-        typeof req.body.address.postal_code !== 'string' ||
-        req.body.address.postal_code.trim() === ''
-      ) {
-        console.log('[DEBUG] Invalid address.postal_code: must be non-empty string');
-        return res.status(422).send({
-          error: 'Invalid request body',
-          message: 'address.postal_code must be a non-empty string',
-        });
-      }
+        kycInstanceId = verificationResult.instanceId;
+      } catch (error: any) {
+        console.error('[DEBUG] GBG verification error:', error.message);
+        const gbgError = handleGBGError(error);
+        console.error('[DEBUG] GBG error code:', gbgError.code);
+        console.error('[DEBUG] GBG error message:', gbgError.message);
 
-      // Validate city is a string
-      if (typeof req.body.address.city !== 'string' || req.body.address.city.trim() === '') {
-        console.log('[DEBUG] Invalid address.city: must be non-empty string');
-        return res.status(422).send({
-          error: 'Invalid request body',
-          message: 'address.city must be a non-empty string',
-        });
+        // Don't fail user creation if GBG verification fails
+        // User can complete verification later
+        console.log('[DEBUG] Proceeding with user creation despite GBG verification failure');
       }
-
-      // Validate state_province if provided
-      if (
-        req.body.address.state_province !== undefined &&
-        req.body.address.state_province !== null
-      ) {
-        if (
-          typeof req.body.address.state_province !== 'string' ||
-          req.body.address.state_province.trim() === ''
-        ) {
-          console.log('[DEBUG] Invalid address.state_province: must be non-empty string');
-          return res.status(422).send({
-            error: 'Invalid request body',
-            message: 'address.state_province must be a non-empty string',
-          });
-        }
-      }
-
-      // Validate country_code format (ISO 3166-1 alpha-2)
-      if (typeof req.body.address.country_code !== 'string') {
-        console.log('[DEBUG] Invalid address.country_code: must be a string');
-        return res.status(422).send({
-          error: 'Invalid request body',
-          message: 'address.country_code must be a string',
-        });
-      }
-      const countryCodeRegex = /^[A-Z]{2}$/;
-      if (!countryCodeRegex.test(req.body.address.country_code)) {
-        console.log('[DEBUG] Invalid address.country_code: must be ISO 3166-1 alpha-2 format');
-        return res.status(422).send({
-          error: 'Invalid request body',
-          message:
-            'address.country_code must be a 2-letter uppercase country code (e.g., US, GB, CA)',
-        });
-      }
-
-      // Validate optional unit
-      if (req.body.address.unit !== undefined && req.body.address.unit !== null) {
-        if (typeof req.body.address.unit !== 'string') {
-          console.log('[DEBUG] Invalid address.unit: must be a string');
-          return res.status(422).send({
-            error: 'Invalid request body',
-            message: 'address.unit must be a string',
-          });
-        }
-      }
+    } else {
+      console.log('[DEBUG] Skipping GBG verification - address not provided');
     }
 
     const newUserId = createId();
@@ -318,14 +405,14 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
       phone_number: req.body.phone_number,
       game_stop_id: req.body.game_stop_id || '',
       is_auth_verified: req.body.is_auth_verified || false,
-      is_identity_verified: req.body.is_identity_verified || false,
+      is_identity_verified: isIdentityVerified,
       deposit_id: depositId,
       betting_limit: req.body.betting_limit || 0,
       payment_id: req.body.payment_id || '',
       current_balance: req.body.current_balance || 0,
       is_admin: false,
-      kyc_completed: false,
-      kyc_instance_id: '',
+      kyc_completed: kycCompleted,
+      kyc_instance_id: kycInstanceId,
       exclusion_ending: new Date(),
       is_self_excluded: false,
       address: req.body.address,
@@ -338,7 +425,10 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
       .values({ ...userObject, deposit_limit: depositLimit })
       .execute();
     console.log('[DEBUG] New user created with ID:', userObject.id);
-    return res.status(201).send({ data: userObject });
+    return res.status(201).send({
+      data: userObject,
+      kyc_manual_review_requested: manualReviewRequested,
+    });
   } catch (error: any) {
     console.log(`[DEBUG] USER CREATION ERROR: ${error.message} 🛑`);
     return res.status(500).send({
@@ -351,7 +441,7 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
 createUserHandler.apiDescription = {
   summary: 'Create a new user',
   description:
-    'Creates a new user account. Email is automatically extracted from authentication. Requires deposit limits to be set during creation.',
+    'Creates a new user account with optional GBG identity verification. Email is automatically extracted from authentication. If address and date_of_birth are provided, GBG identity verification will be performed automatically. Verification results are stored in is_identity_verified and kyc_completed fields.',
   operationId: 'createUser',
   tags: ['users'],
   responses: {
@@ -390,13 +480,13 @@ createUserHandler.apiDescription = {
                   kyc_instance_id: null,
                   exclusion_ending: null,
                   address: {
-                    street_name: 'Main St',
-                    street_number: 123,
-                    unit: 'Apt 4B',
-                    postal_code: '12345',
-                    city: 'New York',
-                    state_province: 'NY',
-                    country_code: 'US',
+                    line1: '123 Main St',
+                    line2: 'Building A',
+                    line3: 'Apt 4B',
+                    town: 'New York',
+                    county: 'New York County',
+                    postcode: '10001',
+                    country: 'US',
                   },
                   created_at: '2025-01-15T10:30:00Z',
                   updated_at: '2025-01-15T10:30:00Z',
@@ -500,34 +590,44 @@ createUserHandler.apiDescription = {
               description: 'Initial account balance',
               example: 0,
             },
+            date_of_birth: {
+              type: 'string',
+              format: 'date',
+              pattern: '^\\d{4}-\\d{2}-\\d{2}$',
+              nullable: true,
+              description:
+                'Date of birth in YYYY-MM-DD format. Required for identity verification via GBG. User must be at least 18 years old.',
+              example: '1990-01-15',
+            },
             address: addressSchema,
           },
         },
         examples: {
           standard: {
-            summary: 'Standard user registration',
+            summary: 'Standard user registration with GBG verification',
             value: {
               first_name: 'John',
               last_name: 'Doe',
               nickname: 'Johnny',
               phone_number: '+12345678901',
+              date_of_birth: '1990-01-15',
               bio: 'Golf enthusiast',
               profile_picture: 'https://example.com/avatar.jpg',
               deposit_limit: { daily: 100, weekly: 500, monthly: 2000 },
               betting_limit: 1000,
               address: {
-                street_name: 'Main St',
-                street_number: 123,
-                unit: 'Apt 4B',
-                postal_code: '12345',
-                city: 'New York',
-                state_province: 'NY',
-                country_code: 'US',
+                line1: '123 Main St',
+                line2: 'Building A',
+                line3: 'Apt 4B',
+                town: 'New York',
+                county: 'New York County',
+                postcode: '10001',
+                country: 'US',
               },
             },
           },
           minimal: {
-            summary: 'Minimal required fields',
+            summary: 'Minimal required fields (no identity verification)',
             value: {
               first_name: 'Jane',
               last_name: 'Smith',

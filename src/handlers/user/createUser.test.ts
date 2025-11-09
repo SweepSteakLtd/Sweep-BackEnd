@@ -1,8 +1,9 @@
 jest.mock('@paralleldrive/cuid2', () => ({ createId: () => 'test-id' }));
 jest.mock('../../services');
+jest.mock('../../integrations/GBG/GBG');
 
 import { NextFunction, Request, Response } from 'express';
-import { database } from '../../services';
+import { database, fetchRemoteConfig } from '../../services';
 import { createUserHandler } from './createUser';
 
 const mockResponse = () => {
@@ -16,7 +17,13 @@ const mockResponse = () => {
 const mockNext: NextFunction = jest.fn();
 
 afterEach(() => {
-  jest.resetAllMocks();
+  jest.clearAllMocks();
+});
+
+beforeEach(() => {
+  (fetchRemoteConfig as jest.Mock).mockResolvedValue({
+    gbg_resource_id: 'd27b6807703eec9f5f5c0d45eb3abc883c142236055b85e30df2f75fdb22cbbe@1gobnzjz',
+  });
 });
 
 const mockSelectExecute = (result: any) => {
@@ -581,8 +588,8 @@ test('createUserHandler - returns 422 if address is missing required fields', as
       phone_number: '+1234567890',
       deposit_limit: { daily: 100, weekly: 500, monthly: 1200 },
       address: {
-        street_name: 'Main St',
-        // missing postal_code, city, country_code
+        line1: '123 Main St',
+        // missing line2, town, postcode, country
       },
     },
   } as unknown as Request;
@@ -596,12 +603,12 @@ test('createUserHandler - returns 422 if address is missing required fields', as
   expect(res.send).toHaveBeenCalledWith(
     expect.objectContaining({
       error: 'Invalid request body',
-      message: 'address.postal_code is required',
+      message: 'address.line2 is required',
     }),
   );
 });
 
-test('createUserHandler - returns 422 if address.country_code is invalid format', async () => {
+test('createUserHandler - returns 422 if address.country is not a string', async () => {
   mockSelectExecute([]);
 
   const req = {
@@ -611,10 +618,11 @@ test('createUserHandler - returns 422 if address.country_code is invalid format'
       phone_number: '+1234567890',
       deposit_limit: { daily: 100, weekly: 500, monthly: 1200 },
       address: {
-        street_name: 'Main St',
-        postal_code: '12345',
-        city: 'New York',
-        country_code: 'USA', // should be 2 letters
+        line1: '123 Main St',
+        line2: 'Apt 4B',
+        town: 'New York',
+        postcode: '12345',
+        country: 123, // should be a string
       },
     },
   } as unknown as Request;
@@ -628,7 +636,7 @@ test('createUserHandler - returns 422 if address.country_code is invalid format'
   expect(res.send).toHaveBeenCalledWith(
     expect.objectContaining({
       error: 'Invalid request body',
-      message: 'address.country_code must be a 2-letter uppercase country code (e.g., US, GB, CA)',
+      message: 'address.country must be a string',
     }),
   );
 });
@@ -642,15 +650,16 @@ test('createUserHandler - successfully creates user with valid address', async (
       first_name: 'John',
       last_name: 'Doe',
       phone_number: '+1234567890',
+      date_of_birth: '1990-01-15',
       deposit_limit: { daily: 100, weekly: 500, monthly: 1200 },
       address: {
-        street_name: 'Main St',
-        street_number: 123,
-        unit: 'Apt 4B',
-        postal_code: '12345',
-        city: 'New York',
-        state_province: 'NY',
-        country_code: 'US',
+        line1: '123 Main St',
+        line2: 'Apt 4B',
+        line3: 'Building C',
+        town: 'New York',
+        county: 'New York County',
+        postcode: '12345',
+        country: 'United States',
       },
     },
   } as unknown as Request;
@@ -665,9 +674,12 @@ test('createUserHandler - successfully creates user with valid address', async (
   const sent = (res.send as jest.Mock).mock.calls[0][0];
   expect(sent).toHaveProperty('data');
   expect(sent.data.address).toMatchObject({
-    street_name: 'Main St',
-    street_number: 123,
-    city: 'New York',
-    country_code: 'US',
+    line1: '123 Main St',
+    line2: 'Apt 4B',
+    line3: 'Building C',
+    town: 'New York',
+    county: 'New York County',
+    postcode: '12345',
+    country: 'United States',
   });
 });

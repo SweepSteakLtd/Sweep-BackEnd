@@ -178,7 +178,7 @@ export const updateCurrentUserHandler = async (req: Request, res: Response, next
       }
 
       // Validate required address fields
-      const requiredAddressFields = ['street_name', 'postal_code', 'city', 'country_code'];
+      const requiredAddressFields = ['line1', 'line2', 'town', 'postcode', 'country'];
       for (const field of requiredAddressFields) {
         if (!req.body.address[field]) {
           console.log(`[DEBUG] Invalid address.${field}: required field missing`);
@@ -189,97 +189,92 @@ export const updateCurrentUserHandler = async (req: Request, res: Response, next
         }
       }
 
-      // Validate street_name is a string
+      // Validate line1 is a string
       if (
-        typeof req.body.address.street_name !== 'string' ||
-        req.body.address.street_name.trim() === ''
+        typeof req.body.address.line1 !== 'string' ||
+        req.body.address.line1.trim() === ''
       ) {
-        console.log('[DEBUG] Invalid address.street_name: must be non-empty string');
+        console.log('[DEBUG] Invalid address.line1: must be non-empty string');
         return res.status(422).send({
           error: 'Invalid request body',
-          message: 'address.street_name must be a non-empty string',
+          message: 'address.line1 must be a non-empty string',
         });
       }
 
-      // Validate street_number if provided
-      if (req.body.address.street_number !== undefined && req.body.address.street_number !== null) {
-        if (
-          typeof req.body.address.street_number !== 'number' ||
-          isNaN(req.body.address.street_number)
-        ) {
-          console.log('[DEBUG] Invalid address.street_number: must be a number');
+      // Validate line2 is a string
+      if (
+        typeof req.body.address.line2 !== 'string' ||
+        req.body.address.line2.trim() === ''
+      ) {
+        console.log('[DEBUG] Invalid address.line2: must be non-empty string');
+        return res.status(422).send({
+          error: 'Invalid request body',
+          message: 'address.line2 must be a non-empty string',
+        });
+      }
+
+      // Validate line3 if provided
+      if (req.body.address.line3 !== undefined && req.body.address.line3 !== null) {
+        if (typeof req.body.address.line3 !== 'string') {
+          console.log('[DEBUG] Invalid address.line3: must be a string');
           return res.status(422).send({
             error: 'Invalid request body',
-            message: 'address.street_number must be a number',
+            message: 'address.line3 must be a string',
           });
         }
       }
 
-      // Validate postal_code is a string
-      if (
-        typeof req.body.address.postal_code !== 'string' ||
-        req.body.address.postal_code.trim() === ''
-      ) {
-        console.log('[DEBUG] Invalid address.postal_code: must be non-empty string');
+      // Validate town is a string
+      if (typeof req.body.address.town !== 'string' || req.body.address.town.trim() === '') {
+        console.log('[DEBUG] Invalid address.town: must be non-empty string');
         return res.status(422).send({
           error: 'Invalid request body',
-          message: 'address.postal_code must be a non-empty string',
+          message: 'address.town must be a non-empty string',
         });
       }
 
-      // Validate city is a string
-      if (typeof req.body.address.city !== 'string' || req.body.address.city.trim() === '') {
-        console.log('[DEBUG] Invalid address.city: must be non-empty string');
-        return res.status(422).send({
-          error: 'Invalid request body',
-          message: 'address.city must be a non-empty string',
-        });
-      }
-
-      // Validate state_province if provided
-      if (
-        req.body.address.state_province !== undefined &&
-        req.body.address.state_province !== null
-      ) {
+      // Validate county if provided
+      if (req.body.address.county !== undefined && req.body.address.county !== null) {
         if (
-          typeof req.body.address.state_province !== 'string' ||
-          req.body.address.state_province.trim() === ''
+          typeof req.body.address.county !== 'string' ||
+          req.body.address.county.trim() === ''
         ) {
-          console.log('[DEBUG] Invalid address.state_province: must be non-empty string');
+          console.log('[DEBUG] Invalid address.county: must be non-empty string');
           return res.status(422).send({
             error: 'Invalid request body',
-            message: 'address.state_province must be a non-empty string',
+            message: 'address.county must be a non-empty string',
           });
         }
       }
 
-      // Validate country_code format (ISO 3166-1 alpha-2)
-      if (typeof req.body.address.country_code !== 'string') {
-        console.log('[DEBUG] Invalid address.country_code: must be a string');
+      // Validate postcode is a string
+      if (
+        typeof req.body.address.postcode !== 'string' ||
+        req.body.address.postcode.trim() === ''
+      ) {
+        console.log('[DEBUG] Invalid address.postcode: must be non-empty string');
         return res.status(422).send({
           error: 'Invalid request body',
-          message: 'address.country_code must be a string',
+          message: 'address.postcode must be a non-empty string',
+        });
+      }
+
+      // Validate country format (ISO 3166-1 alpha-2)
+      if (typeof req.body.address.country !== 'string') {
+        console.log('[DEBUG] Invalid address.country: must be a string');
+        return res.status(422).send({
+          error: 'Invalid request body',
+          message: 'address.country must be a string',
         });
       }
       const countryCodeRegex = /^[A-Z]{2}$/;
-      if (!countryCodeRegex.test(req.body.address.country_code)) {
-        console.log('[DEBUG] Invalid address.country_code: must be ISO 3166-1 alpha-2 format');
+      if (!countryCodeRegex.test(req.body.address.country)) {
+        console.log('[DEBUG] Invalid address.country: must be ISO 3166-1 alpha-2 format');
         return res.status(422).send({
           error: 'Invalid request body',
           message:
-            'address.country_code must be a 2-letter uppercase country code (e.g., US, GB, CA)',
+            'address.country must be a 2-letter uppercase country code (e.g., US, GB, CA)',
         });
-      }
-
-      // Validate optional unit
-      if (req.body.address.unit !== undefined && req.body.address.unit !== null) {
-        if (typeof req.body.address.unit !== 'string') {
-          console.log('[DEBUG] Invalid address.unit: must be a string');
-          return res.status(422).send({
-            error: 'Invalid request body',
-            message: 'address.unit must be a string',
-          });
-        }
       }
     }
 

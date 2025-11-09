@@ -458,8 +458,8 @@ test('updateCurrentUserHandler - returns 422 if address is missing required fiel
   const req = {
     body: {
       address: {
-        street_name: 'Main St',
-        // missing postal_code, city, country_code
+        line1: '123 Main St',
+        // missing line2, town, postcode, country
       },
     },
   } as unknown as Request;
@@ -470,22 +470,23 @@ test('updateCurrentUserHandler - returns 422 if address is missing required fiel
   expect(res.send).toHaveBeenCalledWith(
     expect.objectContaining({
       error: 'Invalid request body',
-      message: 'address.postal_code is required',
+      message: 'address.line2 is required',
     }),
   );
 });
 
-test('updateCurrentUserHandler - returns 422 if address.country_code is invalid format', async () => {
+test('updateCurrentUserHandler - returns 422 if address.country is not a string', async () => {
   const res = mockResponse();
   (res as any).locals.user = { id: 'u1', email: 'test@example.com' };
 
   const req = {
     body: {
       address: {
-        street_name: 'Main St',
-        postal_code: '12345',
-        city: 'New York',
-        country_code: 'USA', // should be 2 letters
+        line1: '123 Main St',
+        line2: 'Apt 4B',
+        town: 'New York',
+        postcode: '12345',
+        country: 123, // should be a string
       },
     },
   } as unknown as Request;
@@ -496,7 +497,7 @@ test('updateCurrentUserHandler - returns 422 if address.country_code is invalid 
   expect(res.send).toHaveBeenCalledWith(
     expect.objectContaining({
       error: 'Invalid request body',
-      message: 'address.country_code must be a 2-letter uppercase country code (e.g., US, GB, CA)',
+      message: 'address.country must be a string',
     }),
   );
 });
@@ -508,13 +509,13 @@ test('updateCurrentUserHandler - successfully updates user with valid address', 
   const req = {
     body: {
       address: {
-        street_name: 'Main St',
-        street_number: 123,
-        unit: 'Apt 4B',
-        postal_code: '12345',
-        city: 'New York',
-        state_province: 'NY',
-        country_code: 'US',
+        line1: '123 Main St',
+        line2: 'Apt 4B',
+        line3: 'Building C',
+        town: 'New York',
+        county: 'New York County',
+        postcode: '12345',
+        country: 'US',
       },
     },
   } as unknown as Request;
@@ -523,13 +524,13 @@ test('updateCurrentUserHandler - successfully updates user with valid address', 
     id: 'u1',
     email: 'test@example.com',
     address: {
-      street_name: 'Main St',
-      street_number: 123,
-      unit: 'Apt 4B',
-      postal_code: '12345',
-      city: 'New York',
-      state_province: 'NY',
-      country_code: 'US',
+      line1: '123 Main St',
+      line2: 'Apt 4B',
+      line3: 'Building C',
+      town: 'New York',
+      county: 'New York County',
+      postcode: '12345',
+      country: 'US',
     },
   };
   mockUpdateExecute(finished);

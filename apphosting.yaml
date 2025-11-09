@@ -1,19 +1,18 @@
-
 # For production backend
 runConfig:
   cpu: 1
   memory: 1GiB
   concurrency: 100
 env:
-    - variable: APPLIED_ENV
-      value: development
-    - variable: BE_DATABASE_PASSWORD
-      secret: projects/230553092247/secrets/BE_DATABASE_PASSWORD
-    - variable: GBG_USERNAME
-      secret: projects/230553092247/secrets/GBG_USERNAME
-    - variable: GBG_CLIENT_ID
-      secret: projects/230553092247/secrets/GBG_CLIENT_ID    
-    - variable: GBG_CLIENT_SECRET
-      secret: projects/230553092247/secrets/GBG_CLIENT_SECRET
-    - variable: GBG_PASSWORD
-      secret: projects/230553092247/secrets/GBG_PASSWORD
+  - variable: APPLIED_ENV
+    value: development
+  - variable: BE_DATABASE_PASSWORD
+    secret: projects/230553092247/secrets/BE_DATABASE_PASSWORD
+  - variable: GBG_USERNAME
+    secret: projects/230553092247/secrets/GBG_USERNAME
+  - variable: GBG_CLIENT_ID
+    secret: projects/230553092247/secrets/GBG_CLIENT_ID
+  - variable: GBG_CLIENT_SECRET
+    secret: projects/230553092247/secrets/GBG_CLIENT_SECRET
+  - variable: GBG_PASSWORD
+    secret: projects/230553092247/secrets/GBG_PASSWORD

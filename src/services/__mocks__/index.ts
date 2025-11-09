@@ -39,3 +39,7 @@ export const database = {
     }),
   }),
 } as any;
+
+export const fetchRemoteConfig = jest.fn().mockResolvedValue({
+  gbg_resource_id: 'd27b6807703eec9f5f5c0d45eb3abc883c142236055b85e30df2f75fdb22cbbe@1gobnzjz',
+});

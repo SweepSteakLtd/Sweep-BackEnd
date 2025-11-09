@@ -77,17 +77,18 @@ export const depositLimitSchema = {
 
 export const addressSchema = {
   type: 'object',
+  required: ['line1', 'line2', 'town', 'postcode', 'country'],
   properties: {
-    street_name: { type: 'string' },
-    street_number: { type: 'number' },
-    unit: { type: 'string', nullable: true },
-    postal_code: { type: 'string' },
-    city: { type: 'string' },
-    state_province: { type: 'string' },
-    country_code: {
+    line1: { type: 'string', description: 'Address line 1 (street name and number)' },
+    line2: { type: 'string', description: 'Address line 2' },
+    line3: { type: 'string', nullable: true, description: 'Address line 3 (optional)' },
+    town: { type: 'string', description: 'Town or city' },
+    county: { type: 'string', nullable: true, description: 'County or state (optional)' },
+    postcode: { type: 'string', description: 'Postal code or ZIP code' },
+    country: {
       type: 'string',
       pattern: '^[A-Z]{2}$',
-      description: 'ISO 3166-1 alpha-2 country code',
+      description: 'ISO 3166-1 alpha-2 country code (e.g., US, GB, CA)',
     },
   },
 };

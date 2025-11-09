@@ -7,7 +7,9 @@ import cors from 'cors';
 import express, { Express, Request, Response } from 'express';
 import { version } from '../package.json';
 import { config, env } from './config';
+import { AuthenticateAdminMiddleware } from './middlewares';
 import { routes } from './routes';
+import { clearConfigCache, initializeRemoteConfig } from './services/remoteConfig';
 
 if (!env.CURRENT) {
   throw new Error('Environment is NOT available!');
@@ -77,6 +79,30 @@ const applyRootConfiguration = (appObject: Express): Express => {
   });
   console.log(`ENV: ${env.CURRENT} PORT: 8080 ROUTE: /version METHOD: GET`);
 
+  appObject.post(
+    `/admin/refresh-remote-config`,
+    AuthenticateAdminMiddleware,
+    async (_req: Request, res: Response) => {
+      try {
+        clearConfigCache();
+        console.log('[Admin] Remote Config cache cleared by admin:', res.locals.user.email);
+        res.json({
+          success: true,
+          message: 'Remote Config cache cleared successfully. Next access will fetch fresh values.',
+          clearedBy: res.locals.user.email,
+          timestamp: new Date().toISOString(),
+        });
+      } catch (error: any) {
+        console.error('[Admin] Error clearing Remote Config cache:', error.message);
+        res.status(500).json({
+          error: 'Internal Server Error',
+          message: 'Failed to clear Remote Config cache',
+        });
+      }
+    },
+  );
+  console.log(`ENV: ${env.CURRENT} PORT: 8080 ROUTE: /admin/refresh-remote-config METHOD: POST`);
+
   return appObject;
 };
 
@@ -88,5 +114,9 @@ app.listen(parseInt(process.env.PORT) || 8080, async () => {
   console.log(`APP LISTENING ON PORT ${process.env.PORT || 8080}, environment: ${env.CURRENT}`);
   console.log(`API Version: ${version}`);
   console.log(`Running on Node.js version: ${config.NODE_JS_VERSION}`);
+
+  // Initialize Firebase Remote Config
+  await initializeRemoteConfig();
+
   console.log('All routes registered and server ready!');
 });
