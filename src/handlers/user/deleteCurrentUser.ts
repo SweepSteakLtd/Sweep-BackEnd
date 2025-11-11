@@ -1,4 +1,7 @@
+import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
+import { users } from '../../models';
+import { database } from '../../services';
 
 /**
  * Delete current user (authenticated endpoint)
@@ -6,9 +9,14 @@ import { NextFunction, Request, Response } from 'express';
  */
 export const deleteCurrentUserHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Mock successful deletion - return 204 No Content
-    // In a real implementation, you would delete the user from the database
-    return res.status(204).send({ data: {}, is_mock: true });
+    const { id } = req.query;
+    // TODO: REMOVE for now just used for testing
+    await database
+      .delete(users)
+      .from(users)
+      .where(eq(users.id, id as string));
+
+    return res.status(204).send({ data: { deleted: true } });
   } catch (error: any) {
     console.log(`DELETE CURRENT USER ERROR: ${error.message} 🛑`);
     return res.status(500).send({
