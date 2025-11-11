@@ -9,12 +9,12 @@ import { database } from '../../services';
  */
 export const deleteCurrentUserHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.query;
+    const { email } = req.query;
     // TODO: REMOVE for now just used for testing
     await database
       .delete(users)
       .from(users)
-      .where(eq(users.id, id as string));
+      .where(eq(users.email, email as string));
 
     return res.status(204).send({ data: { deleted: true } });
   } catch (error: any) {
