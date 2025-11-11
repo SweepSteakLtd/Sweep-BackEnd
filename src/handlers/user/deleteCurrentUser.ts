@@ -13,7 +13,6 @@ export const deleteCurrentUserHandler = async (req: Request, res: Response, next
     // TODO: REMOVE for now just used for testing
     await database
       .delete(users)
-      .from(users)
       .where(eq(users.email, email as string)).execute();
 
     return res.status(204).send({ data: { deleted: true } });
