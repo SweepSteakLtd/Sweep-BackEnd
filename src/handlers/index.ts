@@ -64,3 +64,7 @@ export * from './admin/users/updateUser';
 
 // Tournament handlers
 export * from './tournaments/getTournaments';
+
+// Phone verification handlers
+export * from './phone-verification/sendVerificationCode';
+export * from './phone-verification/verifyCode';
