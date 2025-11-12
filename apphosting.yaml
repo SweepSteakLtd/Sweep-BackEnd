@@ -3,6 +3,9 @@ runConfig:
   cpu: 1
   memory: 1GiB
   concurrency: 100
+  vpcAccess:
+    egress: ALL_TRAFFIC
+    connector: sweepstake-connector 
 env:
   - variable: APPLIED_ENV
     value: development
