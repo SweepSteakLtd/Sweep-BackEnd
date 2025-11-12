@@ -31,6 +31,7 @@ import {
   getPlayersByTournamentHandler,
   getTournamentsHandler,
   getTransactionsHandler,
+  sendVerificationCodeHandler,
   updateBetHandler,
   updateCurrentUserHandler,
   updateLeagueAdminHandler,
@@ -39,6 +40,7 @@ import {
   updateTournamentHandler,
   updateTransactionHandler,
   updateUserHandler,
+  verifyCodeHandler,
 } from '../handlers';
 import {
   AuthenticateAdminMiddleware,
@@ -211,6 +213,21 @@ export const routes: RouteDescription[] = [
         method: 'get',
         name: '/',
         stack: [AuthenticateMiddleware, getActivityHandler],
+      },
+    ],
+  },
+  {
+    apiName: 'phone-verification',
+    endpoints: [
+      {
+        method: 'post',
+        name: '/send',
+        stack: [sendVerificationCodeHandler],
+      },
+      {
+        method: 'get',
+        name: '/:verificationId',
+        stack: [verifyCodeHandler],
       },
     ],
   },

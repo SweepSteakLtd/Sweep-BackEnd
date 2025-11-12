@@ -1,6 +1,6 @@
 {
   "name": "sweepsteak-backend",
-  "version": "1.0.49",
+  "version": "1.0.50",
   "description": "New backend project starter",
   "main": "build/index.js",
   "private": "true",
@@ -45,8 +45,7 @@
     "nanoid": "^5.1.6",
     "pg": "^8.16.3",
     "postgres": "3.4.5",
-    "ts-node": "10.9.2",
-    "twilio": "^5.10.5"
+    "ts-node": "10.9.2"
   },
   "devDependencies": {
     "@types/cors": "2.8.19",

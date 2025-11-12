@@ -189,7 +189,6 @@ export const updateCurrentUserHandler = async (req: Request, res: Response, next
         }
       }
 
-      // Validate line1 is a string
       if (
         typeof req.body.address.line1 !== 'string' ||
         req.body.address.line1.trim() === ''
