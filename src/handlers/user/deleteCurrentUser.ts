@@ -15,7 +15,7 @@ export const deleteCurrentUserHandler = async (req: Request, res: Response, next
       .delete(users)
       .where(eq(users.email, email as string)).execute();
 
-    return res.status(204).send({ data: { deleted: true } });
+    return res.status(200).send({ data: { deleted: true } });
   } catch (error: any) {
     console.log(`DELETE CURRENT USER ERROR: ${error.message} 🛑`);
     return res.status(500).send({
@@ -24,6 +24,7 @@ export const deleteCurrentUserHandler = async (req: Request, res: Response, next
     });
   }
 };
+deleteCurrentUserHandler.apiDescription = {}
 
 // for now endpoint is deprecated
 // deleteCurrentUserHandler.apiDescription = {get
