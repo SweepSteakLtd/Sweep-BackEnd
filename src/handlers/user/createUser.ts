@@ -2,6 +2,11 @@ import { createId } from '@paralleldrive/cuid2';
 import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { handleGBGError, verifyIdentity } from '../../integrations/GBG/GBG';
+import {
+  checkGamstopRegistration,
+  GamstopCheckResult,
+  handleGamstopError,
+} from '../../integrations/Gamstop/gamstop';
 import { Deposit, depositLimits, User, users } from '../../models';
 import { database, fetchRemoteConfig } from '../../services';
 import {
@@ -24,7 +29,8 @@ import { Validators as StringValidators, validateEmail } from '../validators/str
  * @body bio - string - optional
  * @body profile_picture - string - optional
  * @body phone_number - string - required
- * @body date_of_birth - string - optional (YYYY-MM-DD format, required for GBG verification)
+ * @body date_of_birth - string - required (YYYY-MM-DD format, required for Gamstop verification)
+ * @body address - object - required (required for Gamstop and GBG verification)
  * @body game_stop_id - string - optional
  * @body is_auth_verified - boolean - optional
  * @body is_identity_verified - boolean - optional
@@ -32,7 +38,6 @@ import { Validators as StringValidators, validateEmail } from '../validators/str
  * @body betting_limit - number - optional
  * @body payment_id - string - optional
  * @body current_balance - number - optional
- * @body address - object - optional (triggers GBG verification if provided)
  * @body is_self_exclusion - boolean - optional
  * @body exclusion_ending - string - optional
  * @returns User
@@ -78,8 +83,15 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
       });
     }
 
-    // Validate required fields
-    const fieldsToValidate = ['first_name', 'last_name', 'phone_number', 'deposit_limit'];
+    // Validate required fields (including date_of_birth and address for Gamstop check)
+    const fieldsToValidate = [
+      'first_name',
+      'last_name',
+      'phone_number',
+      'deposit_limit',
+      'date_of_birth',
+      'address',
+    ];
     for (const field of fieldsToValidate) {
       if (!req.body[field]) {
         console.log(`[DEBUG] Missing required field: ${field}`);
@@ -179,143 +191,164 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
       });
     }
 
-    // Validate optional date_of_birth
-    if (req.body.date_of_birth !== undefined && req.body.date_of_birth !== null) {
-      if (typeof req.body.date_of_birth !== 'string') {
-        console.log('[DEBUG] Invalid date_of_birth: must be a string');
+    // Validate date_of_birth (required for Gamstop check)
+    if (typeof req.body.date_of_birth !== 'string') {
+      console.log('[DEBUG] Invalid date_of_birth: must be a string');
+      return res.status(422).send({
+        error: 'Invalid request body',
+        message: 'date_of_birth must be a string in YYYY-MM-DD format',
+      });
+    }
+
+    // Validate date format (YYYY-MM-DD)
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(req.body.date_of_birth)) {
+      console.log('[DEBUG] Invalid date_of_birth format');
+      return res.status(422).send({
+        error: 'Invalid request body',
+        message: 'date_of_birth must be in YYYY-MM-DD format',
+      });
+    }
+
+    // Validate it's a valid date
+    const dobDate = new Date(req.body.date_of_birth);
+    if (isNaN(dobDate.getTime())) {
+      console.log('[DEBUG] Invalid date_of_birth: not a valid date');
+      return res.status(422).send({
+        error: 'Invalid request body',
+        message: 'date_of_birth must be a valid date',
+      });
+    }
+
+    // Validate user is at least 18 years old
+    const today = new Date();
+    const age = today.getFullYear() - dobDate.getFullYear();
+    const monthDiff = today.getMonth() - dobDate.getMonth();
+    const dayDiff = today.getDate() - dobDate.getDate();
+    const actualAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age;
+
+    if (actualAge < 18) {
+      console.log('[DEBUG] User must be at least 18 years old');
+      return res.status(422).send({
+        error: 'Invalid request body',
+        message: 'User must be at least 18 years old',
+      });
+    }
+
+    // Validate address (required for Gamstop check)
+    if (typeof req.body.address !== 'object' || req.body.address === null) {
+      console.log('[DEBUG] Invalid address: must be an object');
+      return res.status(422).send({
+        error: 'Invalid request body',
+        message: 'address must be an object',
+      });
+    }
+
+    // Validate required address fields
+    const requiredAddressFields = ['line1', 'line2', 'town', 'postcode', 'country'];
+    for (const field of requiredAddressFields) {
+      if (!req.body.address[field]) {
+        console.log(`[DEBUG] Invalid address.${field}: required field missing`);
         return res.status(422).send({
           error: 'Invalid request body',
-          message: 'date_of_birth must be a string in YYYY-MM-DD format',
-        });
-      }
-
-      // Validate date format (YYYY-MM-DD)
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!dateRegex.test(req.body.date_of_birth)) {
-        console.log('[DEBUG] Invalid date_of_birth format');
-        return res.status(422).send({
-          error: 'Invalid request body',
-          message: 'date_of_birth must be in YYYY-MM-DD format',
-        });
-      }
-
-      // Validate it's a valid date
-      const dobDate = new Date(req.body.date_of_birth);
-      if (isNaN(dobDate.getTime())) {
-        console.log('[DEBUG] Invalid date_of_birth: not a valid date');
-        return res.status(422).send({
-          error: 'Invalid request body',
-          message: 'date_of_birth must be a valid date',
-        });
-      }
-
-      // Validate user is at least 18 years old
-      const today = new Date();
-      const age = today.getFullYear() - dobDate.getFullYear();
-      const monthDiff = today.getMonth() - dobDate.getMonth();
-      const dayDiff = today.getDate() - dobDate.getDate();
-      const actualAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age;
-
-      if (actualAge < 18) {
-        console.log('[DEBUG] User must be at least 18 years old');
-        return res.status(422).send({
-          error: 'Invalid request body',
-          message: 'User must be at least 18 years old',
+          message: `address.${field} is required`,
         });
       }
     }
 
-    // Validate optional address
-    if (req.body.address !== undefined && req.body.address !== null) {
-      if (typeof req.body.address !== 'object') {
-        console.log('[DEBUG] Invalid address: must be an object');
+    // Validate line1 is a string
+    if (typeof req.body.address.line1 !== 'string' || req.body.address.line1.trim() === '') {
+      console.log('[DEBUG] Invalid address.line1: must be non-empty string');
+      return res.status(422).send({
+        error: 'Invalid request body',
+        message: 'address.line1 must be a non-empty string',
+      });
+    }
+
+    // Validate line2 is a string
+    if (typeof req.body.address.line2 !== 'string' || req.body.address.line2.trim() === '') {
+      console.log('[DEBUG] Invalid address.line2: must be non-empty string');
+      return res.status(422).send({
+        error: 'Invalid request body',
+        message: 'address.line2 must be a non-empty string',
+      });
+    }
+
+    // Validate line3 if provided
+    if (req.body.address.line3 !== undefined && req.body.address.line3 !== null) {
+      if (typeof req.body.address.line3 !== 'string') {
+        console.log('[DEBUG] Invalid address.line3: must be a string');
         return res.status(422).send({
           error: 'Invalid request body',
-          message: 'address must be an object',
+          message: 'address.line3 must be a string',
         });
       }
+    }
 
-      // Validate required address fields
-      const requiredAddressFields = ['line1', 'line2', 'town', 'postcode', 'country'];
-      for (const field of requiredAddressFields) {
-        if (!req.body.address[field]) {
-          console.log(`[DEBUG] Invalid address.${field}: required field missing`);
-          return res.status(422).send({
-            error: 'Invalid request body',
-            message: `address.${field} is required`,
-          });
-        }
-      }
+    // Validate town is a string
+    if (typeof req.body.address.town !== 'string' || req.body.address.town.trim() === '') {
+      console.log('[DEBUG] Invalid address.town: must be non-empty string');
+      return res.status(422).send({
+        error: 'Invalid request body',
+        message: 'address.town must be a non-empty string',
+      });
+    }
 
-      // Validate line1 is a string
-      if (typeof req.body.address.line1 !== 'string' || req.body.address.line1.trim() === '') {
-        console.log('[DEBUG] Invalid address.line1: must be non-empty string');
+    // Validate county if provided
+    if (req.body.address.county !== undefined && req.body.address.county !== null) {
+      if (typeof req.body.address.county !== 'string' || req.body.address.county.trim() === '') {
+        console.log('[DEBUG] Invalid address.county: must be non-empty string');
         return res.status(422).send({
           error: 'Invalid request body',
-          message: 'address.line1 must be a non-empty string',
+          message: 'address.county must be a non-empty string',
         });
       }
+    }
 
-      // Validate line2 is a string
-      if (typeof req.body.address.line2 !== 'string' || req.body.address.line2.trim() === '') {
-        console.log('[DEBUG] Invalid address.line2: must be non-empty string');
-        return res.status(422).send({
-          error: 'Invalid request body',
-          message: 'address.line2 must be a non-empty string',
-        });
-      }
+    // Validate postcode is a string
+    if (typeof req.body.address.postcode !== 'string' || req.body.address.postcode.trim() === '') {
+      console.log('[DEBUG] Invalid address.postcode: must be non-empty string');
+      return res.status(422).send({
+        error: 'Invalid request body',
+        message: 'address.postcode must be a non-empty string',
+      });
+    }
 
-      // Validate line3 if provided
-      if (req.body.address.line3 !== undefined && req.body.address.line3 !== null) {
-        if (typeof req.body.address.line3 !== 'string') {
-          console.log('[DEBUG] Invalid address.line3: must be a string');
-          return res.status(422).send({
-            error: 'Invalid request body',
-            message: 'address.line3 must be a string',
-          });
-        }
-      }
+    // Validate country format (ISO 3166-1 alpha-2)
+    if (typeof req.body.address.country !== 'string') {
+      console.log('[DEBUG] Invalid address.country: must be a string');
+      return res.status(422).send({
+        error: 'Invalid request body',
+        message: 'address.country must be a string',
+      });
+    }
 
-      // Validate town is a string
-      if (typeof req.body.address.town !== 'string' || req.body.address.town.trim() === '') {
-        console.log('[DEBUG] Invalid address.town: must be non-empty string');
-        return res.status(422).send({
-          error: 'Invalid request body',
-          message: 'address.town must be a non-empty string',
-        });
-      }
+    let gamstopResult: GamstopCheckResult | undefined;
+    console.log('[DEBUG] Starting Gamstop self-exclusion check for new user');
+    try {
+      gamstopResult = await checkGamstopRegistration({
+        first_name: req.body.first_name,
+        last_name: req.body.last_name,
+        date_of_birth: req.body.date_of_birth,
+        email: res.locals.email,
+        postcode: req.body.address.postcode,
+        phone: req.body.phone_number,
+      });
 
-      // Validate county if provided
-      if (req.body.address.county !== undefined && req.body.address.county !== null) {
-        if (typeof req.body.address.county !== 'string' || req.body.address.county.trim() === '') {
-          console.log('[DEBUG] Invalid address.county: must be non-empty string');
-          return res.status(422).send({
-            error: 'Invalid request body',
-            message: 'address.county must be a non-empty string',
-          });
-        }
-      }
+      console.log('[DEBUG] Gamstop check passed - user is not self-excluded');
+    } catch (error: any) {
+      console.error('[DEBUG] Gamstop check failed:', error.message);
+      const gamstopError = handleGamstopError(error);
+      console.error('[DEBUG] Gamstop error code:', gamstopError.code);
+      console.error('[DEBUG] Gamstop error message:', gamstopError.message);
 
-      // Validate postcode is a string
-      if (
-        typeof req.body.address.postcode !== 'string' ||
-        req.body.address.postcode.trim() === ''
-      ) {
-        console.log('[DEBUG] Invalid address.postcode: must be non-empty string');
-        return res.status(422).send({
-          error: 'Invalid request body',
-          message: 'address.postcode must be a non-empty string',
-        });
-      }
-
-      // Validate country format (ISO 3166-1 alpha-2)
-      if (typeof req.body.address.country !== 'string') {
-        console.log('[DEBUG] Invalid address.country: must be a string');
-        return res.status(422).send({
-          error: 'Invalid request body',
-          message: 'address.country must be a string',
-        });
-      }
+      // Gamstop check failure blocks user creation for safety
+      return res.status(503).send({
+        error: 'Service Unavailable',
+        message:
+          'Unable to verify self-exclusion status. Please try again later or contact support.',
+        details: gamstopError.message,
+      });
     }
 
     // ========================================================================
@@ -403,7 +436,7 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
       bio: req.body.bio || '',
       profile_picture: req.body.profile_picture || '',
       phone_number: req.body.phone_number,
-      game_stop_id: req.body.game_stop_id || '',
+      game_stop_id: gamstopResult.registration_id || '',
       is_auth_verified: req.body.is_auth_verified || false,
       is_identity_verified: isIdentityVerified,
       deposit_id: depositId,
@@ -441,7 +474,7 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
 createUserHandler.apiDescription = {
   summary: 'Create a new user',
   description:
-    'Creates a new user account with optional GBG identity verification. Email is automatically extracted from authentication. If address and date_of_birth are provided, GBG identity verification will be performed automatically. Verification results are stored in is_identity_verified and kyc_completed fields.',
+    'Creates a new user account with mandatory Gamstop self-exclusion check and GBG identity verification. Email is automatically extracted from authentication. All users must provide date_of_birth and address for Gamstop verification. If user is registered with Gamstop, account creation will be blocked. GBG identity verification is performed automatically.',
   operationId: 'createUser',
   tags: ['users'],
   responses: {
@@ -511,18 +544,68 @@ createUserHandler.apiDescription = {
         },
       },
     },
+    403: {
+      description: 'Forbidden - User is registered with Gamstop self-exclusion service',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string', example: 'Self-Exclusion Active' },
+              message: {
+                type: 'string',
+                example:
+                  'Cannot create account. You are currently registered with Gamstop self-exclusion service.',
+              },
+              exclusion_type: {
+                type: 'string',
+                enum: ['Y', 'P'],
+                description: 'Y = Excluded, P = Partial Match',
+              },
+              gamstop_unique_id: { type: 'string', description: 'Gamstop unique reference ID' },
+            },
+          },
+        },
+      },
+    },
     422: standardResponses[422],
-    403: standardResponses[403],
     500: standardResponses[500],
+    503: {
+      description: 'Service Unavailable - Gamstop verification service is unavailable',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string', example: 'Service Unavailable' },
+              message: {
+                type: 'string',
+                example:
+                  'Unable to verify self-exclusion status. Please try again later or contact support.',
+              },
+              details: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
   },
   requestBody: {
-    description: 'User registration details. Email is extracted from authentication token.',
+    description:
+      'User registration details. Email is extracted from authentication token. date_of_birth and address are required for mandatory Gamstop self-exclusion verification.',
     required: true,
     content: {
       'application/json': {
         schema: {
           type: 'object',
-          required: ['first_name', 'last_name', 'phone_number', 'deposit_limit'],
+          required: [
+            'first_name',
+            'last_name',
+            'phone_number',
+            'deposit_limit',
+            'date_of_birth',
+            'address',
+          ],
           properties: {
             first_name: {
               type: 'string',
@@ -594,9 +677,8 @@ createUserHandler.apiDescription = {
               type: 'string',
               format: 'date',
               pattern: '^\\d{4}-\\d{2}-\\d{2}$',
-              nullable: true,
               description:
-                'Date of birth in YYYY-MM-DD format. Required for identity verification via GBG. User must be at least 18 years old.',
+                'Date of birth in YYYY-MM-DD format. Required for Gamstop self-exclusion check and GBG identity verification. User must be at least 18 years old.',
               example: '1990-01-15',
             },
             address: addressSchema,
@@ -604,7 +686,7 @@ createUserHandler.apiDescription = {
         },
         examples: {
           standard: {
-            summary: 'Standard user registration with GBG verification',
+            summary: 'Standard user registration with Gamstop check and GBG verification',
             value: {
               first_name: 'John',
               last_name: 'Doe',
@@ -627,12 +709,20 @@ createUserHandler.apiDescription = {
             },
           },
           minimal: {
-            summary: 'Minimal required fields (no identity verification)',
+            summary: 'Minimal required fields with Gamstop verification',
             value: {
               first_name: 'Jane',
               last_name: 'Smith',
               phone_number: '+19876543210',
+              date_of_birth: '1985-03-20',
               deposit_limit: { daily: 50, weekly: 250, monthly: 1000 },
+              address: {
+                line1: '456 Oak Street',
+                line2: 'Flat 2',
+                town: 'London',
+                postcode: 'SW1A 1AA',
+                country: 'GB',
+              },
             },
           },
         },
