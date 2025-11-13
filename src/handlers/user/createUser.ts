@@ -245,7 +245,7 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
     }
 
     // Validate required address fields
-    const requiredAddressFields = ['line1', 'line2', 'town', 'postcode', 'country'];
+    const requiredAddressFields = ['line1', 'town', 'postcode', 'country'];
     for (const field of requiredAddressFields) {
       if (!req.body.address[field]) {
         console.log(`[DEBUG] Invalid address.${field}: required field missing`);
@@ -262,15 +262,6 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
       return res.status(422).send({
         error: 'Invalid request body',
         message: 'address.line1 must be a non-empty string',
-      });
-    }
-
-    // Validate line2 is a string
-    if (typeof req.body.address.line2 !== 'string' || req.body.address.line2.trim() === '') {
-      console.log('[DEBUG] Invalid address.line2: must be non-empty string');
-      return res.status(422).send({
-        error: 'Invalid request body',
-        message: 'address.line2 must be a non-empty string',
       });
     }
 
