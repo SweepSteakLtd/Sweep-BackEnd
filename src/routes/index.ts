@@ -16,6 +16,7 @@ import {
   deleteTournamentHandler,
   deleteTransactionHandler,
   deleteUserHandler,
+  fetchGBGStateHandler,
   getActivityHandler,
   getAllLeaguesAdminHandler,
   getAllLeaguesHandler,
@@ -107,6 +108,7 @@ export const routes: RouteDescription[] = [
         name: '/me',
         stack: [AuthenticateMiddleware, deleteCurrentUserHandler],
       },
+      { method: 'get', name: '/verify/gbg', stack: [AuthenticateMiddleware, fetchGBGStateHandler] },
     ],
   },
   {

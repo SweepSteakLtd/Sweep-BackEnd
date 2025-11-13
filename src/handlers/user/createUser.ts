@@ -345,21 +345,20 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
     // ========================================================================
     // GBG Identity Verification
     // ========================================================================
-    let isIdentityVerified = req.body.is_identity_verified || false;
-    let kycCompleted = false;
-    let kycInstanceId = '';
-    let manualReviewRequested = false;
+    // let isIdentityVerified = req.body.is_identity_verified || false;
+    // let kycCompleted = false;
+    // let kycInstanceId = '';
 
     // Fetch Remote Config for GBG Resource ID
     const remoteConfig = await fetchRemoteConfig();
     console.log('[DEBUG] GBG Resource ID from Remote Config:', remoteConfig.gbg_resource_id);
-
+    let gbg_instance_id: string | undefined;
     // Perform GBG verification if address is provided
     if (req.body.address && req.body.address !== null) {
       console.log('[DEBUG] Starting GBG identity verification for new user');
       const { first_name, last_name, birthday, address } = req.body;
       try {
-        const verificationResult = await verifyIdentity(
+        gbg_instance_id = await verifyIdentity(
           {
             first_name: first_name,
             last_name: last_name,
@@ -370,25 +369,6 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
           },
           remoteConfig.gbg_resource_id,
         );
-
-        if (
-          verificationResult.decision === 'Decision: Pass 1+1' ||
-          verificationResult.decision === 'Decision: Pass 2+2'
-        ) {
-          isIdentityVerified = true;
-          kycCompleted = true;
-          console.log('[DEBUG] GBG verification successful');
-        } else if (verificationResult.decision === 'Decision: Manual review') {
-          manualReviewRequested = true;
-        } else {
-          console.log('[DEBUG] GBG verification failed or requires review');
-          return res.status(422).send({
-            error: 'Failed KYC verification',
-            message: 'Cannot create account as user is not passing KYC verification',
-          });
-        }
-
-        kycInstanceId = verificationResult.instanceId;
       } catch (error: any) {
         console.error('[DEBUG] GBG verification error:', error.message);
         const gbgError = handleGBGError(error);
@@ -429,14 +409,14 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
       phone_number: req.body.phone_number,
       game_stop_id: gamstopResult.registration_id || '',
       is_auth_verified: req.body.is_auth_verified || false,
-      is_identity_verified: isIdentityVerified,
+      is_identity_verified: false,
       deposit_id: depositId,
       betting_limit: req.body.betting_limit || 0,
       payment_id: req.body.payment_id || '',
       current_balance: req.body.current_balance || 0,
       is_admin: false,
-      kyc_completed: kycCompleted,
-      kyc_instance_id: kycInstanceId,
+      kyc_completed: false,
+      kyc_instance_id: gbg_instance_id,
       exclusion_ending: new Date(),
       is_self_excluded: false,
       address: req.body.address,
@@ -451,7 +431,7 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
     console.log('[DEBUG] New user created with ID:', userObject.id);
     return res.status(201).send({
       data: userObject,
-      kyc_manual_review_requested: manualReviewRequested,
+      ...(gbg_instance_id ? { gbg_instance_id } : {}),
     });
   } catch (error: any) {
     console.log(`[DEBUG] USER CREATION ERROR: ${error.message} 🛑`);

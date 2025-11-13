@@ -109,12 +109,6 @@ const applyRootConfiguration = (appObject: Express): Express => {
 export const app = applyRootConfiguration(plainApp);
 app.use('/swaggerui', oapi.swaggerui());
 
-app.use('/ip', async (req, res, next) => {
-  const response = await fetch('https://ifconfig.me/ip').then(r => r.text());
-  console.log('Outbound IP:', response);
-  res.send(response);
-});
-
 console.log('SERVER APP GENERATED');
 app.listen(parseInt(process.env.PORT) || 8080, async () => {
   console.log(`APP LISTENING ON PORT ${process.env.PORT || 8080}, environment: ${env.CURRENT}`);

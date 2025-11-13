@@ -105,12 +105,7 @@ type Decision =
   | 'Decision: Pass 1+1'
   | 'Decision: Pass 2+2';
 
-interface JourneyResult {
-  decision: Decision;
-  instanceId: string;
-}
-
-const getAuthToken = async (): Promise<AuthResponse> => {
+export const getAuthToken = async (): Promise<AuthResponse> => {
   const res = await fetch('https://api.auth.gbgplc.com/as/token.oauth2', {
     method: 'POST',
     headers: {
@@ -162,7 +157,7 @@ const startJourney = async (
   return result;
 };
 
-const fetchState = async (instanceId: string, authToken?: AuthResponse) => {
+export const fetchState = async (instanceId: string, authToken?: AuthResponse) => {
   const token = authToken || (await getAuthToken());
 
   const res = await fetch('https://eu.platform.go.gbgplc.com/captain/api/journey/state/fetch', {
@@ -206,10 +201,7 @@ const fetchState = async (instanceId: string, authToken?: AuthResponse) => {
  * @param resourceId Optional GBG Resource ID (defaults to hardcoded value)
  * @returns Complete journey result
  */
-export const verifyIdentity = async (
-  person: PersonData,
-  resourceId: string,
-): Promise<JourneyResult> => {
+export const verifyIdentity = async (person: PersonData, resourceId: string): Promise<string> => {
   if (!person.address) {
     throw new Error('Address is required for identity verification');
   }
@@ -257,32 +249,11 @@ export const verifyIdentity = async (
 
   const lines = [line1, line2, line3].filter(item => item);
 
-  console.log(
-    '[DEBUG]:',
-    JSON.stringify({
-      firstName: person.first_name,
-      lastNames: [person.last_name],
-      dateOfBirth: person.birthday,
-      currentAddress: {
-        lines: lines,
-        locality: town,
-        postalCode: postcode,
-        country: 'GB',
-        addressString: `${lines.join(',')}, ${postcode}, United Kingdom`,
-        premise,
-        thoroughfare: thoroughfare,
-        administrativeArea: 'England',
-        subAdministrativeArea: line2,
-      },
-      emails: person.email ? [{ type: 'private', email: person.email }] : undefined,
-      phones: person.phone_number ? [{ type: 'mobile', number: person.phone_number }] : undefined,
-    }),
-  );
-
   // Build the GBG request format according to schema
   const journeyRequest: StartJourneyRequest = {
     resourceId: resourceId,
     context: {
+      config: { async: true },
       subject: {
         identity: {
           firstName: person.first_name,
@@ -312,21 +283,23 @@ export const verifyIdentity = async (
   // Start journey with identity data (reuse auth token)
   const journey = await startJourney(journeyRequest, authToken);
   console.log('[DEBUG] GBG journey started:', journey.instanceId);
-  const fetchResult = await fetchState(journey.instanceId, authToken);
-  const finalResult = Object.values(fetchResult.data.context.process.flow).filter(
-    value => !!value._ggo,
-  );
 
-  if (
-    fetchResult.status === 'Completed' ||
-    (fetchResult.status === 'inProgress' &&
-      finalResult[0].result.outcome === 'Decision: Manual review')
-  ) {
-    return {
-      decision: finalResult[0].result.outcome, //"PASS" | "FAIL" | "MANUAL"
-      instanceId: journey.instanceId,
-    };
-  }
+  return journey.instanceId;
+  // const fetchResult = await fetchState(journey.instanceId, authToken);
+  // const finalResult = Object.values(fetchResult.data.context.process.flow).filter(
+  //   value => !!value._ggo,
+  // );
+
+  // if (
+  //   fetchResult.status === 'Completed' ||
+  //   (fetchResult.status === 'inProgress' &&
+  //     finalResult[0].result.outcome === 'Decision: Manual review')
+  // ) {
+  //   return {
+  //     decision: finalResult[0].result.outcome, //"PASS" | "FAIL" | "MANUAL"
+  //     instanceId: journey.instanceId,
+  //   };
+  // }
 };
 
 // ============================================================================
