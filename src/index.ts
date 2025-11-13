@@ -110,7 +110,7 @@ export const app = applyRootConfiguration(plainApp);
 app.use('/swaggerui', oapi.swaggerui());
 
 app.use('/ip', async (req, res, next) => {
-  const response = fetch('https://ifconfig.me/ip').then(r => r.text());
+  const response = await fetch('https://ifconfig.me/ip').then(r => r.text());
   console.log('Outbound IP:', response);
   res.send(response);
 });
