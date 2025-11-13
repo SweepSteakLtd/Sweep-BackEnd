@@ -255,6 +255,28 @@ export const verifyIdentity = async (
 
   const premise = extractPremise(line1);
 
+  console.log(
+    '[DEBUG]:',
+    JSON.stringify({
+      firstName: person.first_name,
+      lastNames: [person.last_name],
+      dateOfBirth: person.birthday,
+      currentAddress: {
+        lines: [line1, line2, line3],
+        locality: town,
+        postalCode: postcode,
+        country: 'GB',
+        addressString: `${line1}, ${line2}, ${line3}, ${postcode}, United Kingdom`,
+        premise,
+        thoroughfare: thoroughfare,
+        administrativeArea: 'England',
+        subAdministrativeArea: line2,
+      },
+      emails: person.email ? [{ type: 'private', email: person.email }] : undefined,
+      phones: person.phone_number ? [{ type: 'mobile', number: person.phone_number }] : undefined,
+    }),
+  );
+
   // Build the GBG request format according to schema
   const journeyRequest: StartJourneyRequest = {
     resourceId: resourceId,
