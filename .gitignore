@@ -12,3 +12,4 @@ scripts/payment-ids-prod.ts
 scripts/reports
 .DS_Store
 certs
+command_docs.txt

@@ -106,6 +106,8 @@ const applyRootConfiguration = (appObject: Express): Express => {
   return appObject;
 };
 
+fetch('https://ifconfig.me/ip').then(r => console.log('Outbound IP:', r.text()));
+
 export const app = applyRootConfiguration(plainApp);
 app.use('/swaggerui', oapi.swaggerui());
 
