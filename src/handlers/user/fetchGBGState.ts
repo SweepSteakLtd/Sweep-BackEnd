@@ -43,7 +43,7 @@ export const fetchGBGStateHandler = async (req: Request, res: Response, next: Ne
 
     if (
       fetchResult.status === 'Completed' ||
-      (fetchResult.status === 'inProgress' &&
+      (fetchResult.status === 'InProgress' &&
         finalResult[0].result.outcome === 'Decision: Manual review')
     ) {
       // TODO: update user if completed
