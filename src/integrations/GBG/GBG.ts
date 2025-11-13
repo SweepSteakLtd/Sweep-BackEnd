@@ -255,7 +255,7 @@ export const verifyIdentity = async (
 
   const premise = extractPremise(line1);
 
-  const lines = [line1, line2, line3].filter(item => !item);
+  const lines = [line1, line2, line3].filter(item => item);
 
   console.log(
     '[DEBUG]:',
