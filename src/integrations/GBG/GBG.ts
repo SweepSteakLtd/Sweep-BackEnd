@@ -255,6 +255,8 @@ export const verifyIdentity = async (
 
   const premise = extractPremise(line1);
 
+  const lines = [line1, line2, line3].filter(item => !item);
+
   console.log(
     '[DEBUG]:',
     JSON.stringify({
@@ -262,11 +264,11 @@ export const verifyIdentity = async (
       lastNames: [person.last_name],
       dateOfBirth: person.birthday,
       currentAddress: {
-        lines: [line1, line2, line3],
+        lines: lines,
         locality: town,
         postalCode: postcode,
         country: 'GB',
-        addressString: `${line1}, ${line2}, ${line3}, ${postcode}, United Kingdom`,
+        addressString: `${lines.join(',')}, ${postcode}, United Kingdom`,
         premise,
         thoroughfare: thoroughfare,
         administrativeArea: 'England',
@@ -287,15 +289,14 @@ export const verifyIdentity = async (
           lastNames: [person.last_name],
           dateOfBirth: person.birthday,
           currentAddress: {
-            lines: [line1, line2, line3],
+            lines: lines,
             locality: town,
             postalCode: postcode,
             country: 'GB',
-            addressString: `${line1}, ${line2}, ${line3}, ${postcode}, United Kingdom`,
+            addressString: `${lines.join(',')}, ${postcode}, United Kingdom`,
             premise,
             thoroughfare: thoroughfare,
             administrativeArea: 'England',
-            subAdministrativeArea: line2,
           },
           emails: person.email ? [{ type: 'private', email: person.email }] : undefined,
           phones: person.phone_number
