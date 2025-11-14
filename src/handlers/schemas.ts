@@ -193,7 +193,7 @@ export const tournamentAdSchema = {
 
 export const tournamentSchema = {
   type: 'object',
-  required: ['id', 'name', 'starts_at', 'finishes_at'],
+  required: ['id', 'name', 'starts_at', 'finishes_at', 'colours', 'sport', 'rules'],
   properties: {
     id: { type: 'string', format: 'uuid', description: 'Unique tournament identifier' },
     name: { type: 'string', minLength: 1, maxLength: 200 },
@@ -209,6 +209,18 @@ export const tournamentSchema = {
     maximum_cut_amount: { type: 'number', minimum: 0, nullable: true },
     maximum_score_generator: { type: 'number', minimum: 0, nullable: true },
     players: { type: 'array', items: { type: 'string' }, default: [] },
+    colours: {
+      type: 'object',
+      required: ['primary', 'secondary', 'highlight'],
+      properties: {
+        primary: { type: 'string', description: 'Primary colour' },
+        secondary: { type: 'string', description: 'Secondary colour' },
+        highlight: { type: 'string', description: 'Highlight colour' },
+      },
+    },
+    sport: { type: 'string', enum: ['Golf'], description: 'Sport type' },
+    rules: { type: 'array', items: { type: 'string' }, minItems: 1, description: 'Tournament rules' },
+    instructions: { type: 'array', items: { type: 'string' }, default: [], description: 'Tournament instructions' },
     created_at: { type: 'string', format: 'date-time' },
     updated_at: { type: 'string', format: 'date-time' },
   },

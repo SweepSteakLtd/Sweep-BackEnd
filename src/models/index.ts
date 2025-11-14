@@ -31,6 +31,12 @@ export interface Address {
   country: string;
 }
 
+export interface TournamentColours {
+  primary?: string;
+  secondary?: string;
+  highlight?: string;
+}
+
 // Main Tables
 export const users = pgTable('Users', {
   id: text('id').primaryKey().notNull(), // required
@@ -131,6 +137,10 @@ export const tournaments = pgTable('Tournament', {
   maximum_cut_amount: integer('maximum_cut_amount').notNull(), // required
   maximum_score_generator: integer('maximum_score_generator').notNull(), // required
   players: text('players').array().default([]).notNull(), // required
+  colours: jsonb('colours').$type<TournamentColours>().default({}), // required
+  sport: text('sport').notNull().default("Golf"), // required
+  rules: text('rules').array().notNull(), // required
+  instructions: text('instructions').array().default([]), // optional, default []
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });

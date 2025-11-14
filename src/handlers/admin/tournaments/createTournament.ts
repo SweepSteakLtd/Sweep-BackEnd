@@ -19,6 +19,10 @@ import { apiKeyAuth, dataWrapper, standardResponses, tournamentSchema } from '..
  * @body maximum_cut_amount - number - required
  * @body maximum_score_generator - number - required
  * @body players - array - required
+ * @body colours - {primary: string; secondary: string; highlight: string;} - required
+ * @body sport - enum Gold - required - enum will get updated later on
+ * @body rules - array<string> - required
+ * @body instructions - array<string> - optional
  * @returns Tournament
  */
 export const createTournamentHandler = async (req: Request, res: Response, next: NextFunction) => {
@@ -37,6 +41,10 @@ export const createTournamentHandler = async (req: Request, res: Response, next:
       holes,
       ads,
       name,
+      colours,
+      sport,
+      rules,
+      instructions,
     } = req.body as Tournament;
 
     if (
@@ -46,11 +54,22 @@ export const createTournamentHandler = async (req: Request, res: Response, next:
       maximum_cut_amount === undefined ||
       maximum_score_generator === undefined ||
       !players ||
-      players.length === 0
+      players.length === 0 ||
+      !colours ||
+      !sport ||
+      !rules ||
+      rules.length === 0
     ) {
       return res
         .status(422)
         .send({ error: 'Invalid request body', message: 'required properties missing' });
+    }
+
+    // Validate colours structure
+    if (!colours.primary || !colours.secondary || !colours.highlight) {
+      return res
+        .status(422)
+        .send({ error: 'Invalid request body', message: 'colours must have primary, secondary, and highlight properties' });
     }
 
     if (starts_at < new Date()) {
@@ -80,6 +99,10 @@ export const createTournamentHandler = async (req: Request, res: Response, next:
       gallery,
       holes,
       ads,
+      colours,
+      sport,
+      rules,
+      instructions,
       created_at: new Date(),
       updated_at: new Date(),
     };
@@ -129,6 +152,9 @@ createTournamentHandler.apiDescription = {
             'maximum_cut_amount',
             'maximum_score_generator',
             'players',
+            'colours',
+            'sport',
+            'rules',
           ],
           properties: {
             name: { type: 'string', minLength: 1, maxLength: 200, description: 'Tournament name' },
@@ -158,6 +184,33 @@ createTournamentHandler.apiDescription = {
               items: { type: 'string' },
               minItems: 1,
               description: 'Array of player IDs',
+            },
+            colours: {
+              type: 'object',
+              required: ['primary', 'secondary', 'highlight'],
+              properties: {
+                primary: { type: 'string', description: 'Primary colour for tournament branding' },
+                secondary: { type: 'string', description: 'Secondary colour for tournament branding' },
+                highlight: { type: 'string', description: 'Highlight colour for tournament branding' },
+              },
+              description: 'Tournament colour scheme',
+            },
+            sport: {
+              type: 'string',
+              enum: ['Golf'],
+              description: 'Sport type (currently only Golf is supported)',
+            },
+            rules: {
+              type: 'array',
+              items: { type: 'string' },
+              minItems: 1,
+              description: 'Array of tournament rules',
+            },
+            instructions: {
+              type: 'array',
+              items: { type: 'string' },
+              nullable: true,
+              description: 'Array of tournament instructions (optional)',
             },
             description: { type: 'string', nullable: true, description: 'Tournament description' },
             url: {

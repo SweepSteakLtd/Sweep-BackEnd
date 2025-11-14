@@ -431,7 +431,6 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
     console.log('[DEBUG] New user created with ID:', userObject.id);
     return res.status(201).send({
       data: userObject,
-      ...(gbg_instance_id ? { gbg_instance_id } : {}),
     });
   } catch (error: any) {
     console.log(`[DEBUG] USER CREATION ERROR: ${error.message} 🛑`);

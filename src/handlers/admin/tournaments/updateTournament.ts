@@ -20,6 +20,10 @@ import { dataWrapper, standardResponses, tournamentSchema } from '../../schemas'
  * @body maximum_cut_amount - number - optional
  * @body maximum_score_generator - number - optional
  * @body players - array - optional
+ * @body colours - {primary: string; secondary: string; highlight: string;} - optional
+ * @body sport - enum Golf - optional
+ * @body rules - array<string> - optional
+ * @body instructions - array<string> - optional
  * @returns Tournament
  */
 export const updateTournamentHandler = async (req: Request, res: Response, next: NextFunction) => {
@@ -38,6 +42,10 @@ export const updateTournamentHandler = async (req: Request, res: Response, next:
       'maximum_cut_amount',
       'maximum_score_generator',
       'players',
+      'colours',
+      'sport',
+      'rules',
+      'instructions',
     ];
 
     const { id } = req.params;
@@ -120,6 +128,33 @@ updateTournamentHandler.apiDescription = {
             maximum_cut_amount: { type: 'integer', minimum: 0 },
             maximum_score_generator: { type: 'integer', minimum: 0 },
             players: { type: 'array', items: { type: 'string' } },
+            colours: {
+              type: 'object',
+              required: ['primary', 'secondary', 'highlight'],
+              properties: {
+                primary: { type: 'string', description: 'Primary colour for tournament branding' },
+                secondary: { type: 'string', description: 'Secondary colour for tournament branding' },
+                highlight: { type: 'string', description: 'Highlight colour for tournament branding' },
+              },
+              description: 'Tournament colour scheme',
+            },
+            sport: {
+              type: 'string',
+              enum: ['Golf'],
+              description: 'Sport type (currently only Golf is supported)',
+            },
+            rules: {
+              type: 'array',
+              items: { type: 'string' },
+              minItems: 1,
+              description: 'Array of tournament rules',
+            },
+            instructions: {
+              type: 'array',
+              items: { type: 'string' },
+              nullable: true,
+              description: 'Array of tournament instructions (optional)',
+            },
             description: { type: 'string', nullable: true },
             url: { type: 'string', format: 'uri', nullable: true },
             cover_picture: { type: 'string', nullable: true },
