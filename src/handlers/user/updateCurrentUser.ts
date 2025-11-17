@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { Deposit, depositLimits, User, users } from '../../models';
+import { User, users } from '../../models';
 import { database } from '../../services';
 import {
   apiKeyAuth,
@@ -190,10 +190,7 @@ export const updateCurrentUserHandler = async (req: Request, res: Response, next
       }
 
       // Validate line1 is a string
-      if (
-        typeof req.body.address.line1 !== 'string' ||
-        req.body.address.line1.trim() === ''
-      ) {
+      if (typeof req.body.address.line1 !== 'string' || req.body.address.line1.trim() === '') {
         console.log('[DEBUG] Invalid address.line1: must be non-empty string');
         return res.status(422).send({
           error: 'Invalid request body',
@@ -202,10 +199,7 @@ export const updateCurrentUserHandler = async (req: Request, res: Response, next
       }
 
       // Validate line2 is a string
-      if (
-        typeof req.body.address.line2 !== 'string' ||
-        req.body.address.line2.trim() === ''
-      ) {
+      if (typeof req.body.address.line2 !== 'string' || req.body.address.line2.trim() === '') {
         console.log('[DEBUG] Invalid address.line2: must be non-empty string');
         return res.status(422).send({
           error: 'Invalid request body',
@@ -235,10 +229,7 @@ export const updateCurrentUserHandler = async (req: Request, res: Response, next
 
       // Validate county if provided
       if (req.body.address.county !== undefined && req.body.address.county !== null) {
-        if (
-          typeof req.body.address.county !== 'string' ||
-          req.body.address.county.trim() === ''
-        ) {
+        if (typeof req.body.address.county !== 'string' || req.body.address.county.trim() === '') {
           console.log('[DEBUG] Invalid address.county: must be non-empty string');
           return res.status(422).send({
             error: 'Invalid request body',
@@ -272,8 +263,7 @@ export const updateCurrentUserHandler = async (req: Request, res: Response, next
         console.log('[DEBUG] Invalid address.country: must be ISO 3166-1 alpha-2 format');
         return res.status(422).send({
           error: 'Invalid request body',
-          message:
-            'address.country must be a 2-letter uppercase country code (e.g., US, GB, CA)',
+          message: 'address.country must be a 2-letter uppercase country code (e.g., US, GB, CA)',
         });
       }
     }
@@ -321,24 +311,11 @@ export const updateCurrentUserHandler = async (req: Request, res: Response, next
     updatedUser['updated_at'] = new Date();
 
     if (req.body.deposit_limit) {
-      const existingDeposit: Deposit[] = await database
-        .select(depositLimits)
-        .from(depositLimits)
-        .where(eq(depositLimits.owner_id, res.locals.user.id))
-        .execute();
-
-      const { weekly, daily, monthly } = req.body.deposit_limit;
-      await database
-        .update(depositLimits)
-        .set({
-          ...existingDeposit,
-          weekly,
-          daily,
-          monthly,
-          updated_at: updatedUser['updated_at'],
-        })
-        .where(eq(depositLimits.owner_id, res.locals.user.id))
-        .execute();
+      updatedUser['deposit_limit'] = {
+        daily: req.body.deposit_limit.daily ?? null,
+        weekly: req.body.deposit_limit.weekly ?? null,
+        monthly: req.body.deposit_limit.monthly ?? null,
+      };
     }
 
     await database

@@ -37,6 +37,12 @@ export interface TournamentColours {
   highlight?: string;
 }
 
+interface DepositLimit {
+  daily: number | null;
+  weekly: number | null;
+  monthly: number | null;
+}
+
 // Main Tables
 export const users = pgTable('Users', {
   id: text('id').primaryKey().notNull(), // required
@@ -50,7 +56,9 @@ export const users = pgTable('Users', {
   game_stop_id: text('game_stop_id').default(''), // optional, default ""
   is_auth_verified: boolean('is_auth_verified').default(false), // optional, default false
   is_identity_verified: boolean('is_identity_verified').default(false), // optional, default false
-  deposit_id: text('deposit_id').notNull(), // optional, default 0
+  deposit_limit: jsonb('deposit_limit')
+    .$type<DepositLimit>()
+    .default({ daily: null, weekly: null, monthly: null }), // optional, default 0
   betting_limit: integer('betting_limit').default(0), // optional, default 0
   payment_id: text('payment_id').default(''), // optional, default ""
   current_balance: integer('current_balance').default(0), // optional, default 0
@@ -138,7 +146,7 @@ export const tournaments = pgTable('Tournament', {
   maximum_score_generator: integer('maximum_score_generator').notNull(), // required
   players: text('players').array().default([]).notNull(), // required
   colours: jsonb('colours').$type<TournamentColours>().default({}), // required
-  sport: text('sport').notNull().default("Golf"), // required
+  sport: text('sport').notNull().default('Golf'), // required
   rules: text('rules').array().notNull(), // required
   instructions: text('instructions').array().default([]), // optional, default []
   created_at: timestamp('created_at').defaultNow().notNull(),

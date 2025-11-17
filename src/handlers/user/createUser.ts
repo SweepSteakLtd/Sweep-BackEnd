@@ -7,7 +7,7 @@ import {
   GamstopCheckResult,
   handleGamstopError,
 } from '../../integrations/Gamstop/gamstop';
-import { Deposit, depositLimits, User, users } from '../../models';
+import { User, users } from '../../models';
 import { database, fetchRemoteConfig } from '../../services';
 import {
   addressSchema,
@@ -383,21 +383,6 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
       console.log('[DEBUG] Skipping GBG verification - address not provided');
     }
 
-    const newUserId = createId();
-    const depositId = createId();
-
-    const depositLimit: Deposit = {
-      id: depositId,
-      owner_id: newUserId,
-      monthly: req.body.deposit_limit.monthly,
-      daily: req.body.deposit_limit.daily,
-      weekly: req.body.deposit_limit.weekly,
-      created_at: new Date(),
-      updated_at: new Date(),
-    };
-
-    await database.insert(depositLimits).values(depositLimit).execute();
-
     const userObject: User = {
       id: createId(),
       first_name: req.body.first_name,
@@ -410,7 +395,11 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
       game_stop_id: gamstopResult.registration_id || '',
       is_auth_verified: req.body.is_auth_verified || false,
       is_identity_verified: false,
-      deposit_id: depositId,
+      deposit_limit: {
+        daily: req.body.deposit_limit.daily ?? null,
+        weekly: req.body.deposit_limit.weekly ?? null,
+        monthly: req.body.deposit_limit.monthly ?? null,
+      },
       betting_limit: req.body.betting_limit || 0,
       payment_id: req.body.payment_id || '',
       current_balance: req.body.current_balance || 0,
@@ -424,10 +413,7 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
       updated_at: new Date(),
     };
 
-    await database
-      .insert(users)
-      .values({ ...userObject, deposit_limit: depositLimit })
-      .execute();
+    await database.insert(users).values(userObject).execute();
     console.log('[DEBUG] New user created with ID:', userObject.id);
     return res.status(201).send({
       data: userObject,

@@ -1,9 +1,11 @@
 jest.mock('@paralleldrive/cuid2', () => ({ createId: () => 'test-id' }));
 jest.mock('../../services');
 jest.mock('../../integrations/GBG/GBG');
+jest.mock('../../integrations/Gamstop/gamstop');
 
 import { NextFunction, Request, Response } from 'express';
 import { database, fetchRemoteConfig } from '../../services';
+import { checkGamstopRegistration } from '../../integrations/Gamstop/gamstop';
 import { createUserHandler } from './createUser';
 
 const mockResponse = () => {
@@ -16,6 +18,23 @@ const mockResponse = () => {
 
 const mockNext: NextFunction = jest.fn();
 
+// Helper to create valid request body with all required fields
+const createValidRequestBody = (overrides: any = {}) => ({
+  first_name: 'John',
+  last_name: 'Doe',
+  phone_number: '+1234567890',
+  date_of_birth: '1990-01-15',
+  deposit_limit: { daily: 100, weekly: 500, monthly: 1200 },
+  address: {
+    line1: '123 Main St',
+    line2: 'Apt 4B',
+    town: 'New York',
+    postcode: '10001',
+    country: 'US',
+  },
+  ...overrides,
+});
+
 afterEach(() => {
   jest.clearAllMocks();
 });
@@ -23,6 +42,12 @@ afterEach(() => {
 beforeEach(() => {
   (fetchRemoteConfig as jest.Mock).mockResolvedValue({
     gbg_resource_id: 'd27b6807703eec9f5f5c0d45eb3abc883c142236055b85e30df2f75fdb22cbbe@1gobnzjz',
+  });
+
+  // Mock Gamstop to return successful result (not self-excluded)
+  (checkGamstopRegistration as jest.Mock).mockResolvedValue({
+    registration_id: 'gamstop-test-id',
+    status: 'not_excluded',
   });
 });
 
@@ -48,6 +73,7 @@ const mockInsertExecute = (result: any, shouldThrow = false) => {
       }),
     }));
   } else {
+    // Mock insert to handle single user insert (no deposit table)
     jest.spyOn(database as any, 'insert').mockImplementation(() => ({
       values: () => ({
         execute: async () => result,
@@ -67,12 +93,20 @@ test('createUserHandler - creates a new user and returns 201', async () => {
       bio: 'Golf enthusiast',
       profile_picture: 'https://example.com/avatar.jpg',
       phone_number: '+1234567890',
+      date_of_birth: '1990-01-15',
       deposit_limit: {
         daily: 100,
         weekly: 500,
         monthly: 1200,
       },
       betting_limit: 2400,
+      address: {
+        line1: '123 Main St',
+        line2: 'Apt 4B',
+        town: 'New York',
+        postcode: '10001',
+        country: 'US',
+      },
     },
   } as unknown as Request;
 
@@ -89,6 +123,11 @@ test('createUserHandler - creates a new user and returns 201', async () => {
     email: 'john.doe@example.com',
     first_name: 'John',
     last_name: 'Doe',
+    deposit_limit: {
+      daily: 100,
+      weekly: 500,
+      monthly: 1200,
+    },
   });
   expect(sent.data.id).toBe('test-id');
 });
@@ -119,16 +158,7 @@ test('createUserHandler - returns 500 on DB insert error', async () => {
   mockInsertExecute(null, true); // make insert throw
 
   const req = {
-    body: {
-      first_name: 'John',
-      last_name: 'Doe',
-      phone_number: '+1234567890',
-      deposit_limit: {
-        daily: 100,
-        weekly: 500,
-        monthly: 1200,
-      },
-    },
+    body: createValidRequestBody(),
   } as unknown as Request;
 
   const res = mockResponse();
@@ -284,12 +314,7 @@ test('createUserHandler - returns 422 if first_name is empty string', async () =
   mockSelectExecute([]);
 
   const req = {
-    body: {
-      first_name: '   ',
-      last_name: 'Doe',
-      phone_number: '+1234567890',
-      deposit_limit: { daily: 100, weekly: 500, monthly: 1200 },
-    },
+    body: createValidRequestBody({ first_name: '   ' }),
   } as unknown as Request;
 
   const res = mockResponse();
@@ -310,12 +335,7 @@ test('createUserHandler - returns 422 if first_name exceeds 100 characters', asy
   mockSelectExecute([]);
 
   const req = {
-    body: {
-      first_name: 'a'.repeat(101),
-      last_name: 'Doe',
-      phone_number: '+1234567890',
-      deposit_limit: { daily: 100, weekly: 500, monthly: 1200 },
-    },
+    body: createValidRequestBody({ first_name: 'a'.repeat(101) }),
   } as unknown as Request;
 
   const res = mockResponse();
@@ -337,12 +357,7 @@ test('createUserHandler - returns 422 if last_name is empty string', async () =>
   mockSelectExecute([]);
 
   const req = {
-    body: {
-      first_name: 'John',
-      last_name: '   ',
-      phone_number: '+1234567890',
-      deposit_limit: { daily: 100, weekly: 500, monthly: 1200 },
-    },
+    body: createValidRequestBody({ last_name: '   ' }),
   } as unknown as Request;
 
   const res = mockResponse();
@@ -363,12 +378,7 @@ test('createUserHandler - returns 422 if last_name exceeds 100 characters', asyn
   mockSelectExecute([]);
 
   const req = {
-    body: {
-      first_name: 'John',
-      last_name: 'a'.repeat(101),
-      phone_number: '+1234567890',
-      deposit_limit: { daily: 100, weekly: 500, monthly: 1200 },
-    },
+    body: createValidRequestBody({ last_name: 'a'.repeat(101) }),
   } as unknown as Request;
 
   const res = mockResponse();
@@ -390,12 +400,7 @@ test('createUserHandler - returns 422 if phone_number is not in E.164 format', a
   mockSelectExecute([]);
 
   const req = {
-    body: {
-      first_name: 'John',
-      last_name: 'Doe',
-      phone_number: '1234567890', // missing +
-      deposit_limit: { daily: 100, weekly: 500, monthly: 1200 },
-    },
+    body: createValidRequestBody({ phone_number: '1234567890' }), // missing +
   } as unknown as Request;
 
   const res = mockResponse();
@@ -417,13 +422,7 @@ test('createUserHandler - returns 422 if nickname exceeds 50 characters', async 
   mockSelectExecute([]);
 
   const req = {
-    body: {
-      first_name: 'John',
-      last_name: 'Doe',
-      phone_number: '+1234567890',
-      nickname: 'a'.repeat(51),
-      deposit_limit: { daily: 100, weekly: 500, monthly: 1200 },
-    },
+    body: createValidRequestBody({ nickname: 'a'.repeat(51) }),
   } as unknown as Request;
 
   const res = mockResponse();
@@ -444,13 +443,7 @@ test('createUserHandler - returns 422 if bio exceeds 500 characters', async () =
   mockSelectExecute([]);
 
   const req = {
-    body: {
-      first_name: 'John',
-      last_name: 'Doe',
-      phone_number: '+1234567890',
-      bio: 'a'.repeat(501),
-      deposit_limit: { daily: 100, weekly: 500, monthly: 1200 },
-    },
+    body: createValidRequestBody({ bio: 'a'.repeat(501) }),
   } as unknown as Request;
 
   const res = mockResponse();
@@ -471,13 +464,7 @@ test('createUserHandler - returns 422 if profile_picture is not a valid URL', as
   mockSelectExecute([]);
 
   const req = {
-    body: {
-      first_name: 'John',
-      last_name: 'Doe',
-      phone_number: '+1234567890',
-      profile_picture: 'not-a-valid-url',
-      deposit_limit: { daily: 100, weekly: 500, monthly: 1200 },
-    },
+    body: createValidRequestBody({ profile_picture: 'not-a-valid-url' }),
   } as unknown as Request;
 
   const res = mockResponse();
@@ -499,12 +486,7 @@ test('createUserHandler - returns 422 if deposit_limit is not an object', async 
   mockSelectExecute([]);
 
   const req = {
-    body: {
-      first_name: 'John',
-      last_name: 'Doe',
-      phone_number: '+1234567890',
-      deposit_limit: 'not-an-object',
-    },
+    body: createValidRequestBody({ deposit_limit: 'not-an-object' }),
   } as unknown as Request;
 
   const res = mockResponse();
@@ -526,13 +508,7 @@ test('createUserHandler - returns 422 if betting_limit is negative', async () =>
   mockSelectExecute([]);
 
   const req = {
-    body: {
-      first_name: 'John',
-      last_name: 'Doe',
-      phone_number: '+1234567890',
-      deposit_limit: { daily: 100, weekly: 500, monthly: 1200 },
-      betting_limit: -100,
-    },
+    body: createValidRequestBody({ betting_limit: -100 }),
   } as unknown as Request;
 
   const res = mockResponse();
@@ -554,13 +530,7 @@ test('createUserHandler - returns 422 if current_balance is negative', async () 
   mockSelectExecute([]);
 
   const req = {
-    body: {
-      first_name: 'John',
-      last_name: 'Doe',
-      phone_number: '+1234567890',
-      deposit_limit: { daily: 100, weekly: 500, monthly: 1200 },
-      current_balance: -50,
-    },
+    body: createValidRequestBody({ current_balance: -50 }),
   } as unknown as Request;
 
   const res = mockResponse();
@@ -582,16 +552,13 @@ test('createUserHandler - returns 422 if address is missing required fields', as
   mockSelectExecute([]);
 
   const req = {
-    body: {
-      first_name: 'John',
-      last_name: 'Doe',
-      phone_number: '+1234567890',
-      deposit_limit: { daily: 100, weekly: 500, monthly: 1200 },
+    body: createValidRequestBody({
       address: {
         line1: '123 Main St',
-        // missing line2, town, postcode, country
+        line2: 'Apt 4B',
+        // missing town, postcode, country (line2 is optional)
       },
-    },
+    }),
   } as unknown as Request;
 
   const res = mockResponse();
@@ -603,7 +570,7 @@ test('createUserHandler - returns 422 if address is missing required fields', as
   expect(res.send).toHaveBeenCalledWith(
     expect.objectContaining({
       error: 'Invalid request body',
-      message: 'address.line2 is required',
+      message: 'address.town is required',
     }),
   );
 });
@@ -612,11 +579,7 @@ test('createUserHandler - returns 422 if address.country is not a string', async
   mockSelectExecute([]);
 
   const req = {
-    body: {
-      first_name: 'John',
-      last_name: 'Doe',
-      phone_number: '+1234567890',
-      deposit_limit: { daily: 100, weekly: 500, monthly: 1200 },
+    body: createValidRequestBody({
       address: {
         line1: '123 Main St',
         line2: 'Apt 4B',
@@ -624,7 +587,7 @@ test('createUserHandler - returns 422 if address.country is not a string', async
         postcode: '12345',
         country: 123, // should be a string
       },
-    },
+    }),
   } as unknown as Request;
 
   const res = mockResponse();

@@ -1,7 +1,4 @@
-import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { depositLimits } from '../../models';
-import { database } from '../../services';
 import { apiKeyAuth, dataWrapper, standardResponses, userSchema } from '../schemas';
 /**
  * Get current user (authenticated endpoint)
@@ -10,13 +7,7 @@ import { apiKeyAuth, dataWrapper, standardResponses, userSchema } from '../schem
 export const getCurrentUserHandler = async (_: Request, res: Response, next: NextFunction) => {
   try {
     if (res.locals.user) {
-      const depositLimit = await database
-        .select(depositLimits)
-        .from(depositLimits)
-        .where(eq(depositLimits.owner_id, res.locals.user.id))
-        .execute();
-
-      return res.status(200).send({ data: { ...res.locals.user, deposit_limit: depositLimit[0] } });
+      return res.status(200).send({ data: res.locals.user });
     }
 
     return res.status(401).send({ message: 'Failed getting the user' });

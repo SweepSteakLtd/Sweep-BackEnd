@@ -1,7 +1,6 @@
 jest.mock('../../services');
 
 import { NextFunction, Request, Response } from 'express';
-import { database } from '../../services';
 import { getCurrentUserHandler } from './getCurrentUser';
 
 const mockResponse = () => {
@@ -18,30 +17,22 @@ afterEach(() => {
   jest.resetAllMocks();
 });
 
-const mockSelectExecute = (result: any) => {
-  jest.spyOn(database as any, 'select').mockImplementation(() => ({
-    from: () => ({
-      where: () => ({
-        execute: async () => result,
-      }),
-    }),
-  }));
-};
-
 test('getCurrentUserHandler - returns 200 and user when res.locals.user is present', async () => {
   const res = mockResponse();
-  const user = { id: 'u1', email: 'a@b.com', first_name: 'Test' };
-  const depositLimit = { id: 'd1', owner_id: 'u1', daily: 100, weekly: 500, monthly: 1000 };
+  const user = {
+    id: 'u1',
+    email: 'a@b.com',
+    first_name: 'Test',
+    deposit_limit: { daily: 100, weekly: 500, monthly: 1000 },
+  };
   (res as any).locals.user = user;
-
-  mockSelectExecute([depositLimit]);
 
   const req = {} as Request;
 
   await getCurrentUserHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(200);
-  expect(res.send).toHaveBeenCalledWith({ data: { ...user, deposit_limit: depositLimit } });
+  expect(res.send).toHaveBeenCalledWith({ data: user });
 });
 
 test('getCurrentUserHandler - returns 401 when no user in res.locals', async () => {
