@@ -106,28 +106,35 @@ type Decision =
   | 'Decision: Pass 2+2';
 
 export const getAuthToken = async (): Promise<AuthResponse> => {
-  const res = await fetch('https://api.auth.gbgplc.com/as/token.oauth2', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      client_id: process.env.GBG_CLIENT_ID!,
-      client_secret: process.env.GBG_CLIENT_SECRET!,
-      grant_type: 'password',
-      scope: 'openid',
-      username: process.env.GBG_USERNAME!,
-      password: process.env.GBG_PASSWORD!,
-    }),
-  });
+  try {
+    console.log('[DEBUG]: trying to get auth token');
+    const res = await fetch('https://api.auth.gbgplc.com/as/token.oauth2', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        client_id: process.env.GBG_CLIENT_ID!,
+        client_secret: process.env.GBG_CLIENT_SECRET!,
+        grant_type: 'password',
+        scope: 'openid',
+        username: process.env.GBG_USERNAME!,
+        password: process.env.GBG_PASSWORD!,
+      }),
+    });
 
-  if (!res.ok) {
-    const errorText = await res.text().catch(() => 'Unknown error');
-    throw new Error(`GBG Auth failed: ${res.status} ${res.statusText} - ${errorText}`);
+    if (!res.ok) {
+      const errorText = await res.text().catch(() => 'Unknown error');
+      throw new Error(`GBG Auth failed: ${res.status} ${res.statusText} - ${errorText}`);
+    }
+
+    const result = (await res.json()) as AuthResponse;
+
+    return result;
+  } catch (e) {
+    console.log('[DEBUG] failed to get GBG auth token:', e);
+    return null;
   }
-
-  const result = (await res.json()) as AuthResponse;
-  return result;
 };
 
 const startJourney = async (
@@ -184,6 +191,9 @@ export const fetchState = async (instanceId: string, authToken?: AuthResponse) =
         process: {
           flow: Record<string, { _ggo?: Record<string, string>; result: { outcome: Decision } }>;
         };
+        result: {
+          status: 'pending';
+        };
       };
     };
   };
@@ -208,7 +218,13 @@ export const verifyIdentity = async (person: PersonData, resourceId: string): Pr
 
   // Get auth token once for the entire journey
   console.log('[DEBUG] Fetching GBG auth token...');
-  const authToken = await getAuthToken();
+  let authTokenTries = 0;
+  let authToken = null;
+  while (!authToken || authTokenTries !== 3) {
+    authToken = await getAuthToken();
+    authTokenTries += 1;
+  }
+
   console.log('[DEBUG] GBG auth token obtained');
 
   const streetParts = person.address.line1?.split(' ') || [];

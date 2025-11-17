@@ -32,7 +32,7 @@ export const initializeRemoteConfig = async (): Promise<void> => {
     const defaultParameters = {
       gbg_resource_id: {
         defaultValue: {
-          value: 'd27b6807703eec9f5f5c0d45eb3abc883c142236055b85e30df2f75fdb22cbbe@1gobnzjz',
+          value: 'd27b6807703eec9f5f5c0d45eb3abc883c142236055b85e30df2f75fdb22cbbe@latest',
         },
         description: 'GBG Resource ID for verification',
       },

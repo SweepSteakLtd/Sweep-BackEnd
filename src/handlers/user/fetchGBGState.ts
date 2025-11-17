@@ -37,6 +37,13 @@ export const fetchGBGStateHandler = async (req: Request, res: Response, next: Ne
     const authToken = await getAuthToken();
 
     const fetchResult = await fetchState(instance_id, authToken);
+    if (!fetchResult.data.context) {
+      console.log('[DEBUG]: fetch result is still pending');
+      return res.status(200).send({
+        status: 'IN_PROGRESS',
+      });
+    }
+
     const finalResult = Object.values(fetchResult.data.context.process.flow).filter(
       value => !!value._ggo,
     );
@@ -56,7 +63,7 @@ export const fetchGBGStateHandler = async (req: Request, res: Response, next: Ne
       });
     }
   } catch (error: any) {
-    console.log(`[DEBUG]: UPDATE CURRENT USER ERROR: ${error.message} 🛑`);
+    console.log(`[DEBUG]: VERIFY CURRENT USER ERROR: ${error.message} 🛑`);
     return res.status(500).send({
       error: 'Internal Server Error',
       message: 'An unexpected error occurred',
