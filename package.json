@@ -1,6 +1,6 @@
 {
   "name": "sweepsteak-backend",
-  "version": "1.0.64",
+  "version": "1.0.65",
   "description": "New backend project starter",
   "main": "build/index.js",
   "private": "true",

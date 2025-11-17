@@ -220,7 +220,7 @@ export const verifyIdentity = async (person: PersonData, resourceId: string): Pr
   console.log('[DEBUG] Fetching GBG auth token...');
   let authTokenTries = 0;
   let authToken = null;
-  while (!authToken || authTokenTries !== 3) {
+  while (!authToken && authTokenTries !== 3) {
     authToken = await getAuthToken();
     authTokenTries += 1;
   }
