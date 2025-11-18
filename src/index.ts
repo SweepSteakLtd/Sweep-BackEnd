@@ -9,6 +9,7 @@ import { version } from '../package.json';
 import { config, env } from './config';
 import { AuthenticateAdminMiddleware } from './middlewares';
 import { routes } from './routes';
+import { ensureDatabaseReady } from './services';
 import { clearConfigCache, initializeRemoteConfig } from './services/remoteConfig';
 
 if (!env.CURRENT) {
@@ -110,13 +111,25 @@ export const app = applyRootConfiguration(plainApp);
 app.use('/swaggerui', oapi.swaggerui());
 
 console.log('SERVER APP GENERATED');
-app.listen(parseInt(process.env.PORT) || 8080, async () => {
-  console.log(`APP LISTENING ON PORT ${process.env.PORT || 8080}, environment: ${env.CURRENT}`);
-  console.log(`API Version: ${version}`);
-  console.log(`Running on Node.js version: ${config.NODE_JS_VERSION}`);
 
-  // Initialize Firebase Remote Config
-  await initializeRemoteConfig();
+(async () => {
+  try {
+    console.log('⏳ Waiting for database connection...');
+    await ensureDatabaseReady();
+    console.log('✅ Database connection established');
 
-  console.log('All routes registered and server ready!');
-});
+    console.log('⏳ Initializing Remote Config...');
+    await initializeRemoteConfig();
+    console.log('✅ Remote Config initialized');
+
+    app.listen(parseInt(process.env.PORT) || 8080, () => {
+      console.log(`APP LISTENING ON PORT ${process.env.PORT || 8080}, environment: ${env.CURRENT}`);
+      console.log(`API Version: ${version}`);
+      console.log(`Running on Node.js version: ${config.NODE_JS_VERSION}`);
+      console.log('All routes registered and server ready!');
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+})();
