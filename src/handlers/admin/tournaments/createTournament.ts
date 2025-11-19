@@ -23,6 +23,7 @@ import { apiKeyAuth, dataWrapper, standardResponses, tournamentSchema } from '..
  * @body sport - enum Gold - required - enum will get updated later on
  * @body rules - array<string> - required
  * @body instructions - array<string> - optional
+ * @body external_id - string - required
  * @returns Tournament
  */
 export const createTournamentHandler = async (req: Request, res: Response, next: NextFunction) => {
@@ -45,6 +46,7 @@ export const createTournamentHandler = async (req: Request, res: Response, next:
       sport,
       rules,
       instructions,
+      external_id,
     } = req.body as Tournament;
 
     if (
@@ -58,7 +60,8 @@ export const createTournamentHandler = async (req: Request, res: Response, next:
       !colours ||
       !sport ||
       !rules ||
-      rules.length === 0
+      rules.length === 0 ||
+      !external_id
     ) {
       return res
         .status(422)
@@ -67,9 +70,10 @@ export const createTournamentHandler = async (req: Request, res: Response, next:
 
     // Validate colours structure
     if (!colours.primary || !colours.secondary || !colours.highlight) {
-      return res
-        .status(422)
-        .send({ error: 'Invalid request body', message: 'colours must have primary, secondary, and highlight properties' });
+      return res.status(422).send({
+        error: 'Invalid request body',
+        message: 'colours must have primary, secondary, and highlight properties',
+      });
     }
 
     if (starts_at < new Date()) {
@@ -103,6 +107,7 @@ export const createTournamentHandler = async (req: Request, res: Response, next:
       sport,
       rules,
       instructions,
+      external_id,
       created_at: new Date(),
       updated_at: new Date(),
     };
@@ -155,6 +160,7 @@ createTournamentHandler.apiDescription = {
             'colours',
             'sport',
             'rules',
+            'external_id',
           ],
           properties: {
             name: { type: 'string', minLength: 1, maxLength: 200, description: 'Tournament name' },
@@ -190,8 +196,14 @@ createTournamentHandler.apiDescription = {
               required: ['primary', 'secondary', 'highlight'],
               properties: {
                 primary: { type: 'string', description: 'Primary colour for tournament branding' },
-                secondary: { type: 'string', description: 'Secondary colour for tournament branding' },
-                highlight: { type: 'string', description: 'Highlight colour for tournament branding' },
+                secondary: {
+                  type: 'string',
+                  description: 'Secondary colour for tournament branding',
+                },
+                highlight: {
+                  type: 'string',
+                  description: 'Highlight colour for tournament branding',
+                },
               },
               description: 'Tournament colour scheme',
             },
@@ -237,6 +249,11 @@ createTournamentHandler.apiDescription = {
               items: { type: 'string' },
               nullable: true,
               description: 'Advertisement IDs',
+            },
+            external_id: {
+              type: 'string',
+              minLength: 1,
+              description: 'External tournament ID',
             },
           },
         },

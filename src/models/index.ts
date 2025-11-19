@@ -132,6 +132,7 @@ export const tournamentHole = pgTable('TournamentHole', {
 
 export const tournaments = pgTable('Tournament', {
   id: text('id').primaryKey().notNull(), // required
+  external_id: text('external_id').notNull(),
   name: text('name').notNull(), // required
   starts_at: timestamp('starts_at').notNull(), // required
   finishes_at: timestamp('finishes_at').notNull(), // required

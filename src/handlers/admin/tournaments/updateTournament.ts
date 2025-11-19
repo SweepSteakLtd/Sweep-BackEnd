@@ -24,6 +24,7 @@ import { dataWrapper, standardResponses, tournamentSchema } from '../../schemas'
  * @body sport - enum Golf - optional
  * @body rules - array<string> - optional
  * @body instructions - array<string> - optional
+ * @body external_id - string - optional
  * @returns Tournament
  */
 export const updateTournamentHandler = async (req: Request, res: Response, next: NextFunction) => {
@@ -46,6 +47,7 @@ export const updateTournamentHandler = async (req: Request, res: Response, next:
       'sport',
       'rules',
       'instructions',
+      'external_id',
     ];
 
     const { id } = req.params;
@@ -161,6 +163,7 @@ updateTournamentHandler.apiDescription = {
             gallery: { type: 'array', items: { type: 'string' }, nullable: true },
             holes: { type: 'array', items: { type: 'string' }, nullable: true },
             ads: { type: 'array', items: { type: 'string' }, nullable: true },
+            external_id: { type: 'string', minLength: 1, description: 'External tournament ID' },
           },
         },
       },
