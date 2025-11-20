@@ -4,6 +4,7 @@ import {
   createLeagueHandler,
   createPlayerHandler,
   createPlayerProfileHandler,
+  createTeamHandler,
   createTournamentHandler,
   createTransactionHandler,
   createUserHandler,
@@ -37,6 +38,7 @@ import {
   updateLeagueAdminHandler,
   updateLeagueHandler,
   updatePlayerProfileHandler,
+  updateTeamHandler,
   updateTournamentHandler,
   updateTransactionHandler,
   updateUserHandler,
@@ -125,9 +127,19 @@ export const routes: RouteDescription[] = [
     apiName: 'teams',
     endpoints: [
       {
+        method: 'post',
+        name: '/',
+        stack: [AuthenticateMiddleware, createTeamHandler],
+      },
+      {
         method: 'get',
         name: '/',
         stack: [AuthenticateMiddleware, getAllTeamsHandler],
+      },
+      {
+        method: 'put',
+        name: '/:id',
+        stack: [AuthenticateMiddleware, updateTeamHandler],
       },
     ],
   },

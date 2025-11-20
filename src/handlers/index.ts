@@ -19,7 +19,9 @@ export * from './bets/getBets';
 export * from './bets/updateBet';
 
 // Team handlers
+export * from './teams/createTeam';
 export * from './teams/getAllTeams';
+export * from './teams/updateTeam';
 
 // Player profile handlers
 export * from './player-profiles/getPlayerProfiles';
