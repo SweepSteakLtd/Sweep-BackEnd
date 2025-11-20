@@ -12,6 +12,7 @@ import { apiKeyAuth, dataWrapper, playerProfileSchema, standardResponses } from 
  * @body country - string - required
  * @body age - number - required
  * @body ranking - number - required
+ * @body profile_picture - string - required
  * @returns PlayerProfile
  */
 export const createPlayerProfileHandler = async (
@@ -20,7 +21,14 @@ export const createPlayerProfileHandler = async (
   next: NextFunction,
 ) => {
   try {
-    const requiredProperties = ['first_name', 'last_name', 'country', 'age', 'ranking'];
+    const requiredProperties = [
+      'first_name',
+      'last_name',
+      'country',
+      'age',
+      'ranking',
+      'profile_picture',
+    ];
 
     for (const property of requiredProperties) {
       if (!req.body[property]) {
@@ -33,12 +41,14 @@ export const createPlayerProfileHandler = async (
 
     // If all required properties are present, create the player profile
     const newPlayerProfile = {
-      external_id: req.body.external_id || null,
+      external_id: req.body.external_id || '',
       first_name: req.body.first_name,
       last_name: req.body.last_name,
       country: req.body.country,
       age: req.body.age,
       ranking: req.body.ranking,
+      profile_picture: req.body.profile_picture,
+      group: req.body.group || '',
       created_at: new Date(),
       updated_at: new Date(),
     };
@@ -97,6 +107,8 @@ createPlayerProfileHandler.apiDescription = {
                   country: 'USA',
                   age: 48,
                   ranking: 1250,
+                  profile_picture: 'https://example.com/tiger-woods.jpg',
+                  group: 'A',
                   created_at: '2025-01-20T10:00:00Z',
                   updated_at: '2025-01-20T10:00:00Z',
                 },
@@ -117,9 +129,9 @@ createPlayerProfileHandler.apiDescription = {
       'application/json': {
         schema: {
           type: 'object',
-          required: ['first_name', 'last_name', 'country', 'age', 'ranking'],
+          required: ['first_name', 'last_name', 'country', 'age', 'ranking', 'profile_picture'],
           properties: {
-            external_id: { type: 'string', nullable: true, description: 'External API identifier' },
+            external_id: { type: 'string', default: '', description: 'External API identifier' },
             first_name: { type: 'string', minLength: 1, maxLength: 100, description: 'First name' },
             last_name: { type: 'string', minLength: 1, maxLength: 100, description: 'Last name' },
             country: {
@@ -127,8 +139,10 @@ createPlayerProfileHandler.apiDescription = {
               pattern: '^[A-Z]{2,3}$',
               description: 'ISO country code (2-3 letters)',
             },
-            age: { type: 'integer', minimum: 16, maximum: 100, description: 'Age in years' },
+            age: { type: 'integer', minimum: 18, maximum: 100, description: 'Age in years' },
             ranking: { type: 'integer', minimum: 1, description: 'World ranking position' },
+            profile_picture: { type: 'string', description: 'Profile picture URL' },
+            group: { type: 'string', default: '', description: 'Player group' },
           },
         },
         examples: {
@@ -141,6 +155,8 @@ createPlayerProfileHandler.apiDescription = {
               country: 'USA',
               age: 48,
               ranking: 1250,
+              profile_picture: 'https://example.com/tiger-woods.jpg',
+              group: 'A',
             },
           },
         },

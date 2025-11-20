@@ -90,6 +90,8 @@ export const playerProfiles = pgTable('PlayerProfile', {
   country: text('country').notNull(), // required
   age: integer('age').notNull(), // required
   ranking: integer('ranking').notNull(), // required
+  profile_picture: text('profile_picture').notNull(), // required
+  group: text('group').default(''), // optional, default ""
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });

@@ -24,6 +24,7 @@ export * from './teams/getAllTeams';
 export * from './teams/updateTeam';
 
 // Player profile handlers
+export * from './player-profiles/getPlayerProfileById';
 export * from './player-profiles/getPlayerProfiles';
 
 // Transaction handlers
@@ -31,6 +32,9 @@ export * from './transactions/getTransactions';
 
 // Activity handlers
 export * from './activities/getActivities';
+
+// Leaderboard handlers
+export * from './leaderboards/getLeaderboard';
 
 // Admin - Games
 export * from './admin/leagues/deleteLeague';

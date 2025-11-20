@@ -1,48 +1,10 @@
 import {
   Player,
   PlayerAttemptData,
-  PlayerProfile,
   RewardSplitData,
   TournamentPlayerData,
   Transaction,
 } from './index';
-
-// Mock Player Profiles
-export const mockPlayerProfiles: PlayerProfile[] = [
-  {
-    id: 'profile_1',
-    external_id: 'ext_tiger_woods',
-    first_name: 'Tiger',
-    last_name: 'Woods',
-    country: 'USA',
-    age: 48,
-    ranking: 1,
-    created_at: new Date('2024-01-01T00:00:00Z'),
-    updated_at: new Date('2024-01-20T10:00:00Z'),
-  },
-  {
-    id: 'profile_2',
-    external_id: 'ext_rory_mcilroy',
-    first_name: 'Rory',
-    last_name: 'McIlroy',
-    country: 'Northern Ireland',
-    age: 35,
-    ranking: 2,
-    created_at: new Date('2024-01-01T00:00:00Z'),
-    updated_at: new Date('2024-01-20T10:00:00Z'),
-  },
-  {
-    id: 'profile_3',
-    external_id: 'ext_jon_rahm',
-    first_name: 'Jon',
-    last_name: 'Rahm',
-    country: 'Spain',
-    age: 29,
-    ranking: 3,
-    created_at: new Date('2024-01-01T00:00:00Z'),
-    updated_at: new Date('2024-01-20T10:00:00Z'),
-  },
-];
 
 // Mock Player Attempt Data
 export const mockPlayerAttempts: PlayerAttemptData[] = [
@@ -226,7 +188,6 @@ export const mockTransactions: Transaction[] = [
 
 // Export all mocks as a single object for easy importing
 export const mockData = {
-  playerProfiles: mockPlayerProfiles,
   players: mockPlayers,
   tournaments: [],
   games: [],

@@ -28,6 +28,7 @@ import {
   getAllUsersHandler,
   getBetsHandler,
   getCurrentUserHandler,
+  getLeaderboardHandler,
   getLeagueByIdHandler,
   getPlayerProfilesHandler,
   getPlayersByTournamentHandler,
@@ -229,6 +230,16 @@ export const routes: RouteDescription[] = [
     ],
   },
   {
+    apiName: 'leaderboards',
+    endpoints: [
+      {
+        method: 'get',
+        name: '/:league_id',
+        stack: [AuthenticateMiddleware, getLeaderboardHandler],
+      },
+    ],
+  },
+  {
     apiName: 'admin',
     endpoints: [
       // League admin endpoints
@@ -257,6 +268,11 @@ export const routes: RouteDescription[] = [
       {
         method: 'get',
         name: '/player-profiles',
+        stack: [AuthenticateAdminMiddleware, getAllPlayerProfilesAdminHandler],
+      },
+      {
+        method: 'get',
+        name: '/player-profiles/:id',
         stack: [AuthenticateAdminMiddleware, getAllPlayerProfilesAdminHandler],
       },
       {

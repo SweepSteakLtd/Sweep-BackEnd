@@ -16,8 +16,10 @@ import {
  * @body first_name - string - optional
  * @body last_name - string - optional
  * @body country - string - optional
- * @body age - number -
- * @body ranking - optional
+ * @body age - number - optional
+ * @body ranking - number - optional
+ * @body profile_picture - string - optional
+ * @body group - string - optional
  * @returns PlayerProfile
  */
 export const updatePlayerProfileHandler = async (
@@ -33,6 +35,8 @@ export const updatePlayerProfileHandler = async (
       'country',
       'age',
       'ranking',
+      'profile_picture',
+      'group',
     ];
 
     const playerProfileId = req.params.id;
@@ -105,6 +109,8 @@ updatePlayerProfileHandler.apiDescription = {
                     country: 'USA',
                     age: 49,
                     ranking: 1100,
+                    profile_picture: 'https://example.com/tiger-woods.jpg',
+                    group: 'A',
                     created_at: '2025-01-20T10:00:00Z',
                     updated_at: '2025-01-22T14:30:00Z',
                   },
@@ -141,12 +147,14 @@ updatePlayerProfileHandler.apiDescription = {
           type: 'object',
           minProperties: 1,
           properties: {
-            external_id: { type: 'string', nullable: true, description: 'External API identifier' },
+            external_id: { type: 'string', description: 'External API identifier', default: '' },
             first_name: { type: 'string', minLength: 1, maxLength: 100, description: 'First name' },
             last_name: { type: 'string', minLength: 1, maxLength: 100, description: 'Last name' },
             country: { type: 'string', pattern: '^[A-Z]{2,3}$', description: 'ISO country code' },
-            age: { type: 'integer', minimum: 16, maximum: 100, description: 'Age in years' },
+            age: { type: 'integer', minimum: 18, maximum: 100, description: 'Age in years' },
             ranking: { type: 'integer', minimum: 1, description: 'World ranking position' },
+            profile_picture: { type: 'string', description: 'Profile picture URL' },
+            group: { type: 'string', description: 'Player group', default: '' },
           },
         },
         examples: {
