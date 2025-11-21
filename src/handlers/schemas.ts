@@ -254,15 +254,17 @@ export const playerSchema = {
 
 export const playerProfileSchema = {
   type: 'object',
-  required: ['id', 'external_id', 'first_name', 'last_name', 'country'],
+  required: ['id', 'external_id', 'first_name', 'last_name', 'country', 'age', 'ranking', 'profile_picture'],
   properties: {
     id: { type: 'string', format: 'uuid', description: 'Unique profile identifier' },
-    external_id: { type: 'string', description: 'External API player identifier' },
+    external_id: { type: 'string', description: 'External API player identifier', default: '' },
     first_name: { type: 'string', minLength: 1, maxLength: 100 },
     last_name: { type: 'string', minLength: 1, maxLength: 100 },
     country: { type: 'string', pattern: '^[A-Z]{2,3}$', description: 'ISO country code' },
-    age: { type: 'number', minimum: 18, maximum: 100, nullable: true },
-    ranking: { type: 'number', minimum: 1, nullable: true, description: 'World ranking' },
+    age: { type: 'number', minimum: 18, maximum: 100, description: 'Player age' },
+    ranking: { type: 'number', minimum: 1, description: 'World ranking' },
+    profile_picture: { type: 'string', description: 'Profile picture URL' },
+    group: { type: 'string', description: 'Player group', default: '' },
     created_at: { type: 'string', format: 'date-time' },
     updated_at: { type: 'string', format: 'date-time' },
   },
