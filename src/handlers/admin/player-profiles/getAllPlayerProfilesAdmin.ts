@@ -2,11 +2,7 @@ import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { PlayerProfile, playerProfiles } from '../../../models';
 import { database } from '../../../services';
-import {
-  apiKeyAuth,
-  playerProfileSchema,
-  standardResponses,
-} from '../../schemas';
+import { apiKeyAuth, playerProfileSchema, standardResponses } from '../../schemas';
 
 /**
  * Get all player profiles (admin endpoint)

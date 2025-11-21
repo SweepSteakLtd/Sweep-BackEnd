@@ -42,35 +42,64 @@ const mockSelectExecute = (result: any, shouldThrow = false) => {
   }
 };
 
-test('getPlayerProfilesHandler - returns all player profiles when no country filter', async () => {
+test('getPlayerProfilesHandler - returns all player profiles grouped when no country filter', async () => {
   const res = mockResponse();
   (res as any).locals.user = { id: 'u1' };
   const req = { query: {} } as unknown as Request;
 
   const profiles = [
-    { id: 'p1', first_name: 'John', last_name: 'Doe', country: 'USA' },
-    { id: 'p2', first_name: 'Jane', last_name: 'Smith', country: 'UK' },
+    { id: 'p1', first_name: 'John', last_name: 'Doe', country: 'USA', group: 'A' },
+    { id: 'p2', first_name: 'Jane', last_name: 'Smith', country: 'UK', group: 'B' },
   ];
   mockSelectExecute(profiles);
 
   await getPlayerProfilesHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(200);
-  expect(res.send).toHaveBeenCalledWith({ data: profiles });
+  expect(res.send).toHaveBeenCalledWith({
+    data: [
+      { name: 'A', players: [profiles[0]] },
+      { name: 'B', players: [profiles[1]] },
+    ],
+  });
 });
 
-test('getPlayerProfilesHandler - filters by country when provided', async () => {
+test('getPlayerProfilesHandler - filters by country and groups when provided', async () => {
   const res = mockResponse();
   (res as any).locals.user = { id: 'u1' };
   const req = { query: { country: 'USA' } } as unknown as Request;
 
-  const profiles = [{ id: 'p1', first_name: 'John', last_name: 'Doe', country: 'USA' }];
+  const profiles = [{ id: 'p1', first_name: 'John', last_name: 'Doe', country: 'USA', group: 'A' }];
   mockSelectExecute(profiles);
 
   await getPlayerProfilesHandler(req, res, mockNext);
 
   expect(res.status).toHaveBeenCalledWith(200);
-  expect(res.send).toHaveBeenCalledWith({ data: profiles });
+  expect(res.send).toHaveBeenCalledWith({
+    data: [{ name: 'A', players: profiles }],
+  });
+});
+
+test('getPlayerProfilesHandler - groups players without group as Ungrouped', async () => {
+  const res = mockResponse();
+  (res as any).locals.user = { id: 'u1' };
+  const req = { query: {} } as unknown as Request;
+
+  const profiles = [
+    { id: 'p1', first_name: 'John', last_name: 'Doe', country: 'USA', group: '' },
+    { id: 'p2', first_name: 'Jane', last_name: 'Smith', country: 'UK', group: 'A' },
+  ];
+  mockSelectExecute(profiles);
+
+  await getPlayerProfilesHandler(req, res, mockNext);
+
+  expect(res.status).toHaveBeenCalledWith(200);
+  expect(res.send).toHaveBeenCalledWith({
+    data: [
+      { name: 'Ungrouped', players: [profiles[0]] },
+      { name: 'A', players: [profiles[1]] },
+    ],
+  });
 });
 
 test('getPlayerProfilesHandler - returns 500 on DB error', async () => {
