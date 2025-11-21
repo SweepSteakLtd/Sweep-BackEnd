@@ -4,7 +4,6 @@ import { PlayerProfile, playerProfiles } from '../../../models';
 import { database } from '../../../services';
 import {
   apiKeyAuth,
-  arrayDataWrapper,
   playerProfileSchema,
   standardResponses,
 } from '../../schemas';
@@ -12,7 +11,7 @@ import {
 /**
  * Get all player profiles (admin endpoint)
  * @query country - optional
- * @returns { groups: Array<{ name: string, players: PlayerProfile[] }> }
+ * @returns { data: Record<string, { players: PlayerProfile[] }> }
  */
 export const getAllPlayerProfilesAdminHandler = async (
   req: Request,
@@ -30,26 +29,20 @@ export const getAllPlayerProfilesAdminHandler = async (
 
     // Group players by their group field
     const groupedPlayers = existingUsers.reduce(
-      (acc: Record<string, PlayerProfile[]>, player: PlayerProfile) => {
+      (acc: Record<string, { players: PlayerProfile[] }>, player: PlayerProfile) => {
         const groupName = player.group || 'Ungrouped';
 
         if (!acc[groupName]) {
-          acc[groupName] = [];
+          acc[groupName] = { players: [] };
         }
 
-        acc[groupName].push(player);
+        acc[groupName].players.push(player);
         return acc;
       },
       {},
     );
 
-    // Convert to the requested format
-    const groups = Object.entries(groupedPlayers).map(([name, players]) => ({
-      name,
-      players,
-    }));
-
-    return res.status(200).send({ data: groups });
+    return res.status(200).send({ data: groupedPlayers });
   } catch (error: any) {
     console.log(`GET ALL PLAYER PROFILES ADMIN ERROR: ${error.message} 🛑`);
     return res.status(500).send({
@@ -69,26 +62,30 @@ getAllPlayerProfilesAdminHandler.apiDescription = {
       description: 'Player profiles retrieved successfully, grouped by group',
       content: {
         'application/json': {
-          schema: arrayDataWrapper({
+          schema: {
             type: 'object',
             properties: {
-              name: {
-                type: 'string',
-                description: 'Group name',
-              },
-              players: {
-                type: 'array',
-                items: playerProfileSchema,
+              data: {
+                type: 'object',
+                description: 'Groups indexed by group name',
+                additionalProperties: {
+                  type: 'object',
+                  properties: {
+                    players: {
+                      type: 'array',
+                      items: playerProfileSchema,
+                    },
+                  },
+                },
               },
             },
-          }),
+          },
           examples: {
             groupedProfiles: {
               summary: 'Player profiles grouped by group',
               value: {
-                data: [
-                  {
-                    name: 'Group A',
+                data: {
+                  'Group A': {
                     players: [
                       {
                         id: 'profile_abc123',
@@ -104,8 +101,7 @@ getAllPlayerProfilesAdminHandler.apiDescription = {
                       },
                     ],
                   },
-                  {
-                    name: 'Group B',
+                  'Group B': {
                     players: [
                       {
                         id: 'profile_def456',
@@ -121,15 +117,14 @@ getAllPlayerProfilesAdminHandler.apiDescription = {
                       },
                     ],
                   },
-                ],
+                },
               },
             },
             ungroupedPlayers: {
               summary: 'Players without a group',
               value: {
-                data: [
-                  {
-                    name: 'Ungrouped',
+                data: {
+                  Ungrouped: {
                     players: [
                       {
                         id: 'profile_xyz789',
@@ -145,7 +140,7 @@ getAllPlayerProfilesAdminHandler.apiDescription = {
                       },
                     ],
                   },
-                ],
+                },
               },
             },
           },
