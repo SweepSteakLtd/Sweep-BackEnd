@@ -1,9 +1,10 @@
 import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { playerProfiles, PlayerProfile } from '../../../models';
+import { PlayerProfile, playerProfiles } from '../../../models';
 import { database } from '../../../services';
 import {
   apiKeyAuth,
+  arrayDataWrapper,
   playerProfileSchema,
   standardResponses,
 } from '../../schemas';
@@ -28,16 +29,19 @@ export const getAllPlayerProfilesAdminHandler = async (
       .execute();
 
     // Group players by their group field
-    const groupedPlayers = existingUsers.reduce((acc: Record<string, PlayerProfile[]>, player: PlayerProfile) => {
-      const groupName = player.group || 'Ungrouped';
+    const groupedPlayers = existingUsers.reduce(
+      (acc: Record<string, PlayerProfile[]>, player: PlayerProfile) => {
+        const groupName = player.group || 'Ungrouped';
 
-      if (!acc[groupName]) {
-        acc[groupName] = [];
-      }
+        if (!acc[groupName]) {
+          acc[groupName] = [];
+        }
 
-      acc[groupName].push(player);
-      return acc;
-    }, {});
+        acc[groupName].push(player);
+        return acc;
+      },
+      {},
+    );
 
     // Convert to the requested format
     const groups = Object.entries(groupedPlayers).map(([name, players]) => ({
@@ -45,7 +49,7 @@ export const getAllPlayerProfilesAdminHandler = async (
       players,
     }));
 
-    return res.status(200).send({ groups });
+    return res.status(200).send({ data: groups });
   } catch (error: any) {
     console.log(`GET ALL PLAYER PROFILES ADMIN ERROR: ${error.message} 🛑`);
     return res.status(500).send({
@@ -56,40 +60,33 @@ export const getAllPlayerProfilesAdminHandler = async (
 };
 getAllPlayerProfilesAdminHandler.apiDescription = {
   summary: 'Get all player profiles grouped by group (Admin)',
-  description: 'Admin endpoint to retrieve all player profiles grouped by their group field, with optional country filtering.',
+  description:
+    'Admin endpoint to retrieve all player profiles grouped by their group field, with optional country filtering.',
   operationId: 'adminGetAllPlayerProfiles',
-  tags: ['admin', 'player-profiles'],
+  tags: ['player-profiles'],
   responses: {
     200: {
       description: 'Player profiles retrieved successfully, grouped by group',
       content: {
         'application/json': {
-          schema: {
+          schema: arrayDataWrapper({
             type: 'object',
             properties: {
-              groups: {
+              name: {
+                type: 'string',
+                description: 'Group name',
+              },
+              players: {
                 type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    name: {
-                      type: 'string',
-                      description: 'Group name',
-                    },
-                    players: {
-                      type: 'array',
-                      items: playerProfileSchema,
-                    },
-                  },
-                },
+                items: playerProfileSchema,
               },
             },
-          },
+          }),
           examples: {
             groupedProfiles: {
               summary: 'Player profiles grouped by group',
               value: {
-                groups: [
+                data: [
                   {
                     name: 'Group A',
                     players: [
@@ -130,7 +127,7 @@ getAllPlayerProfilesAdminHandler.apiDescription = {
             ungroupedPlayers: {
               summary: 'Players without a group',
               value: {
-                groups: [
+                data: [
                   {
                     name: 'Ungrouped',
                     players: [
