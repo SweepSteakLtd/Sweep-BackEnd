@@ -52,7 +52,7 @@ getAllPlayerProfilesAdminHandler.apiDescription = {
   description:
     'Admin endpoint to retrieve all player profiles grouped by their group field, with optional country filtering.',
   operationId: 'adminGetAllPlayerProfiles',
-  tags: ['player-profiles'],
+  tags: ['admin', 'player-profiles'],
   responses: {
     200: {
       description: 'Player profiles retrieved successfully, grouped by group',
