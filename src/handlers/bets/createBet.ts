@@ -161,6 +161,7 @@ export const createBetHandler = async (req: Request, res: Response, next: NextFu
     const newTeam: Team = {
       id: newTeamId,
       owner_id: user.id,
+      league_id: league_id,
       player_ids,
       name: null, // TODO: what should this be?
       position: null, // TODO: what should this be?

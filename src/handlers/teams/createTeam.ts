@@ -89,6 +89,7 @@ export const createTeamHandler = async (req: Request, res: Response, next: NextF
     const teamObject: Team = {
       id: createId(),
       owner_id: res.locals.user.id,
+      league_id: league_id,
       name: name || null,
       position: null,
       player_ids: players || [],

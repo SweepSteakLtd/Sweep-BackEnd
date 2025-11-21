@@ -1,6 +1,6 @@
 import { eq, inArray } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { Bet, bets, League, leagues, Player, players, Team, teams, User } from '../../models';
+import { League, leagues, Player, players, Team, teams, User } from '../../models';
 import { database } from '../../services';
 import {
   apiKeyAuth,
@@ -18,40 +18,34 @@ import {
 export const getAllTeamsHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user: User = res.locals.user;
-    const existingBets: Bet[] = await database
-      .select(bets)
-      .from(bets)
-      .where(eq(bets.owner_id, user.id));
+    const existingTeams: Team[] = await database
+      .select(teams)
+      .from(teams)
+      .where(eq(teams.owner_id, user.id));
 
-    const resolvedBet = await Promise.all(
-      existingBets.map(async bet => {
+    const resolvedTeams = await Promise.all(
+      existingTeams.map(async team => {
         const existingLeague: League[] = await database
           .select(leagues)
           .from(leagues)
-          .where(eq(leagues.id, bet.league_id))
-          .execute();
-
-        const existingTeam: Team[] = await database
-          .select(teams)
-          .from(teams)
-          .where(eq(teams.id, bet.team_id))
+          .where(eq(leagues.id, team.league_id))
           .execute();
 
         const existingPlayers = await database
           .select(players)
           .from(players)
-          .where(inArray(players.id, existingTeam[0].player_ids))
+          .where(inArray(players.id, team.player_ids))
           .execute();
 
         return {
           league: existingLeague[0] as League,
-          team: existingTeam[0] as Team,
+          team: team,
           players: existingPlayers as Player[],
         };
       }),
     );
 
-    return res.status(200).send({ data: resolvedBet });
+    return res.status(200).send({ data: resolvedTeams });
   } catch (error: any) {
     console.log(`GET ALL TEAM ERROR: ${error.message} 🛑`);
     return res.status(500).send({
