@@ -40,8 +40,18 @@ export const getAllLeaguesHandler = async (req: Request, res: Response, next: Ne
       );
     }
 
+    const userId = res.locals.user?.id;
+    const sanitizedResult = finalResult.map(league => {
+      if (league.owner_id === userId) {
+        return league;
+      } else {
+        const { join_code, ...leagueWithoutJoinCode } = league;
+        return leagueWithoutJoinCode;
+      }
+    });
+
     // TODO: should we return finished leagues or only leagues in progress?
-    return res.status(200).send({ data: finalResult });
+    return res.status(200).send({ data: sanitizedResult });
   } catch (error: any) {
     console.log(`GET ALL leagueS ERROR: ${error.message} 🛑`);
     return res.status(500).send({
@@ -54,18 +64,20 @@ export const getAllLeaguesHandler = async (req: Request, res: Response, next: Ne
 getAllLeaguesHandler.apiDescription = {
   summary: 'Get all leagues',
   description:
-    'Retrieves all leagues with optional filtering by tournament, entry fee, owner, or search term. Search term filters by league name or description (case-insensitive).',
+    'Retrieves all leagues with optional filtering by tournament, entry fee, owner, or search term. Search term filters by league name or description (case-insensitive). Privacy: join_code is only included in responses for leagues owned by the authenticated user; it is omitted for leagues owned by others.',
   operationId: 'getAllLeagues',
   tags: ['leagues'],
   responses: {
     200: {
-      description: 'Leagues retrieved successfully',
+      description: 'Leagues retrieved successfully. Note: join_code only appears for leagues owned by the requesting user.',
       content: {
         'application/json': {
           schema: arrayDataWrapper(leagueSchema),
           examples: {
-            allLeagues: {
-              summary: 'Multiple leagues',
+            mixedOwnership: {
+              summary: 'Multiple leagues (authenticated as user_xyz789)',
+              description:
+                'Shows join_code for owned league (first item) but not for other users leagues (second item)',
               value: {
                 data: [
                   {
@@ -76,13 +88,14 @@ getAllLeaguesHandler.apiDescription = {
                     contact_phone: '+12345678901',
                     contact_email: 'organizer@sweepstake.com',
                     contact_visibility: true,
-                    join_code: null,
+                    join_code: 'ABC123',
                     max_participants: 50,
                     rewards: [],
                     start_time: '2025-04-10T12:00:00Z',
                     end_time: '2025-04-14T18:00:00Z',
-                    type: 'public',
+                    type: 'private',
                     user_id_list: [],
+                    joined_players: ['user_xyz789'],
                     tournament_id: 'tournament_masters2025',
                     owner_id: 'user_xyz789',
                     created_at: '2025-01-15T10:30:00Z',
@@ -96,13 +109,13 @@ getAllLeaguesHandler.apiDescription = {
                     contact_phone: null,
                     contact_email: null,
                     contact_visibility: false,
-                    join_code: null,
                     max_participants: 100,
                     rewards: [],
                     start_time: '2025-06-15T12:00:00Z',
                     end_time: '2025-06-18T18:00:00Z',
-                    type: 'public',
+                    type: 'private',
                     user_id_list: [],
+                    joined_players: ['user_abc456'],
                     tournament_id: 'tournament_usopen2025',
                     owner_id: 'user_abc456',
                     created_at: '2025-01-20T14:00:00Z',

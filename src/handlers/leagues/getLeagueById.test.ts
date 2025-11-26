@@ -89,8 +89,9 @@ describe('getLeagueByIdHandler', () => {
     (database.select as jest.Mock).mockReturnValue({ from: mockFrom });
   });
 
-  test('successfully retrieves league by ID', async () => {
+  test('successfully retrieves league by ID with join_code when user is owner', async () => {
     const res = mockResponse();
+    res.locals.user = { id: 'user_123' }; // Same as league owner_id
     const req = {
       params: { id: 'league_123' },
       query: {},
@@ -99,13 +100,28 @@ describe('getLeagueByIdHandler', () => {
     await getLeagueByIdHandler(req, res, mockNext);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.send).toHaveBeenCalledWith({
-      data: {
-        league: mockLeague,
-        tournament: mockTournament,
-        user_bets: mockBets,
-      },
-    });
+    const sent = (res.send as jest.Mock).mock.calls[0][0];
+    expect(sent.data.league.join_code).toBe('GOLF2025');
+    expect(sent.data.tournament).toEqual(mockTournament);
+    expect(sent.data.user_bets).toEqual(mockBets);
+  });
+
+  test('successfully retrieves league by ID without join_code when user is not owner', async () => {
+    const res = mockResponse();
+    res.locals.user = { id: 'user_456' }; // Different from league owner_id
+    const req = {
+      params: { id: 'league_123' },
+      query: {},
+    } as unknown as Request;
+
+    await getLeagueByIdHandler(req, res, mockNext);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const sent = (res.send as jest.Mock).mock.calls[0][0];
+    expect(sent.data.league.join_code).toBeUndefined();
+    expect(sent.data.league.id).toBe('league_123');
+    expect(sent.data.tournament).toEqual(mockTournament);
+    expect(sent.data.user_bets).toEqual(mockBets);
   });
 
   test('returns 422 when id not provided', async () => {

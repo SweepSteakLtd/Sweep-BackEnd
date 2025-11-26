@@ -315,6 +315,7 @@ export const createLeagueHandler = async (req: Request, res: Response, next: Nex
       user_id_list: req.body.user_id_list,
       is_featured: req.body.is_featured,
       type: req.body.type,
+      joined_players: [res.locals.user.id],
       created_at: new Date(),
       updated_at: new Date(),
     };
@@ -334,7 +335,7 @@ export const createLeagueHandler = async (req: Request, res: Response, next: Nex
 createLeagueHandler.apiDescription = {
   summary: 'Create a new league',
   description:
-    'Creates a new league for a tournament. Automatically generates a join code for private leagues. The owner_id is automatically set from the authenticated user.',
+    'Creates a new league for a tournament. Automatically generates a join code for private leagues. The owner_id and initial joined_players array (containing the creator) are automatically set from the authenticated user.',
   operationId: 'createLeague',
   tags: ['leagues'],
   responses: {
@@ -366,6 +367,7 @@ createLeagueHandler.apiDescription = {
                   end_time: '2025-04-14T18:00:00Z',
                   type: 'public',
                   user_id_list: [],
+                  joined_players: ['user_xyz789'],
                   tournament_id: 'tournament_masters2025',
                   owner_id: 'user_xyz789',
                   created_at: '2025-01-15T10:30:00Z',
@@ -391,6 +393,7 @@ createLeagueHandler.apiDescription = {
                   end_time: '2025-05-05T20:00:00Z',
                   type: 'private',
                   user_id_list: [],
+                  joined_players: ['user_xyz789'],
                   tournament_id: 'tournament_usopen2025',
                   owner_id: 'user_xyz789',
                   created_at: '2025-01-15T11:00:00Z',
@@ -407,7 +410,8 @@ createLeagueHandler.apiDescription = {
     500: standardResponses[500],
   },
   requestBody: {
-    description: 'League creation details. Owner ID is automatically set from authenticated user.',
+    description:
+      'League creation details. Owner ID and joined_players (containing the creator) are automatically set from authenticated user.',
     required: true,
     content: {
       'application/json': {

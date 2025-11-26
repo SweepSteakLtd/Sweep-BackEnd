@@ -48,8 +48,19 @@ export const getLeagueByIdHandler = async (req: Request, res: Response, next: Ne
       .limit(1)
       .execute();
 
+    // Filter out join_code unless user is the owner
+    const userId = res.locals.user?.id;
+    const league = existingLeague[0];
+    const sanitizedLeague =
+      league.owner_id === userId
+        ? league
+        : (() => {
+            const { join_code, ...leagueWithoutJoinCode } = league;
+            return leagueWithoutJoinCode;
+          })();
+
     const leagueData = {
-      league: existingLeague[0],
+      league: sanitizedLeague,
       tournament: fetchedTournaments[0] || {},
       user_bets: fetchedBets,
     };
@@ -66,7 +77,7 @@ export const getLeagueByIdHandler = async (req: Request, res: Response, next: Ne
 getLeagueByIdHandler.apiDescription = {
   summary: 'Get league by ID',
   description:
-    'Retrieves detailed information about a specific league, including its associated tournament and user bets. Private leagues require a valid join_code query parameter for access.',
+    'Retrieves detailed information about a specific league, including its associated tournament and user bets. Private leagues require a valid join_code query parameter for access. Privacy: join_code is only included in the response for leagues owned by the authenticated user.',
   operationId: 'getLeagueById',
   tags: ['leagues'],
   responses: {
