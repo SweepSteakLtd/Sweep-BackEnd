@@ -1,5 +1,8 @@
+import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { fetchState, getAuthToken } from '../../integrations/GBG/GBG';
+import { users } from '../../models';
+import { database } from '../../services';
 import { apiKeyAuth, standardResponses } from '../schemas';
 
 type Decisions =
@@ -50,12 +53,27 @@ export const fetchGBGStateHandler = async (req: Request, res: Response, next: Ne
 
     if (
       fetchResult.status === 'Completed' ||
-      (fetchResult.status === 'InProgress' &&
+      (fetchResult.status === 'inProgress' &&
         finalResult[0].result.outcome === 'Decision: Manual review')
     ) {
-      // TODO: update user if completed
+      const verificationStatus = mapDecisionsToResult(finalResult[0].result.outcome);
+
+      await database
+        .update(users)
+        .set({
+          kyc_completed: true,
+          is_identity_verified: verificationStatus === 'PASS',
+          updated_at: new Date(),
+        })
+        .where(eq(users.kyc_instance_id, instance_id))
+        .execute();
+
+      console.log(
+        `[DEBUG]: Updated user with instance_id ${instance_id} - kyc_completed: true, is_identity_verified: ${verificationStatus === 'PASS'}`,
+      );
+
       return res.status(200).send({
-        status: mapDecisionsToResult(finalResult[0].result.outcome), //"PASS" | "FAIL" | "MANUAL"
+        status: verificationStatus, //"PASS" | "FAIL" | "MANUAL"
       });
     } else {
       return res.status(200).send({

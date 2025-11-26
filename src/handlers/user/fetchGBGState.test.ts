@@ -3,8 +3,15 @@ jest.mock('../../integrations/GBG/GBG', () => ({
   fetchState: jest.fn(),
 }));
 
+jest.mock('../../services', () => ({
+  database: {
+    update: jest.fn(),
+  },
+}));
+
 import { NextFunction, Request, Response } from 'express';
 import { fetchState, getAuthToken } from '../../integrations/GBG/GBG';
+import { database } from '../../services';
 import { fetchGBGStateHandler } from './fetchGBGState';
 
 const mockResponse = () => {
@@ -50,6 +57,12 @@ const mockGBGResponse = (status: string, outcome: string) => {
 describe('fetchGBGStateHandler', () => {
   beforeEach(() => {
     (getAuthToken as jest.Mock).mockResolvedValue(mockAuthToken);
+
+    // Mock database update chain
+    const mockExecute = jest.fn().mockResolvedValue(undefined);
+    const mockWhere = jest.fn().mockReturnValue({ execute: mockExecute });
+    const mockSet = jest.fn().mockReturnValue({ where: mockWhere });
+    (database.update as jest.Mock).mockReturnValue({ set: mockSet });
   });
 
   describe('Completed verifications', () => {
@@ -220,7 +233,7 @@ describe('fetchGBGStateHandler', () => {
         message: 'An unexpected error occurred',
       });
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[DEBUG]: UPDATE CURRENT USER ERROR: Auth token error'),
+        expect.stringContaining('[DEBUG]: VERIFY CURRENT USER ERROR: Auth token error'),
       );
 
       consoleLogSpy.mockRestore();
@@ -243,7 +256,7 @@ describe('fetchGBGStateHandler', () => {
         message: 'An unexpected error occurred',
       });
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[DEBUG]: UPDATE CURRENT USER ERROR: GBG API error'),
+        expect.stringContaining('[DEBUG]: VERIFY CURRENT USER ERROR: GBG API error'),
       );
 
       consoleLogSpy.mockRestore();

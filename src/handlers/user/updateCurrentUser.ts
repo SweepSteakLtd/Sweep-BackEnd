@@ -268,12 +268,7 @@ export const updateCurrentUserHandler = async (req: Request, res: Response, next
       }
     }
 
-    const updatedUser: Partial<User> = {
-      // TODO: think if we should allow update of is_auth_verified from client or handle it on backend.
-      // is_auth_verified: req.body.is_auth_verified,
-      // TODO: part of gbg process
-      // is_identity_verified: req.body.is_identity_verified,
-    };
+    const updatedUser: Partial<User> = {};
 
     Object.entries(req.body).forEach(([key, value]) => {
       if (propertiesAvailableForUpdate.includes(key)) {
