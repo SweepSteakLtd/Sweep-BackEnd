@@ -112,7 +112,7 @@ export const createTeamHandler = async (req: Request, res: Response, next: NextF
 createTeamHandler.apiDescription = {
   summary: 'Create a new team',
   description:
-    'Creates a new team with optional name and player list. The owner_id is automatically set from the authenticated user. League validation is performed if league_id is provided.',
+    'Creates a new team with optional name and player list. The owner_id is automatically set from the authenticated user. League validation is performed if league_id is provided. When creating a team for a private league, a valid join_code query parameter is required.',
   operationId: 'createTeam',
   tags: ['teams'],
   responses: {
@@ -156,9 +156,58 @@ createTeamHandler.apiDescription = {
     },
     404: standardResponses[404],
     422: standardResponses[422],
-    403: standardResponses[403],
+    403: {
+      description: 'Forbidden - Authentication required or invalid join_code for private league',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+          examples: {
+            notAuthenticated: {
+              summary: 'User not authenticated',
+              value: {
+                error: 'Forbidden',
+                message: 'User authentication is required',
+              },
+            },
+            noJoinCode: {
+              summary: 'Private league accessed without join_code',
+              value: {
+                error: 'Forbidden',
+                message: 'This is a private league. A valid join code is required to access it.',
+              },
+            },
+            invalidJoinCode: {
+              summary: 'Private league accessed with invalid join_code',
+              value: {
+                error: 'Forbidden',
+                message: 'Invalid join code for this private league.',
+              },
+            },
+          },
+        },
+      },
+    },
     500: standardResponses[500],
   },
+  parameters: [
+    {
+      name: 'join_code',
+      in: 'query',
+      required: false,
+      schema: {
+        type: 'string',
+      },
+      description:
+        'Join code for creating teams in private leagues. Required when league_id refers to a private league, optional for public leagues.',
+      example: 'GOLF2025',
+    },
+  ],
   requestBody: {
     description:
       'Team creation details. All fields are optional. Owner ID is automatically set from authenticated user.',

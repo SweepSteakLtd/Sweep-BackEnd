@@ -48,6 +48,7 @@ import {
   AuthenticateAdminMiddleware,
   AuthenticateEmailMiddleware,
   AuthenticateMiddleware,
+  JoinCodeMiddleware,
 } from '../middlewares';
 
 type ApiSecurity = Array<{ [scheme: string]: any }>;
@@ -130,7 +131,7 @@ export const routes: RouteDescription[] = [
       {
         method: 'post',
         name: '/',
-        stack: [AuthenticateMiddleware, createTeamHandler],
+        stack: [AuthenticateMiddleware, JoinCodeMiddleware, createTeamHandler],
       },
       {
         method: 'get',
@@ -160,7 +161,7 @@ export const routes: RouteDescription[] = [
       {
         method: 'get',
         name: '/:id',
-        stack: [AuthenticateMiddleware, getLeagueByIdHandler],
+        stack: [AuthenticateMiddleware, JoinCodeMiddleware, getLeagueByIdHandler],
       },
       {
         method: 'put',

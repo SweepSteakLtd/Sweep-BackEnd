@@ -66,7 +66,7 @@ export const getLeagueByIdHandler = async (req: Request, res: Response, next: Ne
 getLeagueByIdHandler.apiDescription = {
   summary: 'Get league by ID',
   description:
-    'Retrieves detailed information about a specific league, including its associated tournament and user bets.',
+    'Retrieves detailed information about a specific league, including its associated tournament and user bets. Private leagues require a valid join_code query parameter for access.',
   operationId: 'getLeagueById',
   tags: ['leagues'],
   responses: {
@@ -149,7 +149,36 @@ getLeagueByIdHandler.apiDescription = {
       },
     },
     422: standardResponses[422],
-    403: standardResponses[403],
+    403: {
+      description: 'Forbidden - Invalid or missing join_code for private league',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+          examples: {
+            noJoinCode: {
+              summary: 'Private league accessed without join_code',
+              value: {
+                error: 'Forbidden',
+                message: 'This is a private league. A valid join code is required to access it.',
+              },
+            },
+            invalidJoinCode: {
+              summary: 'Private league accessed with invalid join_code',
+              value: {
+                error: 'Forbidden',
+                message: 'Invalid join code for this private league.',
+              },
+            },
+          },
+        },
+      },
+    },
     500: standardResponses[500],
   },
   parameters: [
@@ -163,6 +192,17 @@ getLeagueByIdHandler.apiDescription = {
       },
       description: 'Unique identifier of the league to retrieve',
       example: 'league_abc123',
+    },
+    {
+      name: 'join_code',
+      in: 'query',
+      required: false,
+      schema: {
+        type: 'string',
+      },
+      description:
+        'Join code for accessing private leagues. Required when accessing a private league, optional for public leagues.',
+      example: 'GOLF2025',
     },
   ],
   security: [apiKeyAuth],
