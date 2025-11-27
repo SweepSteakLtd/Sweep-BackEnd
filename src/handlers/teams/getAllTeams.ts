@@ -1,12 +1,12 @@
 import { eq, inArray } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { League, leagues, Player, playerProfiles, Team, teams, User } from '../../models';
+import { League, leagues, playerProfiles, Team, teams, User } from '../../models';
 import { database } from '../../services';
 import {
   apiKeyAuth,
   dataWrapper,
   leagueSchema,
-  playerSchema,
+  playerProfileSchema,
   standardResponses,
   teamSchema,
 } from '../schemas';
@@ -40,7 +40,7 @@ export const getAllTeamsHandler = async (req: Request, res: Response, next: Next
         return {
           league: existingLeague[0] as League,
           team: team,
-          players: existingPlayers as Player[],
+          players: existingPlayers,
         };
       }),
     );
@@ -58,7 +58,7 @@ export const getAllTeamsHandler = async (req: Request, res: Response, next: Next
 getAllTeamsHandler.apiDescription = {
   summary: 'Get user teams',
   description:
-    'Retrieves all teams for the authenticated user based on their bets. Returns league, team, and player details for each bet.',
+    'Retrieves all teams owned by the authenticated user. Returns league, team, and player profile details for each team.',
   operationId: 'getAllTeams',
   tags: ['teams'],
   responses: {
@@ -76,14 +76,15 @@ getAllTeamsHandler.apiDescription = {
                 team: teamSchema,
                 players: {
                   type: 'array',
-                  items: playerSchema,
+                  items: playerProfileSchema,
+                  description: 'Array of player profiles for the team',
                 },
               },
             },
           }),
           examples: {
             success: {
-              summary: 'User teams with full details',
+              summary: 'User teams with league and player profile details',
               value: {
                 data: [
                   {
@@ -110,34 +111,34 @@ getAllTeamsHandler.apiDescription = {
                     team: {
                       id: 'team_def456',
                       owner_id: 'user_abc123',
-                      player_ids: ['player_1', 'player_2', 'player_3'],
+                      player_ids: ['profile_abc', 'profile_def', 'profile_ghi'],
                       created_at: '2025-01-16T09:00:00Z',
                       updated_at: '2025-01-16T09:00:00Z',
                     },
                     players: [
                       {
-                        id: 'player_1',
+                        id: 'profile_abc',
                         external_id: 'ext_player_1',
-                        level: 4,
-                        current_score: -5,
-                        position: 12,
-                        attempts: { '1': 3, '2': 4 },
-                        missed_cut: false,
-                        odds: 15.5,
-                        profile_id: 'profile_abc',
+                        first_name: 'Tiger',
+                        last_name: 'Woods',
+                        country: 'USA',
+                        age: 48,
+                        ranking: 15,
+                        profile_picture: 'https://example.com/tiger-woods.jpg',
+                        group: 'A',
                         created_at: '2025-01-10T00:00:00Z',
                         updated_at: '2025-01-16T12:00:00Z',
                       },
                       {
-                        id: 'player_2',
+                        id: 'profile_def',
                         external_id: 'ext_player_2',
-                        level: 5,
-                        current_score: -8,
-                        position: 3,
-                        attempts: { '1': 2, '2': 3 },
-                        missed_cut: false,
-                        odds: 8.2,
-                        profile_id: 'profile_def',
+                        first_name: 'Rory',
+                        last_name: 'McIlroy',
+                        country: 'NIR',
+                        age: 34,
+                        ranking: 3,
+                        profile_picture: 'https://example.com/rory-mcilroy.jpg',
+                        group: 'A',
                         created_at: '2025-01-10T00:00:00Z',
                         updated_at: '2025-01-16T12:00:00Z',
                       },
