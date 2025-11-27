@@ -1,6 +1,6 @@
 import { eq, inArray } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { League, leagues, Player, players, Team, teams, User } from '../../models';
+import { League, leagues, Player, playerProfiles, Team, teams, User } from '../../models';
 import { database } from '../../services';
 import {
   apiKeyAuth,
@@ -32,9 +32,9 @@ export const getAllTeamsHandler = async (req: Request, res: Response, next: Next
           .execute();
 
         const existingPlayers = await database
-          .select(players)
-          .from(players)
-          .where(inArray(players.id, team.player_ids))
+          .select(playerProfiles)
+          .from(playerProfiles)
+          .where(inArray(playerProfiles.id, team.player_ids))
           .execute();
 
         return {
