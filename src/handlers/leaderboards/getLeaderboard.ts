@@ -49,20 +49,25 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if league exists
-    const existingLeague = await database
-      .select()
-      .from(leagues)
-      .where(eq(leagues.id, league_id))
-      .limit(1)
-      .execute();
+    let league = res.locals.league;
 
-    if (!existingLeague.length) {
-      console.log('[DEBUG] League not found:', league_id);
-      return res.status(404).send({
-        error: 'Not found',
-        message: 'League not found',
-      });
+    if (!league) {
+      const existingLeague = await database
+        .select()
+        .from(leagues)
+        .where(eq(leagues.id, league_id))
+        .limit(1)
+        .execute();
+
+      if (!existingLeague.length) {
+        console.log('[DEBUG] League not found:', league_id);
+        return res.status(404).send({
+          error: 'Not found',
+          message: 'League not found',
+        });
+      }
+
+      league = existingLeague[0];
     }
 
     // Get all bets for this league
@@ -177,7 +182,6 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
     });
 
     // Calculate prizes based on league rewards
-    const league = existingLeague[0];
     if (league.rewards && Array.isArray(league.rewards) && league.rewards.length > 0) {
       const totalPot = league.entry_fee * leagueBets.length;
 
@@ -203,7 +207,7 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
 getLeaderboardHandler.apiDescription = {
   summary: 'Get leaderboard for a league',
   description:
-    'Retrieves the leaderboard for a specific league. Returns ranked teams with their players, scores, and potential prizes based on league rewards.',
+    'Retrieves the leaderboard for a specific league. Returns ranked teams with their players, scores, and potential prizes based on league rewards. For private leagues, a valid join_code is required in the query parameters.',
   operationId: 'getLeaderboard',
   tags: ['leaderboards'],
   responses: {
@@ -380,6 +384,17 @@ getLeaderboardHandler.apiDescription = {
       },
       description: 'Unique identifier of the league',
       example: 'league_abc123',
+    },
+    {
+      name: 'join_code',
+      in: 'query',
+      required: false,
+      schema: {
+        type: 'string',
+      },
+      description:
+        'Join code required to access private leagues. Not required for public leagues or if the user has already joined the league.',
+      example: 'ABC123XYZ',
     },
   ],
   security: [apiKeyAuth],

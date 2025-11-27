@@ -14,7 +14,7 @@ export const JoinCodeMiddleware = async (req: Request, res: Response, next: Next
   try {
     const { join_code } = req.query;
 
-    const leagueId = req.params.id || req.body?.league_id;
+    const leagueId = req.params.id || req.params.league_id || req.body?.league_id;
 
     if (!leagueId) {
       return next();
@@ -32,6 +32,7 @@ export const JoinCodeMiddleware = async (req: Request, res: Response, next: Next
     }
 
     const league = existingLeague[0];
+    res.locals.league = league;
 
     const user: User = res.locals.user;
     if (league.joined_players && league.joined_players.includes(user.id)) {

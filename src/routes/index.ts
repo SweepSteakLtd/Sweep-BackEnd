@@ -236,7 +236,7 @@ export const routes: RouteDescription[] = [
       {
         method: 'get',
         name: '/:league_id',
-        stack: [AuthenticateMiddleware, getLeaderboardHandler],
+        stack: [AuthenticateMiddleware, JoinCodeMiddleware, getLeaderboardHandler],
       },
     ],
   },
