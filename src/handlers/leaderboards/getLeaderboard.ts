@@ -1,6 +1,6 @@
 import { eq, inArray } from 'drizzle-orm';
 import { Request, Response } from 'express';
-import { bets, leagues, players, playerProfiles, teams, users } from '../../models';
+import { leagues, playerProfiles, players, teams, users } from '../../models';
 import { database } from '../../services';
 import { apiKeyAuth, dataWrapper, standardResponses } from '../schemas';
 
@@ -20,7 +20,7 @@ interface LeaderboardEntry {
   total: number;
   players: LeaderboardPlayer[];
   bestScore: number[];
-  prize: string;
+  prize: number;
 }
 
 /**
@@ -70,24 +70,10 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
       league = existingLeague[0];
     }
 
-    // Get all bets for this league
-    const leagueBets = await database
-      .select()
-      .from(bets)
-      .where(eq(bets.league_id, league_id))
-      .execute();
-
-    if (!leagueBets.length) {
-      // No bets, return empty leaderboard
-      return res.status(200).send({ data: [] });
-    }
-
-    // Get all teams for these bets
-    const teamIds = leagueBets.map((bet: any) => bet.team_id);
     const leagueTeams = await database
       .select()
       .from(teams)
-      .where(inArray(teams.id, teamIds))
+      .where(eq(teams.league_id, league_id))
       .execute();
 
     // Get team owners
@@ -169,7 +155,7 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
         total: totalScore,
         players: leaderboardPlayers,
         bestScore: sortedScores,
-        prize: '$0', // Prize calculation would be based on league rewards
+        prize: 0, // Prize calculation would be based on league rewards
       });
     }
 
@@ -183,13 +169,13 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
 
     // Calculate prizes based on league rewards
     if (league.rewards && Array.isArray(league.rewards) && league.rewards.length > 0) {
-      const totalPot = league.entry_fee * leagueBets.length;
+      const totalPot = league.entry_fee * leagueTeams.length * 0.9 * 100; // 10% platform fee
 
       for (const reward of league.rewards as any[]) {
         const position = reward.position;
         if (position > 0 && position <= leaderboardEntries.length) {
-          const prizeAmount = (totalPot * reward.percentage) / 100;
-          leaderboardEntries[position - 1].prize = `$${prizeAmount.toFixed(2)}`;
+          const prizeAmount = totalPot * reward.percentage;
+          leaderboardEntries[position - 1].prize = prizeAmount;
         }
       }
     }
@@ -284,9 +270,9 @@ getLeaderboardHandler.apiDescription = {
                   example: [-14, -13, -7],
                 },
                 prize: {
-                  type: 'string',
+                  type: 'number',
                   description: 'Prize amount if team is in winning position',
-                  example: '$216066',
+                  example: 216066,
                 },
               },
             },
@@ -324,7 +310,7 @@ getLeaderboardHandler.apiDescription = {
                       },
                     ],
                     bestScore: [-14, -13, -10],
-                    prize: '$216066',
+                    prize: 216066,
                   },
                   {
                     rank: 2,
@@ -354,7 +340,7 @@ getLeaderboardHandler.apiDescription = {
                       },
                     ],
                     bestScore: [-12, -11, -9],
-                    prize: '$129640',
+                    prize: 129640,
                   },
                 ],
               },
