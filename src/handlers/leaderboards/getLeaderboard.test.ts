@@ -96,7 +96,7 @@ test('getLeaderboardHandler - returns 404 when league not found', async () => {
 });
 
 // Empty leaderboard test
-test('getLeaderboardHandler - returns empty array when no bets exist', async () => {
+test('getLeaderboardHandler - returns empty array when no teams exist', async () => {
   const res = mockResponse();
   (res as any).locals.user = { id: 'u1' };
   const req = { params: { league_id: 'league_abc123' } } as unknown as Request;
@@ -108,16 +108,21 @@ test('getLeaderboardHandler - returns empty array when no bets exist', async () 
     rewards: [],
   };
 
-  // Mock: league exists, but no bets
+  // Mock: league exists, but no teams
   mockDatabaseCalls([
     [league], // league query
-    [], // bets query (empty)
+    [], // teams query (empty)
   ]);
 
   await getLeaderboardHandler(req, res);
 
   expect(res.status).toHaveBeenCalledWith(200);
-  expect(res.send).toHaveBeenCalledWith({ data: [] });
+  expect(res.send).toHaveBeenCalledWith({
+    data: {
+      entries: [],
+      total_pot: 0
+    }
+  });
 });
 
 // Success case with leaderboard data
@@ -136,14 +141,9 @@ test('getLeaderboardHandler - returns leaderboard with teams and players', async
     ],
   };
 
-  const bets = [
-    { id: 'bet1', owner_id: 'u1', league_id: 'league_abc123', team_id: 'team1', amount: 100 },
-    { id: 'bet2', owner_id: 'u2', league_id: 'league_abc123', team_id: 'team2', amount: 100 },
-  ];
-
   const teams = [
-    { id: 'team1', owner_id: 'u1', name: 'Team Alpha', player_ids: ['p1', 'p2'] },
-    { id: 'team2', owner_id: 'u2', name: 'Team Beta', player_ids: ['p3', 'p4'] },
+    { id: 'team1', owner_id: 'u1', name: 'Team Alpha', player_ids: ['p1', 'p2'], league_id: 'league_abc123' },
+    { id: 'team2', owner_id: 'u2', name: 'Team Beta', player_ids: ['p3', 'p4'], league_id: 'league_abc123' },
   ];
 
   const owners = [
@@ -192,7 +192,6 @@ test('getLeaderboardHandler - returns leaderboard with teams and players', async
   // Mock all database calls in order
   mockDatabaseCalls([
     [league], // league query
-    bets, // bets query
     teams, // teams query
     owners, // team owners query
     players, // players query
@@ -202,57 +201,59 @@ test('getLeaderboardHandler - returns leaderboard with teams and players', async
   await getLeaderboardHandler(req, res);
 
   expect(res.status).toHaveBeenCalledWith(200);
-  expect(res.send).toHaveBeenCalledWith(
-    expect.objectContaining({
-      data: expect.arrayContaining([
-        expect.objectContaining({
-          rank: 1,
-          name: expect.objectContaining({
-            main: 'Team Alpha',
-            substring: 'John Smith',
-          }),
-          total: -24,
-          players: expect.arrayContaining([
-            expect.objectContaining({
-              group: 'A',
-              player_name: 'Tiger Woods',
-              score: -10,
-              status: 'F',
-            }),
-            expect.objectContaining({
-              group: 'B',
-              player_name: 'Rory McIlroy',
-              score: -14,
-              status: 'F',
-            }),
-          ]),
-          bestScore: [-14, -10],
-          prize: '$100.00',
+  const response = (res.send as jest.Mock).mock.calls[0][0];
+  expect(response.data).toHaveProperty('entries');
+  expect(response.data).toHaveProperty('total_pot');
+  expect(response.data.total_pot).toBe(18000); // 2 teams * 100 entry fee * 0.9 * 100
+  expect(response.data.entries).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        rank: 1,
+        name: expect.objectContaining({
+          main: 'Team Alpha',
+          substring: 'John Smith',
         }),
-        expect.objectContaining({
-          rank: 2,
-          name: expect.objectContaining({
-            main: 'Team Beta',
-            substring: 'Jane Doe',
+        total: -24,
+        players: expect.arrayContaining([
+          expect.objectContaining({
+            group: 'A',
+            player_name: 'Tiger Woods',
+            score: -10,
+            status: 'F',
           }),
-          total: -17,
-          players: expect.arrayContaining([
-            expect.objectContaining({
-              group: 'A',
-              player_name: 'Phil Mickelson',
-              score: -8,
-            }),
-            expect.objectContaining({
-              group: 'B',
-              player_name: 'Justin Thomas',
-              score: -9,
-            }),
-          ]),
-          bestScore: [-9, -8],
-          prize: '$60.00',
+          expect.objectContaining({
+            group: 'B',
+            player_name: 'Rory McIlroy',
+            score: -14,
+            status: 'F',
+          }),
+        ]),
+        bestScore: [-14, -10],
+        prize: 900000, // 18000 * 50
+      }),
+      expect.objectContaining({
+        rank: 2,
+        name: expect.objectContaining({
+          main: 'Team Beta',
+          substring: 'Jane Doe',
         }),
-      ]),
-    }),
+        total: -17,
+        players: expect.arrayContaining([
+          expect.objectContaining({
+            group: 'A',
+            player_name: 'Phil Mickelson',
+            score: -8,
+          }),
+          expect.objectContaining({
+            group: 'B',
+            player_name: 'Justin Thomas',
+            score: -9,
+          }),
+        ]),
+        bestScore: [-9, -8],
+        prize: 540000, // 18000 * 30
+      }),
+    ]),
   );
 });
 
@@ -269,11 +270,7 @@ test('getLeaderboardHandler - handles missed cut status correctly', async () => 
     rewards: [],
   };
 
-  const bets = [
-    { id: 'bet1', owner_id: 'u1', league_id: 'league_abc123', team_id: 'team1', amount: 100 },
-  ];
-
-  const teams = [{ id: 'team1', owner_id: 'u1', name: 'Team Alpha', player_ids: ['p1'] }];
+  const teams = [{ id: 'team1', owner_id: 'u1', name: 'Team Alpha', player_ids: ['p1'], league_id: 'league_abc123' }];
 
   const owners = [{ id: 'u1', first_name: 'John', last_name: 'Smith' }];
 
@@ -289,13 +286,13 @@ test('getLeaderboardHandler - handles missed cut status correctly', async () => 
 
   const profiles = [{ id: 'profile1', first_name: 'Tiger', last_name: 'Woods' }];
 
-  mockDatabaseCalls([[league], bets, teams, owners, players, profiles]);
+  mockDatabaseCalls([[league], teams, owners, players, profiles]);
 
   await getLeaderboardHandler(req, res);
 
   expect(res.status).toHaveBeenCalledWith(200);
   const response = (res.send as jest.Mock).mock.calls[0][0];
-  expect(response.data[0].players[0].status).toBe('MC');
+  expect(response.data.entries[0].players[0].status).toBe('MC');
 });
 
 // Test with no player profiles
@@ -311,34 +308,29 @@ test('getLeaderboardHandler - handles teams with no players', async () => {
     rewards: [],
   };
 
-  const bets = [
-    { id: 'bet1', owner_id: 'u1', league_id: 'league_abc123', team_id: 'team1', amount: 100 },
-  ];
-
-  const teams = [{ id: 'team1', owner_id: 'u1', name: 'Team Alpha', player_ids: [] }];
+  const teams = [{ id: 'team1', owner_id: 'u1', name: 'Team Alpha', player_ids: [], league_id: 'league_abc123' }];
 
   const owners = [{ id: 'u1', first_name: 'John', last_name: 'Smith' }];
 
-  // Mock: league, bets, teams, owners (no players)
-  mockDatabaseCalls([[league], bets, teams, owners]);
+  // Mock: league, teams, owners (no players)
+  mockDatabaseCalls([[league], teams, owners]);
 
   await getLeaderboardHandler(req, res);
 
   expect(res.status).toHaveBeenCalledWith(200);
-  expect(res.send).toHaveBeenCalledWith(
-    expect.objectContaining({
-      data: expect.arrayContaining([
-        expect.objectContaining({
-          rank: 1,
-          name: expect.objectContaining({
-            main: 'Team Alpha',
-          }),
-          total: 0,
-          players: [],
-          bestScore: [],
+  const response = (res.send as jest.Mock).mock.calls[0][0];
+  expect(response.data.entries).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        rank: 1,
+        name: expect.objectContaining({
+          main: 'Team Alpha',
         }),
-      ]),
-    }),
+        total: 0,
+        players: [],
+        bestScore: [],
+      }),
+    ]),
   );
 });
 
@@ -355,16 +347,10 @@ test('getLeaderboardHandler - handles missing or incomplete owner names', async 
     rewards: [],
   };
 
-  const bets = [
-    { id: 'bet1', owner_id: 'u1', league_id: 'league_abc123', team_id: 'team1', amount: 100 },
-    { id: 'bet2', owner_id: 'u2', league_id: 'league_abc123', team_id: 'team2', amount: 100 },
-    { id: 'bet3', owner_id: 'u3', league_id: 'league_abc123', team_id: 'team3', amount: 100 },
-  ];
-
   const teams = [
-    { id: 'team1', owner_id: 'u1', name: 'Team Alpha', player_ids: [] },
-    { id: 'team2', owner_id: 'u2', name: 'Team Beta', player_ids: [] },
-    { id: 'team3', owner_id: 'u3', name: 'Team Gamma', player_ids: [] },
+    { id: 'team1', owner_id: 'u1', name: 'Team Alpha', player_ids: [], league_id: 'league_abc123' },
+    { id: 'team2', owner_id: 'u2', name: 'Team Beta', player_ids: [], league_id: 'league_abc123' },
+    { id: 'team3', owner_id: 'u3', name: 'Team Gamma', player_ids: [], league_id: 'league_abc123' },
   ];
 
   const owners = [
@@ -373,7 +359,7 @@ test('getLeaderboardHandler - handles missing or incomplete owner names', async 
     // u3 not in owners array - owner not found
   ];
 
-  mockDatabaseCalls([[league], bets, teams, owners]);
+  mockDatabaseCalls([[league], teams, owners]);
 
   await getLeaderboardHandler(req, res);
 
@@ -381,15 +367,15 @@ test('getLeaderboardHandler - handles missing or incomplete owner names', async 
   const response = (res.send as jest.Mock).mock.calls[0][0];
 
   // Team1 should have "Unknown Owner" (empty names)
-  const team1 = response.data.find((t: any) => t.name.main === 'Team Alpha');
+  const team1 = response.data.entries.find((t: any) => t.name.main === 'Team Alpha');
   expect(team1.name.substring).toBe('Unknown Owner');
 
   // Team2 should have "Jane" (only first name)
-  const team2 = response.data.find((t: any) => t.name.main === 'Team Beta');
+  const team2 = response.data.entries.find((t: any) => t.name.main === 'Team Beta');
   expect(team2.name.substring).toBe('Jane');
 
   // Team3 should have "Unknown Owner" (owner not found)
-  const team3 = response.data.find((t: any) => t.name.main === 'Team Gamma');
+  const team3 = response.data.entries.find((t: any) => t.name.main === 'Team Gamma');
   expect(team3.name.substring).toBe('Unknown Owner');
 });
 

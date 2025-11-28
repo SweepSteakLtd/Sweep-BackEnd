@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { leagues, teams, tournaments } from '../../models';
+import { leagues, Team, teams, tournaments } from '../../models';
 import { database } from '../../services';
 import {
   apiKeyAuth,
@@ -60,7 +60,7 @@ export const getLeagueByIdHandler = async (req: Request, res: Response, next: Ne
     const leagueData = {
       league: sanitizedLeague,
       tournament: fetchedTournaments[0] || {},
-      user_team_count: fetchedTeams.filter(team => team.owner_id === userId).length,
+      user_team_count: fetchedTeams.filter((team: Team) => team.owner_id === userId).length,
       total_team_count: fetchedTeams.length || 0,
       total_pot: fetchedTeams.length * league.entry_fee * 0.9 * 100, // 10% is going to the platform
     };

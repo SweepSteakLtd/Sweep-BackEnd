@@ -26,7 +26,7 @@ interface LeaderboardEntry {
 /**
  * Get leaderboard for a league (authenticated endpoint)
  * @params league_id - required
- * @returns LeaderboardEntry[]
+ * @returns Object with entries (LeaderboardEntry[]) and total_pot (number)
  */
 export const getLeaderboardHandler = async (req: Request, res: Response) => {
   try {
@@ -180,7 +180,9 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
       }
     }
 
-    return res.status(200).send({ data: leaderboardEntries });
+    const totalPot = league.entry_fee * leagueTeams.length * 0.9 * 100;
+
+    return res.status(200).send({ data: { entries: leaderboardEntries, total_pot: totalPot } });
   } catch (error: any) {
     console.log(`GET LEADERBOARD ERROR: ${error.message} 🛑`);
     return res.status(500).send({
@@ -193,7 +195,7 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
 getLeaderboardHandler.apiDescription = {
   summary: 'Get leaderboard for a league',
   description:
-    'Retrieves the leaderboard for a specific league. Returns ranked teams with their players, scores, and potential prizes based on league rewards. For private leagues, a valid join_code is required in the query parameters.',
+    'Retrieves the leaderboard for a specific league. Returns ranked teams with their players, scores, potential prizes based on league rewards, and the total pot amount. For private leagues, a valid join_code is required in the query parameters.',
   operationId: 'getLeaderboard',
   tags: ['leaderboards'],
   responses: {
@@ -202,78 +204,89 @@ getLeaderboardHandler.apiDescription = {
       content: {
         'application/json': {
           schema: dataWrapper({
-            type: 'array',
-            items: {
-              type: 'object',
-              required: ['rank', 'name', 'total', 'players', 'bestScore', 'prize'],
-              properties: {
-                rank: {
-                  type: 'number',
-                  minimum: 1,
-                  description: 'Team rank in the leaderboard',
-                  example: 1,
-                },
-                name: {
+            type: 'object',
+            required: ['entries', 'total_pot'],
+            properties: {
+              entries: {
+                type: 'array',
+                items: {
                   type: 'object',
-                  required: ['main', 'substring'],
+                  required: ['rank', 'name', 'total', 'players', 'bestScore', 'prize'],
                   properties: {
-                    main: {
-                      type: 'string',
-                      description: 'Team name',
-                      example: 'Dream Team',
+                    rank: {
+                      type: 'number',
+                      minimum: 1,
+                      description: 'Team rank in the leaderboard',
+                      example: 1,
                     },
-                    substring: {
-                      type: 'string',
-                      description: 'Team owner full name',
-                      example: 'John Smith',
+                    name: {
+                      type: 'object',
+                      required: ['main', 'substring'],
+                      properties: {
+                        main: {
+                          type: 'string',
+                          description: 'Team name',
+                          example: 'Dream Team',
+                        },
+                        substring: {
+                          type: 'string',
+                          description: 'Team owner full name',
+                          example: 'John Smith',
+                        },
+                      },
+                    },
+                    total: {
+                      type: 'number',
+                      description: 'Total team score',
+                      example: -37,
+                    },
+                    players: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        required: ['group', 'player_name', 'score', 'status'],
+                        properties: {
+                          group: {
+                            type: 'string',
+                            description: 'Player group (A-E based on level)',
+                            example: 'A',
+                          },
+                          player_name: {
+                            type: 'string',
+                            description: 'Player full name',
+                            example: 'Tiger Woods',
+                          },
+                          score: {
+                            type: 'number',
+                            description: 'Player score',
+                            example: -10,
+                          },
+                          status: {
+                            type: 'string',
+                            description: 'Player status (F for final, MC for missed cut)',
+                            example: 'F',
+                          },
+                        },
+                      },
+                    },
+                    bestScore: {
+                      type: 'array',
+                      items: { type: 'number' },
+                      description: 'Top 3 player scores for this team',
+                      example: [-14, -13, -7],
+                    },
+                    prize: {
+                      type: 'number',
+                      description: 'Prize amount if team is in winning position',
+                      example: 216066,
                     },
                   },
                 },
-                total: {
-                  type: 'number',
-                  description: 'Total team score',
-                  example: -37,
-                },
-                players: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    required: ['group', 'player_name', 'score', 'status'],
-                    properties: {
-                      group: {
-                        type: 'string',
-                        description: 'Player group (A-E based on level)',
-                        example: 'A',
-                      },
-                      player_name: {
-                        type: 'string',
-                        description: 'Player full name',
-                        example: 'Tiger Woods',
-                      },
-                      score: {
-                        type: 'number',
-                        description: 'Player score',
-                        example: -10,
-                      },
-                      status: {
-                        type: 'string',
-                        description: 'Player status (F for final, MC for missed cut)',
-                        example: 'F',
-                      },
-                    },
-                  },
-                },
-                bestScore: {
-                  type: 'array',
-                  items: { type: 'number' },
-                  description: 'Top 3 player scores for this team',
-                  example: [-14, -13, -7],
-                },
-                prize: {
-                  type: 'number',
-                  description: 'Prize amount if team is in winning position',
-                  example: 216066,
-                },
+              },
+              total_pot: {
+                type: 'number',
+                description: 'Total pot amount for the league (entry fee * team count * 0.9 * 100)',
+                example: 432132,
               },
             },
           }),
@@ -281,74 +294,80 @@ getLeaderboardHandler.apiDescription = {
             success: {
               summary: 'League leaderboard',
               value: {
-                data: [
-                  {
-                    rank: 1,
-                    name: {
-                      main: 'Dream Team',
-                      substring: 'John Smith',
+                data: {
+                  entries: [
+                    {
+                      rank: 1,
+                      name: {
+                        main: 'Dream Team',
+                        substring: 'John Smith',
+                      },
+                      total: -37,
+                      players: [
+                        {
+                          group: 'A',
+                          player_name: 'Tiger Woods',
+                          score: -10,
+                          status: 'F',
+                        },
+                        {
+                          group: 'B',
+                          player_name: 'Rory McIlroy',
+                          score: -14,
+                          status: 'F',
+                        },
+                        {
+                          group: 'C',
+                          player_name: 'Jordan Spieth',
+                          score: -13,
+                          status: 'F',
+                        },
+                      ],
+                      bestScore: [-14, -13, -10],
+                      prize: 216066,
                     },
-                    total: -37,
-                    players: [
-                      {
-                        group: 'A',
-                        player_name: 'Tiger Woods',
-                        score: -10,
-                        status: 'F',
+                    {
+                      rank: 2,
+                      name: {
+                        main: 'Eagles United',
+                        substring: 'Jane Doe',
                       },
-                      {
-                        group: 'B',
-                        player_name: 'Rory McIlroy',
-                        score: -14,
-                        status: 'F',
-                      },
-                      {
-                        group: 'C',
-                        player_name: 'Jordan Spieth',
-                        score: -13,
-                        status: 'F',
-                      },
-                    ],
-                    bestScore: [-14, -13, -10],
-                    prize: 216066,
-                  },
-                  {
-                    rank: 2,
-                    name: {
-                      main: 'Eagles United',
-                      substring: 'Jane Doe',
+                      total: -32,
+                      players: [
+                        {
+                          group: 'A',
+                          player_name: 'Phil Mickelson',
+                          score: -11,
+                          status: 'F',
+                        },
+                        {
+                          group: 'B',
+                          player_name: 'Justin Thomas',
+                          score: -12,
+                          status: 'F',
+                        },
+                        {
+                          group: 'C',
+                          player_name: 'Brooks Koepka',
+                          score: -9,
+                          status: 'F',
+                        },
+                      ],
+                      bestScore: [-12, -11, -9],
+                      prize: 129640,
                     },
-                    total: -32,
-                    players: [
-                      {
-                        group: 'A',
-                        player_name: 'Phil Mickelson',
-                        score: -11,
-                        status: 'F',
-                      },
-                      {
-                        group: 'B',
-                        player_name: 'Justin Thomas',
-                        score: -12,
-                        status: 'F',
-                      },
-                      {
-                        group: 'C',
-                        player_name: 'Brooks Koepka',
-                        score: -9,
-                        status: 'F',
-                      },
-                    ],
-                    bestScore: [-12, -11, -9],
-                    prize: 129640,
-                  },
-                ],
+                  ],
+                  total_pot: 432132,
+                },
               },
             },
             emptyLeaderboard: {
-              summary: 'No bets in league',
+              summary: 'No teams in league',
               value: {
-                data: [],
+                data: {
+                  entries: [],
+                  total_pot: 0,
+                },
               },
             },
           },
