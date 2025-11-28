@@ -1,10 +1,9 @@
 import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { bets, leagues, tournaments } from '../../models';
+import { leagues, teams, tournaments } from '../../models';
 import { database } from '../../services';
 import {
   apiKeyAuth,
-  betSchema,
   dataWrapper,
   leagueSchema,
   standardResponses,
@@ -14,7 +13,7 @@ import {
 /**
  * Get league by ID (authenticated endpoint)
  * @params id - required
- * @returns league with Tournament and Bets
+ * @returns league with Tournament, user team count, total team count, and total pot
  */
 export const getLeagueByIdHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -41,14 +40,14 @@ export const getLeagueByIdHandler = async (req: Request, res: Response, next: Ne
       .where(eq(tournaments.id, existingLeague[0].tournament_id))
       .limit(1)
       .execute();
-    const fetchedBets = await database
-      .select()
-      .from(bets)
-      .where(eq(bets.league_id, existingLeague[0].id))
+
+    const fetchedTeams = await database
+      .select(teams)
+      .from(teams)
+      .where(eq(teams.league_id, existingLeague[0].id))
       .limit(1)
       .execute();
 
-    // Filter out join_code unless user is the owner
     const userId = res.locals.user?.id;
     const league = existingLeague[0];
     const sanitizedLeague =
@@ -62,7 +61,9 @@ export const getLeagueByIdHandler = async (req: Request, res: Response, next: Ne
     const leagueData = {
       league: sanitizedLeague,
       tournament: fetchedTournaments[0] || {},
-      user_bets: fetchedBets,
+      user_team_count: fetchedTeams.filter(team => team.owner_id === userId).length,
+      total_team_count: fetchedTeams.length || 0,
+      total_pot: fetchedTeams.length * league.entry_fee * 0.9 * 100, // 10% is going to the platform
     };
     return res.status(200).send({ data: leagueData });
   } catch (error: any) {
@@ -77,7 +78,7 @@ export const getLeagueByIdHandler = async (req: Request, res: Response, next: Ne
 getLeagueByIdHandler.apiDescription = {
   summary: 'Get league by ID',
   description:
-    'Retrieves detailed information about a specific league, including its associated tournament and user bets. Private leagues require a valid join_code query parameter for access. Privacy: join_code is only included in the response for leagues owned by the authenticated user.',
+    'Retrieves detailed information about a specific league, including its associated tournament, user team count (number of teams the authenticated user has in this league), total team count, and total pot. Private leagues require a valid join_code query parameter for access (validated by middleware). Privacy: join_code is only included in the response for leagues owned by the authenticated user.',
   operationId: 'getLeagueById',
   tags: ['leagues'],
   responses: {
@@ -87,19 +88,27 @@ getLeagueByIdHandler.apiDescription = {
         'application/json': {
           schema: dataWrapper({
             type: 'object',
-            required: ['league', 'tournament', 'user_bets'],
+            required: ['league', 'tournament', 'user_team_count', 'total_team_count', 'total_pot'],
             properties: {
               league: leagueSchema,
               tournament: tournamentSchema,
-              user_bets: {
-                type: 'array',
-                items: betSchema,
+              user_team_count: {
+                type: 'number',
+                description: 'Number of teams the authenticated user has in this league',
+              },
+              total_team_count: {
+                type: 'number',
+                description: 'Total number of teams in the league',
+              },
+              total_pot: {
+                type: 'number',
+                description: 'Total pot amount (team count * entry fee * 0.9 * 100)',
               },
             },
           }),
           examples: {
             success: {
-              summary: 'League with tournament and bets',
+              summary: 'League with tournament and team count',
               value: {
                 data: {
                   league: {
@@ -140,18 +149,9 @@ getLeagueByIdHandler.apiDescription = {
                     created_at: '2025-01-01T00:00:00Z',
                     updated_at: '2025-01-01T00:00:00Z',
                   },
-                  user_bets: [
-                    {
-                      id: 'bet_xyz456',
-                      owner_id: 'user_abc789',
-                      league_id: 'league_abc123',
-                      team_id: 'team_def012',
-                      amount: 100,
-                      status: 'pending',
-                      created_at: '2025-01-16T09:00:00Z',
-                      updated_at: '2025-01-16T09:00:00Z',
-                    },
-                  ],
+                  user_team_count: 2,
+                  total_team_count: 10,
+                  total_pot: 90000,
                 },
               },
             },
@@ -161,7 +161,8 @@ getLeagueByIdHandler.apiDescription = {
     },
     422: standardResponses[422],
     403: {
-      description: 'Forbidden - Invalid or missing join_code for private league',
+      description:
+        'Forbidden - Invalid or missing join_code for private league, or league does not exist',
       content: {
         'application/json': {
           schema: {
@@ -184,6 +185,13 @@ getLeagueByIdHandler.apiDescription = {
               value: {
                 error: 'Forbidden',
                 message: 'Invalid join code for this private league.',
+              },
+            },
+            missingLeague: {
+              summary: 'League not found',
+              value: {
+                error: 'Missing league',
+                message: "league doesn't exist",
               },
             },
           },

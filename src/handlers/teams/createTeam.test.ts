@@ -131,6 +131,52 @@ test('createTeamHandler - returns 404 when league does not exist', async () => {
   );
 });
 
+test('createTeamHandler - returns 403 when user has reached max teams limit', async () => {
+  const res = mockResponse();
+  (res as any).locals.user = { id: 'u1' };
+  const req = { body: { league_id: 'league1' } } as unknown as Request;
+
+  // Mock league with max_participants = 2
+  // Mock user already has 2 teams in the league
+  mockSelectChain([
+    [{ id: 'league1', max_participants: 2 }], // league query
+    [{ id: 'team1' }, { id: 'team2' }], // user teams query (2 teams)
+  ]);
+
+  await createTeamHandler(req, res, mockNext);
+
+  expect(res.status).toHaveBeenCalledWith(403);
+  expect(res.send).toHaveBeenCalledWith(
+    expect.objectContaining({
+      error: 'Forbidden',
+      message: 'You have reached the maximum number of teams (2) allowed in this league',
+    }),
+  );
+});
+
+test('createTeamHandler - creates team when max_participants is null (no limit)', async () => {
+  const res = mockResponse();
+  (res as any).locals.user = { id: 'u1' };
+  const req = {
+    body: { name: 'Unlimited Team', league_id: 'league1' },
+  } as unknown as Request;
+
+  // Mock league with max_participants = null (no limit)
+  mockSelectChain([[{ id: 'league1', max_participants: null }]]);
+  mockInsertExecute();
+
+  await createTeamHandler(req, res, mockNext);
+
+  expect(res.status).toHaveBeenCalledWith(201);
+  expect(res.send).toHaveBeenCalledWith({
+    data: expect.objectContaining({
+      id: 'test-id',
+      owner_id: 'u1',
+      name: 'Unlimited Team',
+    }),
+  });
+});
+
 test('createTeamHandler - returns 422 when players is not an array', async () => {
   const res = mockResponse();
   (res as any).locals.user = { id: 'u1' };
@@ -171,8 +217,12 @@ test('createTeamHandler - creates team with all fields', async () => {
     body: { name: 'Dream Team', league_id: 'league1', players: ['p1', 'p2'] },
   } as unknown as Request;
 
-  // Mock league exists
-  mockSelectChain([[{ id: 'league1' }]]);
+  // Mock league exists with max_participants = 5
+  // Mock user has 1 team in the league (can create more)
+  mockSelectChain([
+    [{ id: 'league1', max_participants: 5 }], // league query
+    [{ id: 'existing_team' }], // user teams query (1 team)
+  ]);
   mockInsertExecute();
 
   await createTeamHandler(req, res, mockNext);

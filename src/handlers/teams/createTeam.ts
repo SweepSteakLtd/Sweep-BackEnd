@@ -1,5 +1,5 @@
 import { createId } from '@paralleldrive/cuid2';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { leagues, Team, teams } from '../../models';
 import { database } from '../../services';
@@ -11,6 +11,7 @@ import { apiKeyAuth, dataWrapper, standardResponses, teamSchema } from '../schem
  * @body league_id - string - optional
  * @body players - array - optional
  * @returns Team
+ * @note User can create up to max_participants teams in a league
  */
 export const createTeamHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -64,6 +65,26 @@ export const createTeamHandler = async (req: Request, res: Response, next: NextF
           message: 'League not found',
         });
       }
+
+      const league = existingLeague[0];
+      const maxParticipants = league.max_participants;
+
+      // Check if user has reached the maximum number of teams allowed in this league
+      if (maxParticipants !== null && maxParticipants !== undefined) {
+        const userTeamsInLeague = await database
+          .select()
+          .from(teams)
+          .where(and(eq(teams.league_id, league_id), eq(teams.owner_id, res.locals.user.id)))
+          .execute();
+
+        if (userTeamsInLeague.length >= maxParticipants) {
+          console.log('[DEBUG] User has reached max teams limit:', maxParticipants);
+          return res.status(403).send({
+            error: 'Forbidden',
+            message: `You have reached the maximum number of teams (${maxParticipants}) allowed in this league`,
+          });
+        }
+      }
     }
 
     if (players !== undefined && players !== null) {
@@ -112,7 +133,7 @@ export const createTeamHandler = async (req: Request, res: Response, next: NextF
 createTeamHandler.apiDescription = {
   summary: 'Create a new team',
   description:
-    'Creates a new team with optional name and player list. The owner_id is automatically set from the authenticated user. League validation is performed if league_id is provided. When creating a team for a private league, a valid join_code query parameter is required.',
+    'Creates a new team with optional name and player list. The owner_id is automatically set from the authenticated user. League validation is performed if league_id is provided. Users can create up to max_participants teams per league (e.g., if max_participants is 5, a user can create up to 5 teams in that league). When creating a team for a private league, a valid join_code query parameter is required.',
   operationId: 'createTeam',
   tags: ['teams'],
   responses: {
@@ -157,7 +178,7 @@ createTeamHandler.apiDescription = {
     404: standardResponses[404],
     422: standardResponses[422],
     403: {
-      description: 'Forbidden - Authentication required or invalid join_code for private league',
+      description: 'Forbidden - Authentication required, max teams limit reached, or invalid join_code for private league',
       content: {
         'application/json': {
           schema: {
@@ -173,6 +194,13 @@ createTeamHandler.apiDescription = {
               value: {
                 error: 'Forbidden',
                 message: 'User authentication is required',
+              },
+            },
+            maxTeamsReached: {
+              summary: 'User has reached maximum teams limit',
+              value: {
+                error: 'Forbidden',
+                message: 'You have reached the maximum number of teams (5) allowed in this league',
               },
             },
             noJoinCode: {

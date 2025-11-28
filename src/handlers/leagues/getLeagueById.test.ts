@@ -57,13 +57,18 @@ const mockTournament = {
   updated_at: new Date(),
 };
 
-const mockBets = [
+const mockTeams = [
   {
-    id: 'bet_123',
-    owner_id: 'user_123',
+    id: 'team_123',
     league_id: 'league_123',
-    team_id: 'team_123',
-    amount: 100,
+    owner_id: 'user_123',
+    created_at: new Date(),
+    updated_at: new Date(),
+  },
+  {
+    id: 'team_456',
+    league_id: 'league_123',
+    owner_id: 'user_456',
     created_at: new Date(),
     updated_at: new Date(),
   },
@@ -81,7 +86,7 @@ describe('getLeagueByIdHandler', () => {
     mockExecute
       .mockResolvedValueOnce([mockLeague])
       .mockResolvedValueOnce([mockTournament])
-      .mockResolvedValueOnce(mockBets);
+      .mockResolvedValueOnce(mockTeams);
 
     mockLimit.mockReturnValue({ execute: mockExecute });
     mockWhere.mockReturnValue({ limit: mockLimit });
@@ -103,7 +108,9 @@ describe('getLeagueByIdHandler', () => {
     const sent = (res.send as jest.Mock).mock.calls[0][0];
     expect(sent.data.league.join_code).toBe('GOLF2025');
     expect(sent.data.tournament).toEqual(mockTournament);
-    expect(sent.data.user_bets).toEqual(mockBets);
+    expect(sent.data.user_team_count).toBe(1); // user_123 owns team_123
+    expect(sent.data.total_team_count).toBe(2);
+    expect(sent.data.total_pot).toBe(18000); // 2 teams * 100 entry fee * 0.9 * 100
   });
 
   test('successfully retrieves league by ID without join_code when user is not owner', async () => {
@@ -121,7 +128,9 @@ describe('getLeagueByIdHandler', () => {
     expect(sent.data.league.join_code).toBeUndefined();
     expect(sent.data.league.id).toBe('league_123');
     expect(sent.data.tournament).toEqual(mockTournament);
-    expect(sent.data.user_bets).toEqual(mockBets);
+    expect(sent.data.user_team_count).toBe(1); // user_456 owns team_456
+    expect(sent.data.total_team_count).toBe(2);
+    expect(sent.data.total_pot).toBe(18000); // 2 teams * 100 entry fee * 0.9 * 100
   });
 
   test('returns 422 when id not provided', async () => {
