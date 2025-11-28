@@ -45,7 +45,6 @@ export const getLeagueByIdHandler = async (req: Request, res: Response, next: Ne
       .select(teams)
       .from(teams)
       .where(eq(teams.league_id, existingLeague[0].id))
-      .limit(1)
       .execute();
 
     const userId = res.locals.user?.id;
