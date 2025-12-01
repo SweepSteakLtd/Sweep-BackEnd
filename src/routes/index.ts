@@ -48,6 +48,7 @@ import {
   AuthenticateAdminMiddleware,
   AuthenticateEmailMiddleware,
   AuthenticateMiddleware,
+  CheckMonthlyBetLimitMiddleware,
   JoinCodeMiddleware,
 } from '../middlewares';
 
@@ -131,7 +132,12 @@ export const routes: RouteDescription[] = [
       {
         method: 'post',
         name: '/',
-        stack: [AuthenticateMiddleware, JoinCodeMiddleware, createTeamHandler],
+        stack: [
+          AuthenticateMiddleware,
+          JoinCodeMiddleware,
+          CheckMonthlyBetLimitMiddleware,
+          createTeamHandler,
+        ],
       },
       {
         method: 'get',
@@ -181,7 +187,7 @@ export const routes: RouteDescription[] = [
       {
         method: 'post',
         name: '/',
-        stack: [AuthenticateMiddleware, createBetHandler],
+        stack: [AuthenticateMiddleware, CheckMonthlyBetLimitMiddleware, createBetHandler],
       },
       {
         method: 'get',

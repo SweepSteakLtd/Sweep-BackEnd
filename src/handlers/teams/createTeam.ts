@@ -1,14 +1,14 @@
 import { createId } from '@paralleldrive/cuid2';
 import { and, eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { leagues, Team, teams } from '../../models';
+import { bets, leagues, Team, teams } from '../../models';
 import { database } from '../../services';
 import { apiKeyAuth, dataWrapper, standardResponses, teamSchema } from '../schemas';
 
 /**
  * Create team (authenticated endpoint)
  * @body name - string - optional
- * @body league_id - string - optional
+ * @body league_id - string - required
  * @body players - array - optional
  * @returns Team
  * @note User can create up to max_participants teams in a league
@@ -42,48 +42,45 @@ export const createTeamHandler = async (req: Request, res: Response, next: NextF
       }
     }
 
-    if (league_id !== undefined && league_id !== null) {
-      if (typeof league_id !== 'string' || league_id.trim().length === 0) {
-        console.log('[DEBUG] Invalid league_id: must be non-empty string');
-        return res.status(422).send({
-          error: 'Invalid request body',
-          message: 'league_id must be a non-empty string',
-        });
-      }
+    if (typeof league_id !== 'string' || league_id.trim().length === 0) {
+      console.log('[DEBUG] Invalid league_id: must be non-empty string');
+      return res.status(422).send({
+        error: 'Invalid request body',
+        message: 'league_id must be a non-empty string',
+      });
+    }
 
-      const existingLeague = await database
+    const existingLeague = await database
+      .select()
+      .from(leagues)
+      .where(eq(leagues.id, league_id))
+      .limit(1)
+      .execute();
+
+    if (!existingLeague.length) {
+      console.log('[DEBUG] League not found:', league_id);
+      return res.status(404).send({
+        error: 'Not found',
+        message: 'League not found',
+      });
+    }
+
+    const league = existingLeague[0];
+    const maxParticipants = league.max_participants;
+
+    if (maxParticipants !== null && maxParticipants !== undefined) {
+      const userTeamsInLeague = await database
         .select()
-        .from(leagues)
-        .where(eq(leagues.id, league_id))
-        .limit(1)
+        .from(teams)
+        .where(and(eq(teams.league_id, league_id), eq(teams.owner_id, res.locals.user.id)))
         .execute();
 
-      if (!existingLeague.length) {
-        console.log('[DEBUG] League not found:', league_id);
-        return res.status(404).send({
-          error: 'Not found',
-          message: 'League not found',
+      if (userTeamsInLeague.length >= maxParticipants) {
+        console.log('[DEBUG] User has reached max teams limit:', maxParticipants);
+        return res.status(403).send({
+          error: 'Forbidden',
+          message: `You have reached the maximum number of teams (${maxParticipants}) allowed in this league`,
         });
-      }
-
-      const league = existingLeague[0];
-      const maxParticipants = league.max_participants;
-
-      // Check if user has reached the maximum number of teams allowed in this league
-      if (maxParticipants !== null && maxParticipants !== undefined) {
-        const userTeamsInLeague = await database
-          .select()
-          .from(teams)
-          .where(and(eq(teams.league_id, league_id), eq(teams.owner_id, res.locals.user.id)))
-          .execute();
-
-        if (userTeamsInLeague.length >= maxParticipants) {
-          console.log('[DEBUG] User has reached max teams limit:', maxParticipants);
-          return res.status(403).send({
-            error: 'Forbidden',
-            message: `You have reached the maximum number of teams (${maxParticipants}) allowed in this league`,
-          });
-        }
       }
     }
 
@@ -119,6 +116,19 @@ export const createTeamHandler = async (req: Request, res: Response, next: NextF
     };
 
     await database.insert(teams).values(teamObject).execute();
+
+    await database
+      .insert(bets)
+      .values({
+        league_id: league_id!,
+        owner_id: res.locals.user.id,
+        team_id: teamObject.id,
+        amount: league.entry_fee,
+        id: createId(),
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+      .execute();
 
     return res.status(201).send({ data: teamObject });
   } catch (error: any) {
@@ -178,7 +188,8 @@ createTeamHandler.apiDescription = {
     404: standardResponses[404],
     422: standardResponses[422],
     403: {
-      description: 'Forbidden - Authentication required, max teams limit reached, or invalid join_code for private league',
+      description:
+        'Forbidden - Authentication required, max teams limit reached, or invalid join_code for private league',
       content: {
         'application/json': {
           schema: {
@@ -255,8 +266,8 @@ createTeamHandler.apiDescription = {
             },
             league_id: {
               type: 'string',
-              nullable: true,
-              description: 'League ID for validation (optional)',
+              nullable: false,
+              description: 'League ID for validation (required)',
               example: 'league_abc123',
             },
             players: {
