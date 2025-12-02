@@ -4,6 +4,7 @@ export * from './user/deleteCurrentUser';
 export * from './user/fetchGBGState';
 export * from './user/getCurrentUser';
 export * from './user/updateCurrentUser';
+export * from './user/uploadGBGDocuments';
 
 // Game handlers
 export * from './leagues/createLeague';

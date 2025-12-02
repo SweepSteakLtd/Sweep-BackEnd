@@ -43,6 +43,7 @@ import {
   updateTournamentHandler,
   updateTransactionHandler,
   updateUserHandler,
+  uploadGBGDocumentsHandler,
 } from '../handlers';
 import {
   AuthenticateAdminMiddleware,
@@ -114,6 +115,7 @@ export const routes: RouteDescription[] = [
         stack: [AuthenticateMiddleware, deleteCurrentUserHandler],
       },
       { method: 'get', name: '/verify/gbg', stack: [AuthenticateMiddleware, fetchGBGStateHandler] },
+      { method: 'post', name: '/upload/gbg', stack: [AuthenticateMiddleware, uploadGBGDocumentsHandler] },
     ],
   },
   {
