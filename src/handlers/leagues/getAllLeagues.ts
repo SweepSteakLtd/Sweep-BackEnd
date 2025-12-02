@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, ilike } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { League, leagues } from '../../models';
 import { database } from '../../services';
@@ -8,8 +8,30 @@ import { apiKeyAuth, arrayDataWrapper, leagueSchema, standardResponses } from '.
  * Get all leagues (authenticated endpoint)
  * @returns league[]
  */
-export const getAllLeaguesHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const getAllLeaguesHandler = async (req: Request, res: Response, _next: NextFunction) => {
   try {
+    const nameQuery = req.query.name as string | undefined;
+
+    if (nameQuery) {
+      const nameResults = await database
+        .select()
+        .from(leagues)
+        .where(ilike(leagues.name, nameQuery))
+        .execute();
+
+      const userId = res.locals.user?.id;
+      const sanitizedResult = nameResults.map((league: League) => {
+        if (league.owner_id === userId) {
+          return league;
+        } else {
+          const { join_code, ...leagueWithoutJoinCode } = league;
+          return leagueWithoutJoinCode;
+        }
+      });
+
+      return res.status(200).send({ data: sanitizedResult });
+    }
+
     const existingleague = database.select().from(leagues);
 
     const allowedFilters = ['entry_fee', 'tournament_id', 'owner_id'];
@@ -42,7 +64,7 @@ export const getAllLeaguesHandler = async (req: Request, res: Response, next: Ne
 
     const userId = res.locals.user?.id;
     const sanitizedResult = finalResult
-      .map(league => {
+      .map((league: League) => {
         if (league.owner_id === userId) {
           return league;
         } else {
@@ -50,7 +72,7 @@ export const getAllLeaguesHandler = async (req: Request, res: Response, next: Ne
           return leagueWithoutJoinCode;
         }
       })
-      .filter(league => league.type !== 'private' || league.owner_id === userId);
+      .filter((league: League) => league.type !== 'private' || league.owner_id === userId);
 
     // TODO: should we return finished leagues or only leagues in progress?
     return res.status(200).send({ data: sanitizedResult });
@@ -66,7 +88,7 @@ export const getAllLeaguesHandler = async (req: Request, res: Response, next: Ne
 getAllLeaguesHandler.apiDescription = {
   summary: 'Get all leagues',
   description:
-    'Retrieves all leagues with optional filtering by tournament, entry fee, owner, or search term. Search term filters by league name or description (case-insensitive). Privacy: join_code is only included in responses for leagues owned by the authenticated user; it is omitted for leagues owned by others.',
+    'Retrieves all leagues with optional filtering. When using the "name" parameter, searches for leagues by exact name (case-insensitive) and bypasses privacy filters (returns both public and private leagues). Without "name", filters can be applied by tournament, entry fee, owner, or search term. Search term filters by league name or description (case-insensitive) and respects privacy filters. Privacy: join_code is only included in responses for leagues owned by the authenticated user; it is omitted for leagues owned by others.',
   operationId: 'getAllLeagues',
   tags: ['leagues'],
   responses: {
@@ -142,6 +164,17 @@ getAllLeaguesHandler.apiDescription = {
   },
   parameters: [
     {
+      name: 'name',
+      in: 'query',
+      required: false,
+      schema: {
+        type: 'string',
+        minLength: 1,
+      },
+      description: 'Search for leagues by exact name (case-insensitive). When provided, bypasses privacy filters and returns all matching leagues regardless of public/private status. Takes precedence over other filters.',
+      example: 'Masters Championship League',
+    },
+    {
       name: 'search_term',
       in: 'query',
       required: false,
@@ -149,7 +182,7 @@ getAllLeaguesHandler.apiDescription = {
         type: 'string',
         minLength: 1,
       },
-      description: 'Case-insensitive search term to filter leagues by name or description',
+      description: 'Case-insensitive search term to filter leagues by name or description. Respects privacy filters (only shows public leagues or private leagues owned by user).',
       example: 'masters',
     },
     {
