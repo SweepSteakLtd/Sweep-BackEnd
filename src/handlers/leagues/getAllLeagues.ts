@@ -41,14 +41,16 @@ export const getAllLeaguesHandler = async (req: Request, res: Response, next: Ne
     }
 
     const userId = res.locals.user?.id;
-    const sanitizedResult = finalResult.map(league => {
-      if (league.owner_id === userId) {
-        return league;
-      } else {
-        const { join_code, ...leagueWithoutJoinCode } = league;
-        return leagueWithoutJoinCode;
-      }
-    });
+    const sanitizedResult = finalResult
+      .map(league => {
+        if (league.owner_id === userId) {
+          return league;
+        } else {
+          const { join_code, ...leagueWithoutJoinCode } = league;
+          return leagueWithoutJoinCode;
+        }
+      })
+      .filter(league => league.type !== 'private' || league.owner_id === userId);
 
     // TODO: should we return finished leagues or only leagues in progress?
     return res.status(200).send({ data: sanitizedResult });
@@ -69,7 +71,8 @@ getAllLeaguesHandler.apiDescription = {
   tags: ['leagues'],
   responses: {
     200: {
-      description: 'Leagues retrieved successfully. Note: join_code only appears for leagues owned by the requesting user.',
+      description:
+        'Leagues retrieved successfully. Note: join_code only appears for leagues owned by the requesting user.',
       content: {
         'application/json': {
           schema: arrayDataWrapper(leagueSchema),

@@ -19,7 +19,7 @@ interface GBGSubmitTaskResponse {
 
 /**
  * Upload GBG Documents for Identity Verification
- * @body documents - Array of base64-encoded JPEG images (at least 1 document)
+ * @body documents - Array of base64-encoded images (at least 1 document)
  * @returns GBG instance ID and status
  */
 export const uploadGBGDocumentsHandler = async (
@@ -34,7 +34,7 @@ export const uploadGBGDocumentsHandler = async (
       console.log('[DEBUG] Invalid documents: must be an array');
       return res.status(422).send({
         error: 'Invalid request body',
-        message: 'documents must be an array of base64-encoded JPEG images',
+        message: 'documents must be an array of base64-encoded images',
       });
     }
 
@@ -46,7 +46,7 @@ export const uploadGBGDocumentsHandler = async (
       });
     }
 
-    const base64Regex = /^data:image\/(jpeg|jpg);base64,([A-Za-z0-9+/=]+)$/;
+    const base64Regex = /^([A-Za-z0-9+/=]+)$/;
     const validDocuments: string[] = [];
 
     for (let i = 0; i < req.body.documents.length; i++) {
@@ -61,10 +61,10 @@ export const uploadGBGDocumentsHandler = async (
       }
 
       if (!base64Regex.test(doc)) {
-        console.log(`[DEBUG] Document ${i + 1} is not a valid base64 JPEG`);
+        console.log(`[DEBUG] Document ${i + 1} is not a valid base64`);
         return res.status(422).send({
           error: 'Invalid request body',
-          message: `Document ${i + 1} must be a base64-encoded JPEG image with format: data:image/jpeg;base64,...`,
+          message: `Document ${i + 1} must be a base64-encoded image with format: base64,...`,
         });
       }
 
@@ -224,7 +224,7 @@ export const uploadGBGDocumentsHandler = async (
 uploadGBGDocumentsHandler.apiDescription = {
   summary: 'Upload documents for GBG identity verification',
   description:
-    'Upload identity documents (passport, driver license, etc.) as base64-encoded JPEG images for GBG verification. The user must have an active verification journey (kyc_instance_id) before uploading documents. This endpoint retrieves pending tasks for the journey and submits the documents to complete the task. Returns the journey instance ID and task ID for tracking.',
+    'Upload identity documents (passport, driver license, etc.) as base64-encoded images for GBG verification. The user must have an active verification journey (kyc_instance_id) before uploading documents. This endpoint retrieves pending tasks for the journey and submits the documents to complete the task. Returns the journey instance ID and task ID for tracking.',
   operationId: 'uploadGBGDocuments',
   tags: ['users', 'verification'],
   responses: {
@@ -270,9 +270,9 @@ uploadGBGDocumentsHandler.apiDescription = {
               message: {
                 type: 'string',
                 examples: [
-                  'documents must be an array of base64-encoded JPEG images',
+                  'documents must be an array of base64-encoded images',
                   'Provide at least 1 document for verification',
-                  'Document 1 must be a base64-encoded JPEG image with format: data:image/jpeg;base64,...',
+                  'Document 1 must be a base64-encoded image with format: ...',
                   'Document 1 exceeds the maximum size of 10MB',
                   'User must have first_name and last_name for document verification',
                   'User must have an active verification journey. Please start verification first.',
@@ -323,7 +323,7 @@ uploadGBGDocumentsHandler.apiDescription = {
   },
   requestBody: {
     description:
-      'Array of identity documents as base64-encoded JPEG images. Each document must be in data URL format (data:image/jpeg;base64,...) and not exceed 10MB in size. The user must have an active verification journey (kyc_instance_id) before calling this endpoint.',
+      'Array of identity documents as base64-encoded images. Each document must be in data URL format (...) and not exceed 10MB in size. The user must have an active verification journey (kyc_instance_id) before calling this endpoint.',
     required: true,
     content: {
       'application/json': {
@@ -343,8 +343,8 @@ uploadGBGDocumentsHandler.apiDescription = {
               description:
                 'Array of document images (passport, driver license, etc.) encoded as base64 JPEG',
               example: [
-                'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/...',
-                'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/...',
+                '/9j/4AAQSkZJRgABAQEAYABgAAD/...',
+                '/9j/4AAQSkZJRgABAQEAYABgAAD/...',
               ],
             },
           },
@@ -353,16 +353,16 @@ uploadGBGDocumentsHandler.apiDescription = {
           'single-document': {
             summary: 'Single document upload',
             value: {
-              documents: ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/...'],
+              documents: ['/9j/4AAQSkZJRgABAQEAYABgAAD/...'],
             },
           },
           'multiple-documents': {
             summary: 'Multiple documents upload',
             value: {
               documents: [
-                'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/...',
-                'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/...',
-                'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/...',
+                '/9j/4AAQSkZJRgABAQEAYABgAAD/...',
+                '/9j/4AAQSkZJRgABAQEAYABgAAD/...',
+                '/9j/4AAQSkZJRgABAQEAYABgAAD/...',
               ],
             },
           },
