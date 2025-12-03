@@ -208,16 +208,28 @@ getTournamentsHandler.apiDescription = {
                             type: 'number',
                           },
                           attempts: {
-                            type: 'object',
-                            properties: {
-                              hole1: {
-                                type: 'number',
+                            type: 'array',
+                            items: {
+                              type: 'object',
+                              properties: {
+                                day: {
+                                  type: 'string',
+                                },
+                                hole_id: {
+                                  type: 'string',
+                                },
+                                hole_name: {
+                                  type: 'string',
+                                },
+                                par: {
+                                  type: 'number',
+                                },
+                                attempt: {
+                                  type: 'number',
+                                },
                               },
-                              hole2: {
-                                type: 'number',
-                              },
+                              required: ['day', 'hole_id', 'hole_name', 'par', 'attempt'],
                             },
-                            required: ['hole1', 'hole2'],
                           },
                           missed_cut: {
                             type: 'boolean',
@@ -239,11 +251,6 @@ getTournamentsHandler.apiDescription = {
                           'id',
                           'external_id',
                           'level',
-                          'current_score',
-                          'position',
-                          'attempts',
-                          'missed_cut',
-                          'odds',
                           'profile_id',
                           'created_at',
                           'updated_at',

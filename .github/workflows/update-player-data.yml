@@ -1,0 +1,35 @@
+name: Update Player Data
+
+on:
+  schedule:
+    # Runs every 5 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  update-players:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Update player scores and positions
+        run: yarn update:players
+        env:
+          APPLIED_ENV: ${{ secrets.APPLIED_ENV || 'production' }}
+          BE_DATABASE_PASSWORD: ${{ secrets.BE_DATABASE_PASSWORD }}
+          DATAGOLF_API_KEY: ${{ secrets.DATAGOLF_API_KEY }}
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "Player data update failed at $(date)"

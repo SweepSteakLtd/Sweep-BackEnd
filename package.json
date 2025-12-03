@@ -1,6 +1,6 @@
 {
   "name": "sweepsteak-backend",
-  "version": "1.0.91",
+  "version": "1.0.92",
   "description": "New backend project starter",
   "main": "build/index.js",
   "private": "true",
@@ -20,6 +20,7 @@
     "start": "tsc && node build/src/index.js",
     "test": "yarn jest",
     "update:players": "ts-node src/scripts/updatePlayerScores.ts",
+    "sync:player-profiles": "ts-node src/scripts/syncPlayerProfiles.ts",
     "ts-check": "yarn tsc --noEmit",
     "format": "prettier --write \"src/**/*.{ts,js,json}\" \"*.{ts,js,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,js,json}\" \"*.{ts,js,json}\"",
