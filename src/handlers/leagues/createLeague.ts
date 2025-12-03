@@ -179,13 +179,6 @@ export const createLeagueHandler = async (req: Request, res: Response, next: Nex
           message: 'max_participants must be a number',
         });
       }
-      if (req.body.max_participants < 2) {
-        console.log('[DEBUG] max_participants must be at least 2');
-        return res.status(422).send({
-          error: 'Invalid request body',
-          message: 'max_participants must be at least 2',
-        });
-      }
     }
 
     // Validate rewards if provided
