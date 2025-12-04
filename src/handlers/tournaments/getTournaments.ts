@@ -88,6 +88,20 @@ getTournamentsHandler.apiDescription = {
                     cover_picture: {
                       type: 'string',
                     },
+                    colours: {
+                      type: 'object',
+                      properties: {
+                        primary: {
+                          type: 'string',
+                        },
+                        secondary: {
+                          type: 'string',
+                        },
+                        highlight: {
+                          type: 'string',
+                        },
+                      },
+                    },
                     gallery: {
                       type: 'array',
                       items: {
@@ -272,6 +286,7 @@ getTournamentsHandler.apiDescription = {
                     'description',
                     'url',
                     'cover_picture',
+                    'colours',
                     'gallery',
                     'holes',
                     'ads',
