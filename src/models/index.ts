@@ -106,6 +106,7 @@ export const players = pgTable('Player', {
   missed_cut: boolean('missed_cut').default(false), // optional, default false
   odds: integer('odds').default(0), // optional, default 0
   profile_id: text('profile_id').notNull(), // required
+  tournament_id: text('tournament_id').notNull(), // required
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });

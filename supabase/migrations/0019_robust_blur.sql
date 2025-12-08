@@ -1,0 +1,1 @@
+ALTER TABLE "Player" ADD COLUMN "tournament_id" text NOT NULL;

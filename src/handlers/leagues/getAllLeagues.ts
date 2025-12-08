@@ -88,7 +88,7 @@ export const getAllLeaguesHandler = async (req: Request, res: Response, _next: N
 getAllLeaguesHandler.apiDescription = {
   summary: 'Get all leagues',
   description:
-    'Retrieves all leagues with optional filtering. When using the "name" parameter, searches for leagues by exact name (case-insensitive) and bypasses privacy filters (returns both public and private leagues). Without "name", filters can be applied by tournament, entry fee, owner, or search term. Search term filters by league name or description (case-insensitive) and respects privacy filters. Privacy: join_code is only included in responses for leagues owned by the authenticated user; it is omitted for leagues owned by others.',
+    'Retrieves all leagues with optional filtering. When using the "name" parameter, searches for leagues by name pattern match (case-insensitive LIKE) and bypasses privacy filters (returns both public and private leagues). Without "name", filters can be applied by tournament, entry fee, owner, or search term. Search term filters by league name or description (case-insensitive substring match) and respects privacy filters. Privacy: join_code is only included in responses for leagues owned by the authenticated user; it is omitted for leagues owned by others.',
   operationId: 'getAllLeagues',
   tags: ['leagues'],
   responses: {
@@ -171,8 +171,8 @@ getAllLeaguesHandler.apiDescription = {
         type: 'string',
         minLength: 1,
       },
-      description: 'Search for leagues by exact name (case-insensitive). When provided, bypasses privacy filters and returns all matching leagues regardless of public/private status. Takes precedence over other filters.',
-      example: 'Masters Championship League',
+      description: 'Search for leagues by name using pattern matching (case-insensitive LIKE). When provided, bypasses privacy filters and returns all matching leagues regardless of public/private status. Takes precedence over other filters.',
+      example: 'Masters',
     },
     {
       name: 'search_term',

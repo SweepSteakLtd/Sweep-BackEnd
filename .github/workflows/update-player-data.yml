@@ -5,7 +5,17 @@ on:
     # Runs every 5 minutes
     - cron: '*/5 * * * *'
   workflow_dispatch: # Allows manual trigger from GitHub Actions tab
-
+permissions:
+  id-token: write
+  contents: read
+env:
+  PROJECT_ID: sweepsteak-64dd0
+  SERVICE_ACCOUNT: github-actions@sweepsteak-64dd0.iam.gserviceaccount.com
+  REGION: europe-west4
+  INSTANCE_NAME: sweep-development
+  DATABASE_NAME: postgres
+  DB_USER: postgres
+  DB_PASSWORD: ${{ secrets.BE_DATABASE_PASSWORD }}
 jobs:
   update-players:
     runs-on: ubuntu-latest
@@ -20,8 +30,22 @@ jobs:
           node-version: '20'
           cache: 'yarn'
 
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: "access_token"
+          workload_identity_provider: projects/230553092247/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+
+      - name: Set up Cloud SQL Auth Proxy
+        uses: google-github-actions/cloud-sql-proxy@v1
+        with:
+          instance_connection_name: ${{ env.PROJECT_ID }}:${{ env.REGION }}:${{ env.INSTANCE_NAME }}
+
       - name: Install dependencies
         run: yarn install --frozen-lockfile
+
 
       - name: Update player scores and positions
         run: yarn update:players

@@ -5,10 +5,10 @@ import { players, Tournament, tournaments } from '../models';
 import { database, ensureDatabaseReady } from '../services';
 dotenv.config();
 
-interface DataGolfPlayer {
+interface LiveTournamentPlayer {
   dg_id: number;
   player_name: string;
-  country: string;
+  country?: string;
   position?: string | number;
   total_score?: number;
   thru?: string | number;
@@ -19,13 +19,17 @@ interface DataGolfPlayer {
   r4?: number;
   total_strokes?: number;
   mc?: string;
+  [key: string]: any; // For additional stats like sg_putt, sg_app, etc.
 }
 
-interface DataGolfFieldResponse {
-  event_name: string;
-  year: number;
-  event_id: string;
-  field: DataGolfPlayer[];
+interface LiveTournamentStatsResponse {
+  event_name?: string;
+  event_id?: string;
+  tour?: string;
+  calendar_year?: number;
+  event_completed?: boolean;
+  stats?: LiveTournamentPlayer[];
+  [key: string]: any;
 }
 
 const DATAGOLF_API_KEY = process.env.DATAGOLF_API_KEY;
@@ -36,11 +40,25 @@ if (!DATAGOLF_API_KEY) {
   process.exit(1);
 }
 
-async function fetchDataGolfLeaderboard(
-  tournamentExternalId: string,
-): Promise<DataGolfFieldResponse | null> {
+async function fetchLiveTournamentStats(): Promise<LiveTournamentStatsResponse | null> {
   try {
-    const endpoint = `/field-updates?tour=pga&event_id=${tournamentExternalId}&file_format=json&key=${DATAGOLF_API_KEY}`;
+    // Fetch comprehensive stats for live scoring
+    const stats = [
+      'sg_putt',
+      'sg_arg',
+      'sg_app',
+      'sg_ott',
+      'sg_t2g',
+      'sg_total',
+      'distance',
+      'accuracy',
+      'gir',
+      'scrambling',
+    ].join(',');
+
+    const endpoint = `/preds/live-tournament-stats?stats=${stats}&round=event_cumulative&display=value&file_format=json&key=${DATAGOLF_API_KEY}`;
+
+    console.log('📡 Fetching live tournament stats from DataGolf...');
 
     const response = await axios.get(`${DATAGOLF_BASE_URL}${endpoint}`, {
       headers: {
@@ -49,12 +67,19 @@ async function fetchDataGolfLeaderboard(
       timeout: 15000,
     });
 
+    console.log(`✅ Received live tournament data`);
+
     return response.data;
   } catch (error: any) {
-    console.error('Error fetching DataGolf leaderboard:', error.message);
+    if (error.response?.status === 404) {
+      console.log('ℹ️  No live tournament currently in progress');
+      return null;
+    }
+
+    console.error('Error fetching live tournament stats:', error.message);
     if (error.response) {
-      console.error('Response data:', error.response.data);
       console.error('Response status:', error.response.status);
+      console.error('Response data:', JSON.stringify(error.response.data).substring(0, 200));
     }
     return null;
   }
@@ -89,16 +114,22 @@ function parsePosition(position: string | number | undefined): number {
   return isNaN(parsed) ? 0 : parsed;
 }
 
-async function updateTournamentPlayers(tournament: Tournament) {
+async function updateTournamentPlayers(
+  tournament: Tournament,
+  liveData: LiveTournamentStatsResponse,
+) {
   try {
     console.log(`\n--- Updating players for tournament: ${tournament.name} ---`);
     console.log(`External ID: ${tournament.external_id}`);
+    console.log(
+      `Live Event: ${liveData.event_name || 'Unknown'} (ID: ${liveData.event_id || 'Unknown'})`,
+    );
 
     const playerIds = tournament.players;
 
     if (!playerIds || playerIds.length === 0) {
-      console.log('No players in tournament');
-      return;
+      console.log('⚠️  No players in tournament');
+      return 0;
     }
 
     const tournamentPlayers = await database
@@ -109,18 +140,22 @@ async function updateTournamentPlayers(tournament: Tournament) {
 
     console.log(`Found ${tournamentPlayers.length} players in database`);
 
-    const leaderboardData = await fetchDataGolfLeaderboard(tournament.external_id);
+    const liveStats = liveData.live_stats || liveData;
+    const livePlayerData = Array.isArray(liveStats) ? liveStats : [];
 
-    if (!leaderboardData || !leaderboardData.field) {
-      console.log('No leaderboard data available from DataGolf');
-      return;
+    if (livePlayerData.length === 0) {
+      console.log('⚠️  No player data available in live stats');
+      return 0;
     }
 
-    console.log(`Fetched ${leaderboardData.field.length} players from DataGolf`);
+    console.log(`Processing ${livePlayerData.length} players from live data`);
 
-    const dataGolfMap = new Map<string, DataGolfPlayer>();
-    leaderboardData.field.forEach(dgPlayer => {
-      dataGolfMap.set(String(dgPlayer.dg_id), dgPlayer);
+    // Create a map of DataGolf players by their dg_id
+    const dataGolfMap = new Map<string, LiveTournamentPlayer>();
+    livePlayerData.forEach(dgPlayer => {
+      if (dgPlayer.dg_id) {
+        dataGolfMap.set(String(dgPlayer.dg_id), dgPlayer);
+      }
     });
 
     let updatedCount = 0;
@@ -131,17 +166,17 @@ async function updateTournamentPlayers(tournament: Tournament) {
 
       if (!dgPlayer) {
         console.log(
-          `⚠️  Player ${player.id} (external_id: ${player.external_id}) not found in DataGolf leaderboard`,
+          `⚠️  Player ${player.id} (external_id: ${player.external_id}) not found in live data`,
         );
         notFoundCount++;
         continue;
       }
 
-      const currentScore =
-        dgPlayer.total_score !== undefined ? dgPlayer.total_score : player.current_score;
+      const currentScore = dgPlayer.total;
       const position = parsePosition(dgPlayer.position);
       const missedCut = dgPlayer.mc === '1' || dgPlayer.mc === 'MC';
 
+      // Check if any values have changed
       if (
         player.current_score !== currentScore ||
         player.position !== position ||
@@ -159,17 +194,20 @@ async function updateTournamentPlayers(tournament: Tournament) {
           .execute();
 
         console.log(
-          `✅ Updated ${dgPlayer.player_name}: Score=${currentScore}, Position=${position}, Missed Cut=${missedCut}`,
+          `✅ Updated ${dgPlayer.player_name}: Score=${currentScore}, Position=${position}, MC=${missedCut}`,
         );
         updatedCount++;
       }
     }
 
     console.log(
-      `\n📊 Summary: Updated ${updatedCount} players, ${notFoundCount} not found in DataGolf data`,
+      `\n📊 Summary: Updated ${updatedCount} players, ${notFoundCount} not found in live data`,
     );
+
+    return updatedCount;
   } catch (error: any) {
-    console.error(`Error updating tournament ${tournament.id}:`, error.message);
+    console.error(`❌ Error updating tournament ${tournament.id}:`, error.message);
+    return 0;
   }
 }
 
@@ -182,15 +220,65 @@ async function main() {
     await ensureDatabaseReady();
     console.log('✅ Database connection established\n');
 
-    const activeTournaments = await getActiveTournaments();
+    // Fetch live tournament stats from DataGolf
+    const liveData = await fetchLiveTournamentStats();
 
-    if (activeTournaments.length === 0) {
-      console.log('No active tournaments found. Nothing to update.');
+    if (!liveData) {
+      console.log('ℹ️  No live tournament data available. Exiting.');
       return;
     }
 
+    // Get all active tournaments from database
+    const activeTournaments = await getActiveTournaments();
+
+    if (activeTournaments.length === 0) {
+      console.log('⚠️  No active tournaments found in database.');
+      return;
+    }
+
+    console.log(`\n🔍 Checking if live tournament matches any active tournaments...`);
+    console.log(
+      `Live tournament: ${liveData.event_name || 'Unknown'} (ID: ${liveData.event_id || 'Unknown'})`,
+    );
+    console.log(`Active tournaments in database: ${activeTournaments.length}`);
+
+    // Find matching tournament
+    let matchedTournament: Tournament | null = null;
+
     for (const tournament of activeTournaments) {
-      await updateTournamentPlayers(tournament);
+      console.log(`  - Checking: ${tournament.name} (External ID: ${tournament.external_id})`);
+
+      // Match by external_id (event_id from DataGolf)
+      if (liveData.event_id && tournament.external_id === liveData.event_id) {
+        matchedTournament = tournament;
+        console.log(`  ✅ Match found by event_id!`);
+        break;
+      }
+
+      // Fallback: Try to match by event name (case-insensitive)
+      if (
+        liveData.event_name &&
+        tournament.name.toLowerCase().includes(liveData.event_name.toLowerCase())
+      ) {
+        matchedTournament = tournament;
+        console.log(`  ✅ Match found by event name!`);
+        break;
+      }
+    }
+
+    if (!matchedTournament) {
+      console.log('\n⚠️  No matching tournament found in database for the live tournament data.');
+      console.log('Please ensure the tournament exists and has the correct external_id.');
+      return;
+    }
+
+    // Update players for the matched tournament
+    const updatedCount = await updateTournamentPlayers(matchedTournament, liveData);
+
+    if (updatedCount > 0) {
+      console.log(`\n✅ Successfully updated ${updatedCount} players`);
+    } else {
+      console.log('\n✅ No player updates required');
     }
 
     console.log('\n✅ Player score update job completed successfully');

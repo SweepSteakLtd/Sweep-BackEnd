@@ -1,9 +1,11 @@
 import { createId } from '@paralleldrive/cuid2';
 import axios from 'axios';
+import * as cheerio from 'cheerio';
 import * as dotenv from 'dotenv';
 import { and, eq, sql } from 'drizzle-orm';
-import { playerProfiles, players, Player, tournaments } from '../models';
-import { database, ensureDatabaseReady } from '../services';
+import { Player, playerProfiles, players, tournaments } from '../models';
+import { database, ensureDatabaseReady, firebaseStorage } from '../services';
+import { mapDataGolfCountryCode } from '../utils/countryCodeMapper';
 dotenv.config();
 
 interface DataGolfPlayerListItem {
@@ -123,12 +125,73 @@ function getRandomGroup(): string {
   return groups[Math.floor(Math.random() * groups.length)];
 }
 
+async function scrapePlayerProfileImage(dgId: number): Promise<string | null> {
+  try {
+    const profileUrl = `https://datagolf.com/player-profiles?dg_id=${dgId}`;
+    const response = await axios.get(profileUrl, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      },
+      timeout: 10000,
+    });
+
+    const $ = cheerio.load(response.data);
+    const playerPicSrc = $('.player-pic').attr('src');
+
+    if (!playerPicSrc) {
+      console.log(`   ⚠️  No profile image found for player ${dgId}`);
+      return null;
+    }
+
+    const fullImageUrl = playerPicSrc.startsWith('http')
+      ? playerPicSrc
+      : `https://datagolf.com${playerPicSrc}`;
+
+    console.log(`   📸 Found profile image: ${fullImageUrl}`);
+    return fullImageUrl;
+  } catch (error: any) {
+    console.error(`   ❌ Error scraping profile image for player ${dgId}:`, error.message);
+    return null;
+  }
+}
+
+async function uploadImageToFirebase(imageUrl: string, dgId: number): Promise<string | null> {
+  try {
+    const imageResponse = await axios.get(imageUrl, {
+      responseType: 'arraybuffer',
+      timeout: 15000,
+    });
+
+    const bucket = firebaseStorage.bucket('gs://sweepsteak-64dd0.firebasestorage.app');
+    const fileExtension = imageUrl.split('.').pop() || 'png';
+    const fileName = `player-profiles/${dgId}.${fileExtension}`;
+    const file = bucket.file(fileName);
+
+    await file.save(Buffer.from(imageResponse.data), {
+      metadata: {
+        contentType: imageResponse.headers['content-type'] || 'image/png',
+      },
+    });
+
+    await file.makePublic();
+
+    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+    console.log(`   ✅ Uploaded image to Firebase Storage: ${publicUrl}`);
+    return publicUrl;
+  } catch (error: any) {
+    console.error(`   ❌ Error uploading image to Firebase:`, error.message);
+    return null;
+  }
+}
+
 async function upsertPlayerProfile(
   dgId: number,
   playerName: string,
-  country: string,
+  countryCode: string,
   ranking: number,
-): Promise<string | null> {
+  profilePictureUrl: string = '',
+): Promise<{ id: string; existingProfilePicture: string } | null> {
   try {
     const { firstName, lastName } = splitPlayerName(playerName);
 
@@ -139,20 +202,33 @@ async function upsertPlayerProfile(
       .execute();
 
     if (existingProfileByExternalId.length > 0) {
+      const existingPicture = existingProfileByExternalId[0].profile_picture || '';
+
+      const updateData: any = {
+        first_name: firstName,
+        last_name: lastName,
+        country: countryCode,
+        ranking: ranking,
+        updated_at: new Date(),
+      };
+
+      if (profilePictureUrl) {
+        updateData.profile_picture = profilePictureUrl;
+      }
+
       await database
         .update(playerProfiles)
-        .set({
-          first_name: firstName,
-          last_name: lastName,
-          country: country,
-          ranking: ranking,
-          updated_at: new Date(),
-        })
+        .set(updateData)
         .where(eq(playerProfiles.external_id, String(dgId)))
         .execute();
 
-      console.log(`✅ Updated player profile: ${playerName} (DG ID: ${dgId}) [matched by external_id]`);
-      return existingProfileByExternalId[0].id;
+      console.log(
+        `✅ Updated player profile: ${playerName} (DG ID: ${dgId}) [matched by external_id]`,
+      );
+      return {
+        id: existingProfileByExternalId[0].id,
+        existingProfilePicture: existingPicture,
+      };
     }
 
     const existingProfileByName = await database
@@ -162,27 +238,40 @@ async function upsertPlayerProfile(
         and(
           sql`LOWER(${playerProfiles.first_name}) = LOWER(${firstName})`,
           sql`LOWER(${playerProfiles.last_name}) = LOWER(${lastName})`,
-          sql`LOWER(${playerProfiles.country}) = LOWER(${country})`,
+          sql`LOWER(${playerProfiles.country}) = LOWER(${countryCode})`,
         ),
       )
       .execute();
 
     if (existingProfileByName.length > 0) {
+      const existingPicture = existingProfileByName[0].profile_picture || '';
+
+      const updateData: any = {
+        external_id: String(dgId),
+        first_name: firstName,
+        last_name: lastName,
+        country: countryCode,
+        ranking: ranking,
+        updated_at: new Date(),
+      };
+
+      if (profilePictureUrl) {
+        updateData.profile_picture = profilePictureUrl;
+      }
+
       await database
         .update(playerProfiles)
-        .set({
-          external_id: String(dgId),
-          first_name: firstName,
-          last_name: lastName,
-          country: country,
-          ranking: ranking,
-          updated_at: new Date(),
-        })
+        .set(updateData)
         .where(eq(playerProfiles.id, existingProfileByName[0].id))
         .execute();
 
-      console.log(`✅ Updated player profile: ${playerName} (DG ID: ${dgId}) [matched by name & country]`);
-      return existingProfileByName[0].id;
+      console.log(
+        `✅ Updated player profile: ${playerName} (DG ID: ${dgId}) [matched by name & country]`,
+      );
+      return {
+        id: existingProfileByName[0].id,
+        existingProfilePicture: existingPicture,
+      };
     }
 
     const playerProfileId = generateId();
@@ -191,17 +280,20 @@ async function upsertPlayerProfile(
       first_name: firstName,
       external_id: String(dgId),
       last_name: lastName,
-      country: country,
+      country: countryCode,
       age: 0,
       ranking: ranking,
-      profile_picture: '',
+      profile_picture: profilePictureUrl,
       group: getRandomGroup(),
     };
 
     await database.insert(playerProfiles).values(newProfile).execute();
 
     console.log(`✅ Created player profile: ${playerName} (DG ID: ${dgId})`);
-    return playerProfileId;
+    return {
+      id: playerProfileId,
+      existingProfilePicture: '',
+    };
   } catch (error: any) {
     console.error(`❌ Error upserting player profile for ${playerName}:`, error.message);
     return null;
@@ -212,6 +304,7 @@ async function upsertPlayer(
   dgId: number,
   profileId: string,
   level: number = 1,
+  eventId: string,
 ): Promise<string | null> {
   try {
     const existingPlayers = await database
@@ -230,7 +323,7 @@ async function upsertPlayer(
           level: level,
           updated_at: new Date(),
         })
-        .where(eq(players.id, existingPlayer.id))
+        .where(and(eq(players.id, existingPlayer.id), eq(players.tournament_id, eventId)))
         .execute();
 
       console.log(`   ↳ Updated player entry (ID: ${existingPlayer.id})`);
@@ -246,6 +339,7 @@ async function upsertPlayer(
         position: 0,
         missed_cut: false,
         odds: 0,
+        tournament_id: eventId,
       };
 
       await database.insert(players).values(newPlayer).execute();
@@ -339,19 +433,42 @@ async function main() {
         level = 2;
       }
 
-      const profileId = await upsertPlayerProfile(
+      // Map DataGolf country code to ISO 3166-1 alpha-2 format
+      const isoCountryCode = mapDataGolfCountryCode(playerData.country_code);
+
+      const profileResult = await upsertPlayerProfile(
         dgId,
         playerData.player_name,
-        playerData.country,
+        isoCountryCode,
         ranking,
+        '',
       );
 
-      if (profileId) {
-        const playerId = await upsertPlayer(dgId, profileId, level);
-        if (playerId) {
-          playerIds.push(playerId);
+      if (profileResult) {
+        if (!profileResult.existingProfilePicture) {
+          console.log(`   📸 No existing profile picture, fetching from DataGolf...`);
+          const imageUrl = await scrapePlayerProfileImage(dgId);
+          if (imageUrl) {
+            const uploadedUrl = await uploadImageToFirebase(imageUrl, dgId);
+            if (uploadedUrl) {
+              await upsertPlayerProfile(
+                dgId,
+                playerData.player_name,
+                isoCountryCode,
+                ranking,
+                uploadedUrl,
+              );
+            }
+          }
+        } else {
+          console.log(`   ✓ Profile already has image: ${profileResult.existingProfilePicture}`);
         }
+
         successCount++;
+      }
+      const playerId = await upsertPlayer(dgId, profileResult.id, level, tournamentId);
+      if (playerId) {
+        playerIds.push(playerId);
       }
     }
 

@@ -14,11 +14,12 @@ import { apiKeyAuth, dataWrapper, playerSchema, standardResponses } from '../../
  * @body missed_cut - boolean - optional
  * @body odds - number - optional
  * @body profile_id - string - required
+ * @body tournament_id - string - required
  * @returns Player
  */
 export const createPlayerHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const requiredProperties = ['level', 'external_id', 'profile_id'];
+    const requiredProperties = ['level', 'external_id', 'profile_id', 'tournament_id'];
 
     for (const field of requiredProperties) {
       if (!req.body[field]) {
@@ -42,6 +43,7 @@ export const createPlayerHandler = async (req: Request, res: Response, next: Nex
       missed_cut: requestBodyPlayer.missed_cut,
       odds: requestBodyPlayer.odds,
       profile_id: requestBodyPlayer.profile_id,
+      tournament_id: requestBodyPlayer.tournament_id,
       created_at: new Date(),
       updated_at: new Date(),
     };
@@ -80,6 +82,7 @@ createPlayerHandler.apiDescription = {
                   missed_cut: false,
                   odds: 15.5,
                   profile_id: 'profile_tiger_woods',
+                  tournament_id: 'tournament_masters_2025',
                   created_at: '2025-01-20T10:00:00Z',
                   updated_at: '2025-01-20T10:00:00Z',
                 },
@@ -100,7 +103,7 @@ createPlayerHandler.apiDescription = {
       'application/json': {
         schema: {
           type: 'object',
-          required: ['external_id', 'level', 'profile_id'],
+          required: ['external_id', 'level', 'profile_id', 'tournament_id'],
           properties: {
             external_id: {
               type: 'string',
@@ -145,6 +148,11 @@ createPlayerHandler.apiDescription = {
               format: 'uuid',
               description: 'Reference to player profile',
             },
+            tournament_id: {
+              type: 'string',
+              format: 'uuid',
+              description: 'Reference to tournament',
+            },
           },
         },
         examples: {
@@ -159,6 +167,7 @@ createPlayerHandler.apiDescription = {
               missed_cut: false,
               odds: 15.5,
               profile_id: 'profile_tiger_woods',
+              tournament_id: 'tournament_masters_2025',
             },
           },
         },
