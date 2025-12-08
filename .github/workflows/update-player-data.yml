@@ -39,7 +39,7 @@ jobs:
 
 
       - name: Set up Cloud SQL Auth Proxy
-        uses: google-github-actions/cloud-sql-proxy@v1
+        uses: google-github-actions/cloud-sql-proxy@v2
         with:
           instance_connection_name: ${{ env.PROJECT_ID }}:${{ env.REGION }}:${{ env.INSTANCE_NAME }}
 
