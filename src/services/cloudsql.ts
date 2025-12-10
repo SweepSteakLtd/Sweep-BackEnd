@@ -7,18 +7,38 @@ const connector = new Connector();
 export let database;
 
 const getDatabaseConnection = async () => {
-  const clientOptions = await connector.getOptions({
-    instanceConnectionName: 'sweepsteak-64dd0:europe-west2:sweep-development',
-    ipType: IpAddressTypes.PUBLIC,
-  });
+  // When running in GitHub Actions with Cloud SQL Proxy, connect via localhost
+  const isGitHubActions = process.env.GITHUB_ACTIONS === 'true';
 
-  const pool = new Pool({
-    ...clientOptions,
-    user: 'postgres',
-    password: process.env.BE_DATABASE_PASSWORD,
-    database: 'postgres',
-    max: 5,
-  });
+  let pool: Pool;
+
+  if (isGitHubActions) {
+    // Connect through Cloud SQL Proxy running on localhost
+    pool = new Pool({
+      host: '127.0.0.1',
+      port: 5432,
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.BE_DATABASE_PASSWORD,
+      database: process.env.DATABASE_NAME || 'postgres',
+      max: 5,
+    });
+    console.log('📡 Connecting to Cloud SQL via proxy (localhost)');
+  } else {
+    // Use Cloud SQL Connector for direct connection (local/Cloud Run)
+    const clientOptions = await connector.getOptions({
+      instanceConnectionName: 'sweepsteak-64dd0:europe-west4:sweep-development',
+      ipType: IpAddressTypes.PUBLIC,
+    });
+
+    pool = new Pool({
+      ...clientOptions,
+      user: 'postgres',
+      password: process.env.BE_DATABASE_PASSWORD,
+      database: 'postgres',
+      max: 5,
+    });
+    console.log('📡 Connecting to Cloud SQL via Connector');
+  }
 
   return drizzle({ client: pool, schema });
 };
