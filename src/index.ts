@@ -46,8 +46,9 @@ const applyRootConfiguration = (appObject: Express): Express => {
   // Log routes as they're being registered
   routes.forEach(route =>
     route.endpoints.map(endpoint => {
-      // TODO: openapi requires paths to be in {} format -> library has problems handling :id format in express 5
       const fullPath = `/api/${route.apiName}${endpoint.name}`;
+      const openapiPath = fullPath.replace(/:([a-zA-Z_][a-zA-Z0-9_]*)/g, '{$1}');
+
       const apiDescription = endpoint.stack.find(item => item.apiDescription)?.apiDescription;
       if (!apiDescription) {
         console.log('[DEBUG] handler missing apiDescription', route.apiName);
@@ -55,10 +56,10 @@ const applyRootConfiguration = (appObject: Express): Express => {
 
       appObject[endpoint.method](
         fullPath,
-        apiDescription ? oapi.path(apiDescription) : () => {},
+        apiDescription ? oapi.path(openapiPath, apiDescription) : () => {},
         endpoint.stack,
       );
-      console.log(
+      console.info(
         `ENV: ${env.CURRENT} PORT: 8080 ROUTE: ${fullPath} METHOD: ${endpoint.method.toUpperCase()}`,
       );
     }),
