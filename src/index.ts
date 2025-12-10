@@ -47,7 +47,6 @@ const applyRootConfiguration = (appObject: Express): Express => {
   routes.forEach(route =>
     route.endpoints.map(endpoint => {
       const fullPath = `/api/${route.apiName}${endpoint.name}`;
-      const openapiPath = fullPath.replace(/:([a-zA-Z_][a-zA-Z0-9_]*)/g, '{$1}');
 
       const apiDescription = endpoint.stack.find(item => item.apiDescription)?.apiDescription;
       if (!apiDescription) {
@@ -56,7 +55,7 @@ const applyRootConfiguration = (appObject: Express): Express => {
 
       appObject[endpoint.method](
         fullPath,
-        apiDescription ? oapi.path(openapiPath, apiDescription) : () => {},
+        apiDescription ? oapi.path(apiDescription) : () => {},
         endpoint.stack,
       );
       console.info(
