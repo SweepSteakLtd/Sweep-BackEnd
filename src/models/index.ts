@@ -72,16 +72,6 @@ export const users = pgTable('Users', {
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
 
-export const depositLimits = pgTable('depositLimits', {
-  id: text('id').primaryKey().notNull(), // required
-  owner_id: text('owner_id').default('').notNull(),
-  monthly: integer('monthly').default(null),
-  weekly: integer('weekly').default(null),
-  daily: integer('daily').default(null),
-  created_at: timestamp('created_at').defaultNow().notNull(),
-  updated_at: timestamp('updated_at').defaultNow().notNull(),
-});
-
 export const playerProfiles = pgTable('PlayerProfile', {
   id: text('id').primaryKey().notNull(), // required
   external_id: text('external_id').default(''), // optional, default ""
@@ -239,5 +229,3 @@ export type NewTeam = typeof teams.$inferInsert;
 
 export type TournamentHole = typeof tournamentHole.$inferSelect;
 export type TournamentAd = typeof tournamentAd.$inferSelect;
-
-export type Deposit = typeof depositLimits.$inferSelect;
