@@ -1,3 +1,4 @@
+import BP from 'body-parser';
 import type { RequestHandler } from 'express';
 import {
   createBetHandler,
@@ -52,6 +53,9 @@ import {
   CheckMonthlyBetLimitMiddleware,
   JoinCodeMiddleware,
 } from '../middlewares';
+
+// Middleware for endpoints that need to handle large payloads (e.g., file uploads)
+const largePayloadMiddleware = BP.json({ limit: '15mb' });
 
 type ApiSecurity = Array<{ [scheme: string]: any }>;
 
@@ -115,7 +119,11 @@ export const routes: RouteDescription[] = [
         stack: [AuthenticateMiddleware, deleteCurrentUserHandler],
       },
       { method: 'get', name: '/verify/gbg', stack: [AuthenticateMiddleware, fetchGBGStateHandler] },
-      { method: 'post', name: '/upload/gbg', stack: [AuthenticateMiddleware, uploadGBGDocumentsHandler] },
+      {
+        method: 'post',
+        name: '/upload/gbg',
+        stack: [largePayloadMiddleware, AuthenticateMiddleware, uploadGBGDocumentsHandler],
+      },
     ],
   },
   {
