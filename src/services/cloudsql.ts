@@ -26,7 +26,7 @@ const getDatabaseConnection = async () => {
   } else {
     // Use Cloud SQL Connector for direct connection (local/Cloud Run)
     const clientOptions = await connector.getOptions({
-      instanceConnectionName: 'sweepsteak-64dd0:europe-west4:sweep-development',
+      instanceConnectionName: 'sweepsteak-64dd0:europe-west2:sweep-development',
       ipType: IpAddressTypes.PUBLIC,
     });
 

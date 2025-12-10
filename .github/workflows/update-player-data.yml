@@ -11,7 +11,7 @@ permissions:
 env:
   PROJECT_ID: sweepsteak-64dd0
   SERVICE_ACCOUNT: github-actions@sweepsteak-64dd0.iam.gserviceaccount.com
-  REGION: europe-west4
+  REGION: europe-west2
   INSTANCE_NAME: sweep-development
   DATABASE_NAME: postgres
   DB_USER: postgres
