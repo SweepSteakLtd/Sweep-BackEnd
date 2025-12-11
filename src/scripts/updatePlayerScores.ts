@@ -249,7 +249,10 @@ async function main() {
       console.log(`  - Checking: ${tournament.name} (External ID: ${tournament.external_id})`);
 
       // Match by external_id (event_id from DataGolf)
-      if (liveData.event_id && tournament.external_id === liveData.event_id) {
+      if (
+        (liveData.event_id && tournament.external_id === liveData.event_id) ||
+        liveData.course_name === tournament.course_name
+      ) {
         matchedTournament = tournament;
         console.log(`  ✅ Match found by event_id!`);
         break;

@@ -93,27 +93,30 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
     let leaguePlayerProfiles: any[] = [];
 
     if (uniquePlayerIds.length > 0) {
-      leaguePlayers = await database
-        .select()
-        .from(players)
-        .where(inArray(players.id, uniquePlayerIds as string[]))
-        .execute();
-
-      // Get player profiles
-      const profileIds = leaguePlayers.map((p: any) => p.profile_id) as string[];
       leaguePlayerProfiles = await database
         .select()
         .from(playerProfiles)
-        .where(inArray(playerProfiles.id, profileIds))
+        .where(inArray(playerProfiles.id, uniquePlayerIds as string[]))
+        .execute();
+
+      const allplayerProfiles = leaguePlayerProfiles.flatMap((team: any) => team.id);
+
+      leaguePlayers = await database
+        .select()
+        .from(players)
+        .where(inArray(players.profile_id, allplayerProfiles as string[]))
         .execute();
     }
-
     // Build leaderboard entries
     const leaderboardEntries: LeaderboardEntry[] = [];
 
     for (const team of leagueTeams as any[]) {
       // Get team players
-      const teamPlayers = leaguePlayers.filter((p: any) => team.player_ids.includes(p.id));
+      const teamProfiles = leaguePlayerProfiles.filter((p: any) => team.player_ids.includes(p.id));
+      const allplayerProfiles = teamProfiles.flatMap((profile: any) => profile.id);
+      const teamPlayers = leaguePlayers.filter((p: any) =>
+        allplayerProfiles.includes(p.profile_id),
+      );
 
       // Calculate total score
       const totalScore = teamPlayers.reduce(

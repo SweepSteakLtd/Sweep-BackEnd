@@ -108,6 +108,7 @@ export const createTournamentHandler = async (req: Request, res: Response, next:
       rules,
       instructions,
       external_id,
+      course_name: '',
       created_at: new Date(),
       updated_at: new Date(),
     };

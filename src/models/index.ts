@@ -143,6 +143,7 @@ export const tournaments = pgTable('Tournament', {
   sport: text('sport').notNull().default('Golf'), // required
   rules: text('rules').array().notNull(), // required
   instructions: text('instructions').array().default([]), // optional, default []
+  course_name: text('course_name').default(''), // optional, default ""
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
