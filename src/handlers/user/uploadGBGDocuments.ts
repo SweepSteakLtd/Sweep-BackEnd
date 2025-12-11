@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { getAuthToken, handleGBGError } from '../../integrations/GBG/GBG';
+import { apiKeyAuth } from '../schemas';
 
 interface GBGTask {
   taskId: string;
@@ -370,5 +371,5 @@ uploadGBGDocumentsHandler.apiDescription = {
       },
     },
   },
-  security: [{ bearerAuth: [] }],
+  security: [apiKeyAuth],
 };
