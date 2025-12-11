@@ -169,7 +169,7 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
 
     // Calculate prizes based on league rewards
     if (league.rewards && Array.isArray(league.rewards) && league.rewards.length > 0) {
-      const totalPot = league.entry_fee * leagueTeams.length * 0.9 * 100; // 10% platform fee
+      const totalPot = league.entry_fee * leagueTeams.length * 0.9; // 10% platform fee
 
       for (const reward of league.rewards as any[]) {
         const position = reward.position;
@@ -180,7 +180,7 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
       }
     }
 
-    const totalPot = league.entry_fee * leagueTeams.length * 0.9 * 100;
+    const totalPot = league.entry_fee * leagueTeams.length * 0.9;
 
     return res.status(200).send({ data: { entries: leaderboardEntries, total_pot: totalPot } });
   } catch (error: any) {
@@ -285,7 +285,7 @@ getLeaderboardHandler.apiDescription = {
               },
               total_pot: {
                 type: 'number',
-                description: 'Total pot amount for the league (entry fee * team count * 0.9 * 100)',
+                description: 'Total pot amount for the league (entry fee * team count * 0.9)',
                 example: 432132,
               },
             },

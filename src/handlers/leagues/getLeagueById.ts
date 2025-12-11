@@ -62,7 +62,7 @@ export const getLeagueByIdHandler = async (req: Request, res: Response, next: Ne
       tournament: fetchedTournaments[0] || {},
       user_team_count: fetchedTeams.filter((team: Team) => team.owner_id === userId).length,
       total_team_count: fetchedTeams.length || 0,
-      total_pot: fetchedTeams.length * league.entry_fee * 0.9 * 100, // 10% is going to the platform
+      total_pot: fetchedTeams.length * league.entry_fee * 0.9, // 10% is going to the platform
     };
     return res.status(200).send({ data: leagueData });
   } catch (error: any) {
@@ -101,7 +101,7 @@ getLeagueByIdHandler.apiDescription = {
               },
               total_pot: {
                 type: 'number',
-                description: 'Total pot amount (team count * entry fee * 0.9 * 100)',
+                description: 'Total pot amount (team count * entry fee * 0.9)',
               },
             },
           }),
