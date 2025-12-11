@@ -16,7 +16,7 @@ export const getAllLeaguesHandler = async (req: Request, res: Response, _next: N
       const nameResults = await database
         .select()
         .from(leagues)
-        .where(ilike(leagues.name, nameQuery))
+        .where(ilike(leagues.name, `%${nameQuery}%`))
         .execute();
 
       const userId = res.locals.user?.id;
