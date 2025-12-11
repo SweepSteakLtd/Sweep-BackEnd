@@ -72,7 +72,12 @@ export const getAllLeaguesHandler = async (req: Request, res: Response, _next: N
           return leagueWithoutJoinCode;
         }
       })
-      .filter((league: League) => league.type !== 'private' || league.owner_id === userId);
+      .filter(
+        (league: League) =>
+          league.type !== 'private' ||
+          league.owner_id === userId ||
+          league.joined_players.includes(userId),
+      );
 
     // TODO: should we return finished leagues or only leagues in progress?
     return res.status(200).send({ data: sanitizedResult });
@@ -171,7 +176,8 @@ getAllLeaguesHandler.apiDescription = {
         type: 'string',
         minLength: 1,
       },
-      description: 'Search for leagues by name using pattern matching (case-insensitive LIKE). When provided, bypasses privacy filters and returns all matching leagues regardless of public/private status. Takes precedence over other filters.',
+      description:
+        'Search for leagues by name using pattern matching (case-insensitive LIKE). When provided, bypasses privacy filters and returns all matching leagues regardless of public/private status. Takes precedence over other filters.',
       example: 'Masters',
     },
     {
@@ -182,7 +188,8 @@ getAllLeaguesHandler.apiDescription = {
         type: 'string',
         minLength: 1,
       },
-      description: 'Case-insensitive search term to filter leagues by name or description. Respects privacy filters (only shows public leagues or private leagues owned by user).',
+      description:
+        'Case-insensitive search term to filter leagues by name or description. Respects privacy filters (only shows public leagues or private leagues owned by user).',
       example: 'masters',
     },
     {
