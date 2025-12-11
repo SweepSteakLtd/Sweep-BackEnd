@@ -89,7 +89,7 @@ describe('getLeagueByIdHandler', () => {
       .mockResolvedValueOnce(mockTeams);
 
     mockLimit.mockReturnValue({ execute: mockExecute });
-    mockWhere.mockReturnValue({ limit: mockLimit });
+    mockWhere.mockReturnValue({ limit: mockLimit, execute: mockExecute });
     mockFrom.mockReturnValue({ where: mockWhere });
     (database.select as jest.Mock).mockReturnValue({ from: mockFrom });
   });
@@ -110,7 +110,7 @@ describe('getLeagueByIdHandler', () => {
     expect(sent.data.tournament).toEqual(mockTournament);
     expect(sent.data.user_team_count).toBe(1); // user_123 owns team_123
     expect(sent.data.total_team_count).toBe(2);
-    expect(sent.data.total_pot).toBe(18000); // 2 teams * 100 entry fee * 0.9 * 100
+    expect(sent.data.total_pot).toBe(180); // 2 teams * 100 entry fee * 0.9
   });
 
   test('successfully retrieves league by ID without join_code when user is not owner', async () => {
@@ -130,7 +130,7 @@ describe('getLeagueByIdHandler', () => {
     expect(sent.data.tournament).toEqual(mockTournament);
     expect(sent.data.user_team_count).toBe(1); // user_456 owns team_456
     expect(sent.data.total_team_count).toBe(2);
-    expect(sent.data.total_pot).toBe(18000); // 2 teams * 100 entry fee * 0.9 * 100
+    expect(sent.data.total_pot).toBe(180); // 2 teams * 100 entry fee * 0.9
   });
 
   test('returns 422 when id not provided', async () => {

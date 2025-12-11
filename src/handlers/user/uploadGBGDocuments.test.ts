@@ -166,7 +166,7 @@ describe('uploadGBGDocumentsHandler', () => {
       expect(res.status).toHaveBeenCalledWith(422);
       expect(res.send).toHaveBeenCalledWith({
         error: 'Invalid request body',
-        message: 'documents must be an array of base64-encoded JPEG images',
+        message: 'documents must be an array of base64-encoded images',
       });
     });
 
@@ -181,7 +181,7 @@ describe('uploadGBGDocumentsHandler', () => {
       expect(res.status).toHaveBeenCalledWith(422);
       expect(res.send).toHaveBeenCalledWith({
         error: 'Invalid request body',
-        message: 'documents must be an array of base64-encoded JPEG images',
+        message: 'documents must be an array of base64-encoded images',
       });
     });
 
@@ -226,7 +226,7 @@ describe('uploadGBGDocumentsHandler', () => {
       expect(res.status).toHaveBeenCalledWith(422);
       expect(res.send).toHaveBeenCalledWith({
         error: 'Invalid request body',
-        message: 'Document 1 must be a base64-encoded JPEG image with format: data:image/jpeg;base64,...',
+        message: 'Document 1 must be a base64-encoded image with format: base64,...',
       });
     });
 

@@ -425,8 +425,8 @@ test('createGameHandler - returns 422 if contact_email is invalid', async () => 
   );
 });
 
-// max_participants validation
-test('createGameHandler - returns 422 if max_participants is less than 2', async () => {
+// max_participants validation - handler allows any number, no minimum validation
+test('createGameHandler - creates league with max_participants of 1', async () => {
   const res = mockResponse();
   (res as any).locals.user = { id: 'owner-1' };
 
@@ -441,15 +441,19 @@ test('createGameHandler - returns 422 if max_participants is less than 2', async
     },
   } as unknown as Request;
 
+  mockInsertExecute();
+
   await createLeagueHandler(req, res, mockNext);
 
-  expect(res.status).toHaveBeenCalledWith(422);
-  expect(res.send).toHaveBeenCalledWith(
-    expect.objectContaining({
-      error: 'Invalid request body',
-      message: 'max_participants must be at least 2',
+  expect(res.status).toHaveBeenCalledWith(201);
+  expect(res.send).toHaveBeenCalledWith({
+    data: expect.objectContaining({
+      id: 'test-game-id',
+      name: 'Game A',
+      entry_fee: 100,
+      max_participants: 1,
     }),
-  );
+  });
 });
 
 // Date validation

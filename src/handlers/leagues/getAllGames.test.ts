@@ -8,6 +8,7 @@ const mockResponse = () => {
   const res: any = {};
   res.status = jest.fn().mockReturnValue(res);
   res.send = jest.fn().mockReturnValue(res);
+  res.locals = { user: { id: 'u1' } };
   return res as Response;
 };
 

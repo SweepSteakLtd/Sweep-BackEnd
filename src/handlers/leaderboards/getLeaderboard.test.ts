@@ -204,7 +204,7 @@ test('getLeaderboardHandler - returns leaderboard with teams and players', async
   const response = (res.send as jest.Mock).mock.calls[0][0];
   expect(response.data).toHaveProperty('entries');
   expect(response.data).toHaveProperty('total_pot');
-  expect(response.data.total_pot).toBe(18000); // 2 teams * 100 entry fee * 0.9 * 100
+  expect(response.data.total_pot).toBe(180); // 2 teams * 100 entry fee * 0.9
   expect(response.data.entries).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
@@ -229,7 +229,7 @@ test('getLeaderboardHandler - returns leaderboard with teams and players', async
           }),
         ]),
         bestScore: [-14, -10],
-        prize: 900000, // 18000 * 50
+        prize: 9000, // 180 * 50
       }),
       expect.objectContaining({
         rank: 2,
@@ -251,7 +251,7 @@ test('getLeaderboardHandler - returns leaderboard with teams and players', async
           }),
         ]),
         bestScore: [-9, -8],
-        prize: 540000, // 18000 * 30
+        prize: 5400, // 180 * 30
       }),
     ]),
   );

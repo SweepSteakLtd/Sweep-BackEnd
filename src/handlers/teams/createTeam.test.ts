@@ -180,7 +180,12 @@ test('createTeamHandler - creates team when max_participants is null (no limit)'
 test('createTeamHandler - returns 422 when players is not an array', async () => {
   const res = mockResponse();
   (res as any).locals.user = { id: 'u1' };
-  const req = { body: { players: 'not-an-array' } } as unknown as Request;
+  const req = { body: { league_id: 'league1', players: 'not-an-array' } } as unknown as Request;
+
+  // Mock league exists
+  mockSelectChain([
+    [{ id: 'league1', max_participants: 5 }], // league query
+  ]);
 
   await createTeamHandler(req, res, mockNext);
 
@@ -196,7 +201,12 @@ test('createTeamHandler - returns 422 when players is not an array', async () =>
 test('createTeamHandler - returns 422 when players contains invalid player_id', async () => {
   const res = mockResponse();
   (res as any).locals.user = { id: 'u1' };
-  const req = { body: { players: ['p1', 123, 'p3'] } } as unknown as Request;
+  const req = { body: { league_id: 'league1', players: ['p1', 123, 'p3'] } } as unknown as Request;
+
+  // Mock league exists
+  mockSelectChain([
+    [{ id: 'league1', max_participants: 5 }], // league query
+  ]);
 
   await createTeamHandler(req, res, mockNext);
 
@@ -239,55 +249,51 @@ test('createTeamHandler - creates team with all fields', async () => {
   });
 });
 
-test('createTeamHandler - creates team with minimal fields', async () => {
+test('createTeamHandler - returns 422 when creating team without league_id (minimal fields)', async () => {
   const res = mockResponse();
   (res as any).locals.user = { id: 'u1' };
   const req = { body: {} } as unknown as Request;
 
-  mockInsertExecute();
-
   await createTeamHandler(req, res, mockNext);
 
-  expect(res.status).toHaveBeenCalledWith(201);
-  expect(res.send).toHaveBeenCalledWith({
-    data: expect.objectContaining({
-      id: 'test-id',
-      owner_id: 'u1',
-      name: null,
-      player_ids: [],
-      position: null,
+  expect(res.status).toHaveBeenCalledWith(422);
+  expect(res.send).toHaveBeenCalledWith(
+    expect.objectContaining({
+      error: 'Invalid request body',
+      message: 'league_id must be a non-empty string',
     }),
-  });
+  );
 });
 
-test('createTeamHandler - creates team without league_id', async () => {
+test('createTeamHandler - returns 422 when creating team without league_id', async () => {
   const res = mockResponse();
   (res as any).locals.user = { id: 'u1' };
   const req = {
     body: { name: 'Team Without League', players: ['p1'] },
   } as unknown as Request;
 
-  mockInsertExecute();
-
   await createTeamHandler(req, res, mockNext);
 
-  expect(res.status).toHaveBeenCalledWith(201);
-  expect(res.send).toHaveBeenCalledWith({
-    data: expect.objectContaining({
-      id: 'test-id',
-      owner_id: 'u1',
-      name: 'Team Without League',
-      player_ids: ['p1'],
+  expect(res.status).toHaveBeenCalledWith(422);
+  expect(res.send).toHaveBeenCalledWith(
+    expect.objectContaining({
+      error: 'Invalid request body',
+      message: 'league_id must be a non-empty string',
     }),
-  });
+  );
 });
 
 // Error handling
 test('createTeamHandler - returns 500 on database error', async () => {
   const res = mockResponse();
   (res as any).locals.user = { id: 'u1' };
-  const req = { body: { name: 'Team 1' } } as unknown as Request;
+  const req = { body: { name: 'Team 1', league_id: 'league1' } } as unknown as Request;
 
+  // Mock league exists, user teams check, then database error on insert
+  mockSelectChain([
+    [{ id: 'league1', max_participants: 5 }], // league query
+    [], // user teams query (0 teams)
+  ]);
   mockInsertExecute(true);
 
   await createTeamHandler(req, res, mockNext);
