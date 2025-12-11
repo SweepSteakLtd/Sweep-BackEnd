@@ -47,7 +47,7 @@ export const uploadGBGDocumentsHandler = async (
       });
     }
 
-    const base64Regex = /^([A-Za-z0-9+/=]+)$/;
+    const base64Regex = /^data:image\/(jpeg|jpg|png);base64,[A-Za-z0-9+/]*={0,2}$/;
     const validDocuments: string[] = [];
 
     for (let i = 0; i < req.body.documents.length; i++) {
