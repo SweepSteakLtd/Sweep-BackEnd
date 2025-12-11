@@ -40,7 +40,6 @@ oapi.securitySchemes('ApiKeyAuth', {
 
 const applyRootConfiguration = (appObject: Express): Express => {
   appObject.use(cors({ origin: true }));
-  appObject.use(BP.json()); // Add JSON body parsing
   appObject.use(BP.urlencoded({ extended: false }));
 
   // Log routes as they're being registered
@@ -53,16 +52,16 @@ const applyRootConfiguration = (appObject: Express): Express => {
         console.log('[DEBUG] handler missing apiDescription', route.apiName);
       }
 
-      appObject[endpoint.method](
-        fullPath,
-        apiDescription ? oapi.path(apiDescription) : () => {},
-        endpoint.stack,
-      );
+      appObject[endpoint.method](fullPath, apiDescription ? oapi.path(apiDescription) : () => {}, [
+        endpoint.increasedPayload ? endpoint.stack : ([BP.json(), ...endpoint.stack] as any),
+      ]);
       console.info(
         `ENV: ${env.CURRENT} PORT: 8080 ROUTE: ${fullPath} METHOD: ${endpoint.method.toUpperCase()}`,
       );
     }),
   );
+
+  appObject.use(BP.json()); // Add JSON body parsing
 
   appObject.get(`/`, (req: Request, res: Response) => {
     res.send(

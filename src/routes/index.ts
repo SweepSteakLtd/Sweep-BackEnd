@@ -87,6 +87,7 @@ interface RouteEndpoint {
   method: 'get' | 'post' | 'put' | 'patch' | 'delete';
   name: string;
   stack: (RequestHandler & { apiDescription?: ApiDescription })[];
+  increasedPayload?: boolean;
 }
 
 interface RouteDescription {
@@ -123,6 +124,7 @@ export const routes: RouteDescription[] = [
         method: 'post',
         name: '/upload/gbg',
         stack: [largePayloadMiddleware, AuthenticateMiddleware, uploadGBGDocumentsHandler],
+        increasedPayload: true,
       },
     ],
   },
