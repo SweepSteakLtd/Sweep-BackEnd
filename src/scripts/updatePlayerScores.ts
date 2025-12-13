@@ -172,7 +172,7 @@ async function updateTournamentPlayers(
         continue;
       }
 
-      const currentScore = dgPlayer.total;
+      const currentScore = dgPlayer.total || 0;
       const position = parsePosition(dgPlayer.position);
       const missedCut = dgPlayer.mc === '1' || dgPlayer.mc === 'MC';
 
