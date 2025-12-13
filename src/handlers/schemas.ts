@@ -162,95 +162,41 @@ export const leagueSchema = {
   },
 };
 
-// ===== Tournament Schemas =====
-
-export const tournamentHoleSchema = {
-  type: 'object',
-  required: ['id', 'name', 'position', 'par', 'distance'],
-  properties: {
-    id: { type: 'string', format: 'uuid' },
-    name: { type: 'string', minLength: 1, maxLength: 100 },
-    description: { type: 'string', nullable: true, maxLength: 500 },
-    position: { type: 'number', minimum: 1, maximum: 18 },
-    cover_image: { type: 'string', format: 'uri', nullable: true },
-    par: { type: 'number', minimum: 3, maximum: 6 },
-    distance: { type: 'number', minimum: 0, description: 'Distance in yards' },
-    created_at: { type: 'string', format: 'date-time' },
-    updated_at: { type: 'string', format: 'date-time' },
-  },
-};
-
-export const tournamentAdSchema = {
-  type: 'object',
-  required: ['id', 'name', 'position'],
-  properties: {
-    id: { type: 'string', format: 'uuid' },
-    name: { type: 'string', minLength: 1, maxLength: 200 },
-    description: { type: 'string', nullable: true, maxLength: 1000 },
-    position: { type: 'number', minimum: 1 },
-    website: { type: 'string', format: 'uri', nullable: true },
-    created_at: { type: 'string', format: 'date-time' },
-    updated_at: { type: 'string', format: 'date-time' },
-  },
-};
-
-export const tournamentSchema = {
-  type: 'object',
-  required: ['id', 'name', 'starts_at', 'finishes_at', 'colours', 'sport', 'rules'],
-  properties: {
-    id: { type: 'string', format: 'uuid', description: 'Unique tournament identifier' },
-    name: { type: 'string', minLength: 1, maxLength: 200 },
-    starts_at: { type: 'string', format: 'date-time', description: 'Tournament start date' },
-    finishes_at: { type: 'string', format: 'date-time', description: 'Tournament end date' },
-    description: { type: 'string', nullable: true, maxLength: 2000 },
-    url: { type: 'string', format: 'uri', nullable: true },
-    cover_picture: { type: 'string', format: 'uri', nullable: true },
-    gallery: { type: 'array', items: { type: 'string', format: 'uri' }, default: [] },
-    holes: { type: 'array', items: tournamentHoleSchema, default: [] },
-    ads: { type: 'array', items: tournamentAdSchema, default: [] },
-    proposed_entry_fee: { type: 'number', minimum: 0, nullable: true },
-    maximum_cut_amount: { type: 'number', minimum: 0, nullable: true },
-    maximum_score_generator: { type: 'number', minimum: 0, nullable: true },
-    players: { type: 'array', items: { type: 'string' }, default: [] },
-    colours: {
-      type: 'object',
-      required: ['primary', 'secondary', 'highlight'],
-      properties: {
-        primary: { type: 'string', description: 'Primary colour' },
-        secondary: { type: 'string', description: 'Secondary colour' },
-        highlight: { type: 'string', description: 'Highlight colour' },
-      },
-    },
-    sport: { type: 'string', enum: ['Golf'], description: 'Sport type' },
-    rules: { type: 'array', items: { type: 'string' }, minItems: 1, description: 'Tournament rules' },
-    instructions: { type: 'array', items: { type: 'string' }, default: [], description: 'Tournament instructions' },
-    created_at: { type: 'string', format: 'date-time' },
-    updated_at: { type: 'string', format: 'date-time' },
-  },
-};
-
 // ===== Player Schemas =====
 
-export const playerAttemptsSchema = {
+export const playerAttemptSchema = {
   type: 'object',
-  additionalProperties: { type: 'number', minimum: 0 },
-  description: 'Map of hole number to number of attempts',
+  required: ['day', 'hole_id', 'hole_name', 'par', 'attempt'],
+  properties: {
+    day: { type: 'string', description: 'Day of the attempt' },
+    hole_id: { type: 'string', description: 'Hole identifier' },
+    hole_name: { type: 'string', description: 'Hole name' },
+    par: { type: 'number', description: 'Par for the hole' },
+    attempt: { type: 'number', minimum: 0, description: 'Number of attempts' },
+  },
+};
+
+export const playerAttemptsSchema = {
+  type: 'array',
+  items: playerAttemptSchema,
+  default: [],
+  description: 'Array of player attempts by hole',
 };
 
 export const playerSchema = {
   type: 'object',
-  required: ['id', 'external_id', 'level', 'current_score', 'position'],
+  required: ['id', 'external_id', 'level', 'profile_id', 'tournament_id'],
   properties: {
     id: { type: 'string', format: 'uuid', description: 'Unique player identifier' },
     external_id: { type: 'string', description: 'External API player identifier' },
     level: { type: 'number', minimum: 1, maximum: 5, description: 'Player skill level' },
-    current_score: { type: 'number', description: 'Current tournament score' },
-    position: { type: 'number', minimum: 1, description: 'Current leaderboard position' },
+    current_score: { type: 'number', default: 0, description: 'Current tournament score' },
+    position: { type: 'number', default: 0, description: 'Current leaderboard position' },
     attempts: playerAttemptsSchema,
     missed_cut: { type: 'boolean', default: false },
-    odds: { type: 'number', minimum: 0, nullable: true, description: 'Betting odds' },
-    profile_id: { type: 'string', nullable: true },
-    tournament_id: { type: 'string', nullable: true, description: 'Reference to tournament' },
+    odds: { type: 'number', minimum: 0, default: 0, description: 'Betting odds' },
+    profile_id: { type: 'string', description: 'Player profile reference' },
+    tournament_id: { type: 'string', description: 'Reference to tournament' },
     created_at: { type: 'string', format: 'date-time' },
     updated_at: { type: 'string', format: 'date-time' },
   },
@@ -274,20 +220,101 @@ export const playerProfileSchema = {
   },
 };
 
+// ===== Tournament Schemas =====
+
+export const tournamentHoleSchema = {
+  type: 'object',
+  required: ['id', 'name', 'position', 'par', 'distance', 'cover_image'],
+  properties: {
+    id: { type: 'string', format: 'uuid' },
+    name: { type: 'string', minLength: 1, maxLength: 100 },
+    description: { type: 'string', default: '', maxLength: 500 },
+    position: { type: 'number', minimum: 1, maximum: 18 },
+    cover_image: { type: 'string', default: '', description: 'Cover image URL' },
+    par: { type: 'number', minimum: 3, maximum: 6 },
+    distance: { type: 'number', minimum: 0, description: 'Distance in yards' },
+    created_at: { type: 'string', format: 'date-time' },
+    updated_at: { type: 'string', format: 'date-time' },
+  },
+};
+
+export const tournamentAdSchema = {
+  type: 'object',
+  required: ['id', 'name', 'position'],
+  properties: {
+    id: { type: 'string', format: 'uuid' },
+    name: { type: 'string', minLength: 1, maxLength: 200 },
+    description: { type: 'string', nullable: true, maxLength: 1000 },
+    position: { type: 'number', minimum: 1 },
+    website: { type: 'string', format: 'uri', nullable: true },
+    created_at: { type: 'string', format: 'date-time' },
+    updated_at: { type: 'string', format: 'date-time' },
+  },
+};
+
+export const tournamentSchema = {
+  type: 'object',
+  required: [
+    'id',
+    'external_id',
+    'name',
+    'starts_at',
+    'finishes_at',
+    'proposed_entry_fee',
+    'maximum_cut_amount',
+    'maximum_score_generator',
+    'colours',
+    'sport',
+    'rules',
+  ],
+  properties: {
+    id: { type: 'string', format: 'uuid', description: 'Unique tournament identifier' },
+    external_id: { type: 'string', description: 'External tournament identifier' },
+    name: { type: 'string', minLength: 1, maxLength: 200 },
+    starts_at: { type: 'string', format: 'date-time', description: 'Tournament start date' },
+    finishes_at: { type: 'string', format: 'date-time', description: 'Tournament end date' },
+    description: { type: 'string', default: '', maxLength: 2000 },
+    url: { type: 'string', default: '', description: 'Tournament URL' },
+    cover_picture: { type: 'string', default: '', description: 'Cover picture URL' },
+    gallery: { type: 'array', items: { type: 'string', format: 'uri' }, default: [] },
+    holes: { type: 'array', items: tournamentHoleSchema, default: [] },
+    ads: { type: 'array', items: tournamentAdSchema, default: [] },
+    proposed_entry_fee: { type: 'number', minimum: 0, description: 'Proposed entry fee' },
+    maximum_cut_amount: { type: 'number', minimum: 0, description: 'Maximum cut amount' },
+    maximum_score_generator: { type: 'number', minimum: 0, description: 'Maximum score generator' },
+    players: { type: 'array', items: playerSchema, default: [] },
+    colours: {
+      type: 'object',
+      properties: {
+        primary: { type: 'string', description: 'Primary colour' },
+        secondary: { type: 'string', description: 'Secondary colour' },
+        highlight: { type: 'string', description: 'Highlight colour' },
+      },
+    },
+    sport: { type: 'string', enum: ['Golf'], default: 'Golf', description: 'Sport type' },
+    rules: { type: 'array', items: { type: 'string' }, description: 'Tournament rules' },
+    instructions: { type: 'array', items: { type: 'string' }, default: [], description: 'Tournament instructions' },
+    course_name: { type: 'string', default: '', description: 'Course name' },
+    created_at: { type: 'string', format: 'date-time' },
+    updated_at: { type: 'string', format: 'date-time' },
+  },
+};
+
 // ===== Team & Bet Schemas =====
 
 export const teamSchema = {
   type: 'object',
-  required: ['id', 'owner_id', 'player_ids'],
+  required: ['id', 'owner_id', 'league_id', 'player_ids'],
   properties: {
     id: { type: 'string', format: 'uuid', description: 'Unique team identifier' },
     owner_id: { type: 'string', description: 'User who owns this team' },
+    league_id: { type: 'string', description: 'League this team belongs to' },
+    name: { type: 'string', nullable: true, description: 'Team name' },
+    position: { type: 'string', nullable: true, description: 'Team position/rank' },
     player_ids: {
       type: 'array',
       items: { type: 'string' },
-      minItems: 1,
-      maxItems: 10,
-      uniqueItems: true,
+      default: [],
       description: 'Array of player IDs in the team',
     },
     created_at: { type: 'string', format: 'date-time' },
@@ -304,7 +331,6 @@ export const betSchema = {
     league_id: { type: 'string', description: 'League this bet is for' },
     team_id: { type: 'string', description: 'Team selected for this bet' },
     amount: { type: 'number', minimum: 1, description: 'Bet amount in currency units' },
-    status: { type: 'string', enum: ['pending', 'won', 'lost', 'cancelled'], default: 'pending' },
     created_at: { type: 'string', format: 'date-time' },
     updated_at: { type: 'string', format: 'date-time' },
   },
@@ -314,13 +340,13 @@ export const betSchema = {
 
 export const transactionSchema = {
   type: 'object',
-  required: ['id', 'user_id', 'type', 'value'],
+  required: ['id', 'name', 'user_id', 'type', 'value'],
   properties: {
     id: { type: 'string', format: 'uuid', description: 'Unique transaction identifier' },
-    name: { type: 'string', nullable: true, maxLength: 200 },
+    name: { type: 'string', maxLength: 200, description: 'Transaction name' },
     value: { type: 'number', minimum: 0, description: 'Transaction amount' },
     type: { type: 'string', enum: ['deposit', 'withdrawal'], description: 'Transaction type' },
-    charge_id: { type: 'string', nullable: true, description: 'Payment processor charge ID' },
+    charge_id: { type: 'string', default: '', description: 'Payment processor charge ID' },
     user_id: { type: 'string', description: 'User who made the transaction' },
     created_at: { type: 'string', format: 'date-time' },
     updated_at: { type: 'string', format: 'date-time' },

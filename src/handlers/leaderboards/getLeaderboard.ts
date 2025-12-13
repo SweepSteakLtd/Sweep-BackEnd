@@ -134,7 +134,7 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
       const leaderboardPlayers: LeaderboardPlayer[] = teamPlayers.map((player: any) => {
         const profile = leaguePlayerProfiles.find((p: any) => p.id === player.profile_id);
         return {
-          group: String.fromCharCode(65 + (player.level - 1)), // A, B, C, D, E based on level
+          group: profile.group,
           player_name: profile
             ? `${profile.first_name} ${profile.last_name}`
             : `Player ${player.id}`,
@@ -156,7 +156,7 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
           substring: ownerName,
         },
         total: totalScore,
-        players: leaderboardPlayers,
+        players: leaderboardPlayers.sort((a, b) => a.group.localeCompare(b.group)),
         bestScore: sortedScores,
         prize: 0, // Prize calculation would be based on league rewards
       });
