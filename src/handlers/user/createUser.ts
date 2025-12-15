@@ -409,6 +409,7 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
       exclusion_ending: new Date(),
       is_self_excluded: false,
       address: req.body.address,
+      date_of_birth: req.body.date_of_birth,
       created_at: new Date(),
       updated_at: new Date(),
     };

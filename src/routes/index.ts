@@ -35,6 +35,7 @@ import {
   getPlayersByTournamentHandler,
   getTournamentsHandler,
   getTransactionsHandler,
+  recheckGamstopStatusHandler,
   updateBetHandler,
   updateCurrentUserHandler,
   updateLeagueAdminHandler,
@@ -51,6 +52,7 @@ import {
   AuthenticateEmailMiddleware,
   AuthenticateMiddleware,
   CheckMonthlyBetLimitMiddleware,
+  CheckSelfExclusionMiddleware,
   JoinCodeMiddleware,
 } from '../middlewares';
 
@@ -146,6 +148,7 @@ export const routes: RouteDescription[] = [
         name: '/',
         stack: [
           AuthenticateMiddleware,
+          CheckSelfExclusionMiddleware,
           JoinCodeMiddleware,
           CheckMonthlyBetLimitMiddleware,
           createTeamHandler,
@@ -169,7 +172,7 @@ export const routes: RouteDescription[] = [
       {
         method: 'post',
         name: '/',
-        stack: [AuthenticateMiddleware, createLeagueHandler],
+        stack: [AuthenticateMiddleware, CheckSelfExclusionMiddleware, createLeagueHandler],
       },
       {
         method: 'get',
@@ -199,7 +202,12 @@ export const routes: RouteDescription[] = [
       {
         method: 'post',
         name: '/',
-        stack: [AuthenticateMiddleware, CheckMonthlyBetLimitMiddleware, createBetHandler],
+        stack: [
+          AuthenticateMiddleware,
+          CheckSelfExclusionMiddleware,
+          CheckMonthlyBetLimitMiddleware,
+          createBetHandler,
+        ],
       },
       {
         method: 'get',
@@ -386,6 +394,13 @@ export const routes: RouteDescription[] = [
         method: 'delete',
         name: '/users/:id',
         stack: [AuthenticateAdminMiddleware, deleteUserHandler],
+      },
+
+      // GamStop admin endpoints
+      {
+        method: 'post',
+        name: '/gamstop/recheck',
+        stack: [AuthenticateAdminMiddleware, recheckGamstopStatusHandler],
       },
     ],
   },

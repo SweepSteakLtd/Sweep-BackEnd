@@ -12,6 +12,22 @@ export interface GamstopCheckResult {
   registration_id?: string; // Gamstop registration ID if applicable
 }
 
+export interface GamstopBatchUserData {
+  correlationId?: string; // Optional unique identifier for tracking
+  first_name: string;
+  last_name: string;
+  date_of_birth: string; // Format: YYYY-MM-DD
+  email: string;
+  phone: string;
+  postcode: string;
+}
+
+export interface GamstopBatchCheckResult {
+  correlationId?: string; // Optional correlation ID if provided in request
+  is_registered: boolean; // true if user is self-excluded with Gamstop
+  ms_request_id: string; // Microsoft request ID for tracking
+}
+
 export const checkGamstopRegistration = async (
   userData: GamstopUserData,
 ): Promise<GamstopCheckResult> => {
@@ -55,6 +71,84 @@ export const checkGamstopRegistration = async (
     };
   } catch (error: any) {
     console.error('[ERROR] Gamstop API error:', error.message);
+    throw error;
+  }
+};
+
+/**
+ * Batch check GamStop registration for multiple users
+ * Supports up to 1,000 users per request
+ * Rate limit: 1 request per second average in a 5-minute period
+ * @param usersData Array of user data to check (max 1,000)
+ * @returns Array of check results with correlation IDs
+ */
+export const checkGamstopRegistrationBatch = async (
+  usersData: GamstopBatchUserData[],
+): Promise<GamstopBatchCheckResult[]> => {
+  try {
+    const batchApiUrl = 'https://batch.stage.gamstop.io/v2';
+    const apiKey = process.env.GAMSTOP_API_KEY;
+
+    if (!apiKey) {
+      throw new Error('GAMSTOP_API_KEY environment variable is not set');
+    }
+
+    if (usersData.length === 0) {
+      return [];
+    }
+
+    if (usersData.length > 1000) {
+      throw new Error('Batch requests are limited to 1,000 users per request');
+    }
+
+    // Format data according to GamStop API requirements
+    const requestBody = usersData.map(user => ({
+      ...(user.correlationId && { correlationId: user.correlationId }),
+      firstName: user.first_name,
+      lastName: user.last_name,
+      dateOfBirth: user.date_of_birth,
+      email: user.email,
+      postcode: user.postcode,
+      mobile: user.phone,
+    }));
+
+    const response = await fetch(batchApiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-API-Key': `${apiKey}`,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      throw new Error(
+        `Gamstop Batch API request failed: ${response.status} ${response.statusText} - ${errorText}`,
+      );
+    }
+
+    const batchUniqueId = response.headers.get('x-unique-id');
+    console.log(`[INFO] Gamstop batch request ID: ${batchUniqueId}`);
+
+    // Parse response body
+    const responseData = await response.json();
+
+    if (!Array.isArray(responseData)) {
+      throw new Error('Invalid response format from Gamstop batch API');
+    }
+
+    // Map response to our interface
+    const results: GamstopBatchCheckResult[] = responseData.map((item: any) => ({
+      correlationId: item.correlationId,
+      is_registered: item.exclusion === 'Y' || item.exclusion === 'P',
+      ms_request_id: item.msRequestId,
+    }));
+
+    return results;
+  } catch (error: any) {
+    console.error('[ERROR] Gamstop Batch API error:', error.message);
     throw error;
   }
 };

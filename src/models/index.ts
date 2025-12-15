@@ -50,6 +50,7 @@ export const users = pgTable('Users', {
   last_name: text('last_name').default(''), // optional, default ""
   nickname: text('nickname').default(''),
   email: text('email').notNull(), // required
+  date_of_birth: text('date_of_birth').default(null), // optional, default null
   bio: text('bio').default(''), // optional, default ""
   profile_picture: text('profile_picture').default(''), // optional, default ""
   phone_number: text('phone_number').default(''), // optional, default ""

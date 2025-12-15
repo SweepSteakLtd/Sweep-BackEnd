@@ -1,0 +1,1 @@
+ALTER TABLE "Users" ADD COLUMN "date_of_birth" text DEFAULT null;

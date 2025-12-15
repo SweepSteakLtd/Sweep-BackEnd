@@ -70,5 +70,8 @@ export * from './admin/users/deleteUser';
 export * from './admin/users/getAllUsers';
 export * from './admin/users/updateUser';
 
+// Admin - GamStop
+export * from './admin/gamstop/recheckStatus';
+
 // Tournament handlers
 export * from './tournaments/getTournaments';
