@@ -144,6 +144,7 @@ export const tournaments = pgTable('Tournament', {
   rules: text('rules').array().notNull(), // required
   instructions: text('instructions').array().default([]), // optional, default []
   course_name: text('course_name').default(''), // optional, default ""
+  tour: text('tour').default('pga'), // optional, default "" => can be pga, euro, kft, opp, alt, major
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });

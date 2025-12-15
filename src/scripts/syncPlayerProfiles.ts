@@ -81,9 +81,12 @@ async function fetchRankings(): Promise<DataGolfRankingItem[]> {
   }
 }
 
-async function fetchTournamentField(tournamentId: string): Promise<DataGolfFieldPlayer[]> {
+async function fetchTournamentField(
+  tournamentId: string,
+  tour: string,
+): Promise<DataGolfFieldPlayer[]> {
   try {
-    const endpoint = `/field-updates?tour=pga&event_id=${tournamentId}&file_format=json&key=${DATAGOLF_API_KEY}`;
+    const endpoint = `/field-updates?tour=${tour}&event_id=${tournamentId}&file_format=json&key=${DATAGOLF_API_KEY}`;
 
     const response = await axios.get(`${DATAGOLF_BASE_URL}${endpoint}`, {
       headers: {
@@ -375,8 +378,17 @@ async function main() {
     await ensureDatabaseReady();
     console.log('✅ Database connection established\n');
 
-    console.log(`📋 Fetching tournament field for event ${tournamentId}...`);
-    const tournamentField = await fetchTournamentField(tournamentId);
+    const databaseTournamentTour = await database
+      .select(tournaments)
+      .from(tournaments)
+      .where(eq(tournaments.external_id, args[0]))
+      .execute();
+
+    console.log(`📋 Fetching tournament field for event ${tournamentId}...`, databaseTournamentTour[0].tour);
+    const tournamentField = await fetchTournamentField(
+      tournamentId,
+      databaseTournamentTour[0].tour || 'pga',
+    );
 
     if (tournamentField.length === 0) {
       console.error('❌ No players found in tournament field');

@@ -24,6 +24,8 @@ import { apiKeyAuth, dataWrapper, standardResponses, tournamentSchema } from '..
  * @body rules - array<string> - required
  * @body instructions - array<string> - optional
  * @body external_id - string - required
+ * @body course_name - string - optional
+ * @body tour - enum (pga, euro, kft, opp, alt, major) - optional - defaults to 'pga'
  * @returns Tournament
  */
 export const createTournamentHandler = async (req: Request, res: Response, next: NextFunction) => {
@@ -47,6 +49,8 @@ export const createTournamentHandler = async (req: Request, res: Response, next:
       rules,
       instructions,
       external_id,
+      course_name,
+      tour,
     } = req.body as Tournament;
 
     if (
@@ -108,7 +112,8 @@ export const createTournamentHandler = async (req: Request, res: Response, next:
       rules,
       instructions,
       external_id,
-      course_name: '',
+      course_name: course_name || '',
+      tour: tour || 'pga',
       created_at: new Date(),
       updated_at: new Date(),
     };
@@ -255,6 +260,19 @@ createTournamentHandler.apiDescription = {
               type: 'string',
               minLength: 1,
               description: 'External tournament ID',
+            },
+            course_name: {
+              type: 'string',
+              nullable: true,
+              description: 'Name of the golf course where the tournament is held',
+            },
+            tour: {
+              type: 'string',
+              enum: ['pga', 'euro', 'kft', 'opp', 'alt', 'major'],
+              default: 'pga',
+              nullable: true,
+              description:
+                'Tournament tour type: pga (PGA Tour), euro (European Tour), kft (Korn Ferry Tour), opp (opposite field), alt (alternate event), major (Major Championship)',
             },
           },
         },

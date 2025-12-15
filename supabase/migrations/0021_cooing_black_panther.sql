@@ -1,0 +1,1 @@
+ALTER TABLE "Tournament" ADD COLUMN "tour" text DEFAULT 'pga';

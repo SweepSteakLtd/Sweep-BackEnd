@@ -146,7 +146,11 @@ export const leagueSchema = {
     contact_phone: { type: 'string', default: '', pattern: '^\\+[1-9]\\d{1,14}$' },
     contact_email: { type: 'string', format: 'email', default: '' },
     contact_visibility: { type: 'boolean', default: false },
-    join_code: { type: 'string', default: '', description: 'Code to join the league (only visible to league owner)' },
+    join_code: {
+      type: 'string',
+      default: '',
+      description: 'Code to join the league (only visible to league owner)',
+    },
     max_participants: { type: 'number', minimum: 2, default: 100 },
     rewards: { type: 'array', items: { type: 'object' }, default: [] },
     start_time: { type: 'string', format: 'date-time', description: 'League start time' },
@@ -154,7 +158,12 @@ export const leagueSchema = {
     type: { type: 'string', enum: ['public', 'private'], default: 'public' },
     user_id_list: { type: 'array', items: { type: 'string' }, default: [] },
     is_featured: { type: 'boolean', default: false, description: 'Whether the league is featured' },
-    joined_players: { type: 'array', items: { type: 'string' }, default: [], description: 'Array of user IDs who have joined' },
+    joined_players: {
+      type: 'array',
+      items: { type: 'string' },
+      default: [],
+      description: 'Array of user IDs who have joined',
+    },
     tournament_id: { type: 'string', description: 'Associated tournament ID' },
     owner_id: { type: 'string', description: 'League owner user ID' },
     created_at: { type: 'string', format: 'date-time' },
@@ -204,7 +213,16 @@ export const playerSchema = {
 
 export const playerProfileSchema = {
   type: 'object',
-  required: ['id', 'external_id', 'first_name', 'last_name', 'country', 'age', 'ranking', 'profile_picture'],
+  required: [
+    'id',
+    'external_id',
+    'first_name',
+    'last_name',
+    'country',
+    'age',
+    'ranking',
+    'profile_picture',
+  ],
   properties: {
     id: { type: 'string', format: 'uuid', description: 'Unique profile identifier' },
     external_id: { type: 'string', description: 'External API player identifier', default: '' },
@@ -293,8 +311,20 @@ export const tournamentSchema = {
     },
     sport: { type: 'string', enum: ['Golf'], default: 'Golf', description: 'Sport type' },
     rules: { type: 'array', items: { type: 'string' }, description: 'Tournament rules' },
-    instructions: { type: 'array', items: { type: 'string' }, default: [], description: 'Tournament instructions' },
+    instructions: {
+      type: 'array',
+      items: { type: 'string' },
+      default: [],
+      description: 'Tournament instructions',
+    },
     course_name: { type: 'string', default: '', description: 'Course name' },
+    tour: {
+      type: 'string',
+      enum: ['pga', 'euro', 'kft', 'opp', 'alt', 'major'],
+      default: 'pga',
+      description:
+        'Tournament tour type: pga (PGA Tour), euro (European Tour), kft (Korn Ferry Tour), opp (opposite field), alt (alternate event), major (Major Championship)',
+    },
     created_at: { type: 'string', format: 'date-time' },
     updated_at: { type: 'string', format: 'date-time' },
   },

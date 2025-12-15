@@ -25,6 +25,8 @@ import { dataWrapper, standardResponses, tournamentSchema } from '../../schemas'
  * @body rules - array<string> - optional
  * @body instructions - array<string> - optional
  * @body external_id - string - optional
+ * @body course_name - string - optional
+ * @body tour - enum (pga, euro, kft, opp, alt, major) - optional
  * @returns Tournament
  */
 export const updateTournamentHandler = async (req: Request, res: Response, next: NextFunction) => {
@@ -48,6 +50,8 @@ export const updateTournamentHandler = async (req: Request, res: Response, next:
       'rules',
       'instructions',
       'external_id',
+      'course_name',
+      'tour',
     ];
 
     const { id } = req.params;
@@ -164,6 +168,18 @@ updateTournamentHandler.apiDescription = {
             holes: { type: 'array', items: { type: 'string' }, nullable: true },
             ads: { type: 'array', items: { type: 'string' }, nullable: true },
             external_id: { type: 'string', minLength: 1, description: 'External tournament ID' },
+            course_name: {
+              type: 'string',
+              nullable: true,
+              description: 'Name of the golf course where the tournament is held',
+            },
+            tour: {
+              type: 'string',
+              enum: ['pga', 'euro', 'kft', 'opp', 'alt', 'major'],
+              nullable: true,
+              description:
+                'Tournament tour type: pga (PGA Tour), euro (European Tour), kft (Korn Ferry Tour), opp (opposite field), alt (alternate event), major (Major Championship)',
+            },
           },
         },
       },
