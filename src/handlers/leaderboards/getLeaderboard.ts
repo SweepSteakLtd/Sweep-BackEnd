@@ -124,11 +124,11 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
         0,
       );
 
-      // Get best scores (top 3 player scores)
+      // Get best scores (top 4 player scores)
       const sortedScores = teamPlayers
         .map((p: any) => p.current_score || 0)
         .sort((a: number, b: number) => a - b)
-        .slice(0, 3);
+        .slice(0, 4);
 
       // Build players array
       const leaderboardPlayers: LeaderboardPlayer[] = teamPlayers.map((player: any) => {
@@ -275,8 +275,8 @@ getLeaderboardHandler.apiDescription = {
                     bestScore: {
                       type: 'array',
                       items: { type: 'number' },
-                      description: 'Top 3 player scores for this team',
-                      example: [-14, -13, -7],
+                      description: 'Top 4 player scores for this team',
+                      example: [-14, -13, -7, -3],
                     },
                     prize: {
                       type: 'number',
