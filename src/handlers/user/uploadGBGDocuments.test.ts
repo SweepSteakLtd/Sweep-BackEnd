@@ -1,10 +1,19 @@
 jest.mock('../../integrations/GBG/GBG', () => ({
   getAuthToken: jest.fn(),
   handleGBGError: jest.fn(),
+  retrieveTasks: jest.fn(),
+  submitDocumentsToTask: jest.fn(),
+  retryWithBackoff: jest.fn(async (fn) => await fn()),
 }));
 
 import { NextFunction, Request, Response } from 'express';
-import { getAuthToken, handleGBGError } from '../../integrations/GBG/GBG';
+import {
+  getAuthToken,
+  handleGBGError,
+  retrieveTasks,
+  submitDocumentsToTask,
+  retryWithBackoff,
+} from '../../integrations/GBG/GBG';
 import { uploadGBGDocumentsHandler } from './uploadGBGDocuments';
 
 const mockResponse = () => {
@@ -57,41 +66,18 @@ const createValidRequestBody = (overrides: any = {}) => ({
   ...overrides,
 });
 
-// Mock global fetch
-const mockFetch = jest.fn();
-global.fetch = mockFetch as any;
-
-afterEach(() => {
-  jest.clearAllMocks();
-});
-
 beforeEach(() => {
+  jest.clearAllMocks();
+
+  // Set up default successful mocks for each test
   (getAuthToken as jest.Mock).mockResolvedValue(mockAuthToken);
   (handleGBGError as jest.Mock).mockReturnValue({
     message: 'GBG error occurred',
     code: 'GBG_ERROR',
   });
-
-  // Default successful fetch responses
-  mockFetch.mockImplementation((url: string) => {
-    if (url.includes('/journey/task/list')) {
-      return Promise.resolve({
-        ok: true,
-        json: async () => mockTaskListResponse,
-        text: async () => JSON.stringify(mockTaskListResponse),
-      });
-    } else if (url.includes('/journey/task/update')) {
-      return Promise.resolve({
-        ok: true,
-        json: async () => mockSubmitTaskResponse,
-        text: async () => JSON.stringify(mockSubmitTaskResponse),
-      });
-    }
-    return Promise.resolve({
-      ok: true,
-      json: async () => ({}),
-    });
-  });
+  (retrieveTasks as jest.Mock).mockResolvedValue(mockTaskListResponse);
+  (submitDocumentsToTask as jest.Mock).mockResolvedValue(mockSubmitTaskResponse);
+  (retryWithBackoff as jest.Mock).mockImplementation(async (fn) => await fn());
 });
 
 describe('uploadGBGDocumentsHandler', () => {
@@ -104,23 +90,16 @@ describe('uploadGBGDocumentsHandler', () => {
 
       await uploadGBGDocumentsHandler(req, res, mockNext);
 
+      expect(retryWithBackoff).toHaveBeenCalled();
       expect(getAuthToken).toHaveBeenCalled();
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://eu.platform.go.gbgplc.com/captain/api/journey/task/list',
-        expect.objectContaining({
-          method: 'POST',
-          headers: expect.objectContaining({
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer mock-access-token',
-          }),
-          body: JSON.stringify({ instanceId: 'test-instance-123' }),
-        }),
-      );
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://eu.platform.go.gbgplc.com/captain/api/journey/task/update',
-        expect.objectContaining({
-          method: 'POST',
-        }),
+      expect(retrieveTasks).toHaveBeenCalledWith('test-instance-123', mockAuthToken);
+      expect(submitDocumentsToTask).toHaveBeenCalledWith(
+        'test-instance-123',
+        'task-123',
+        'John',
+        'Doe',
+        expect.any(Array),
+        mockAuthToken,
       );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.send).toHaveBeenCalledWith({
@@ -331,9 +310,9 @@ describe('uploadGBGDocumentsHandler', () => {
   });
 
   describe('Authentication', () => {
-    test('returns 503 if auth token fails after 3 attempts', async () => {
+    test('returns 500 if auth token fails after retries', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      (getAuthToken as jest.Mock).mockResolvedValue(null);
+      (retryWithBackoff as jest.Mock).mockRejectedValue(new Error('Failed to get auth token'));
 
       const req = {
         body: createValidRequestBody(),
@@ -342,15 +321,14 @@ describe('uploadGBGDocumentsHandler', () => {
 
       await uploadGBGDocumentsHandler(req, res, mockNext);
 
-      expect(getAuthToken).toHaveBeenCalledTimes(3);
-      expect(res.status).toHaveBeenCalledWith(503);
+      expect(retryWithBackoff).toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(500);
       expect(res.send).toHaveBeenCalledWith({
-        error: 'Service Unavailable',
-        message: 'Unable to authenticate with verification service. Please try again later.',
+        error: 'Internal Server Error',
+        message: 'Failed to upload documents for verification',
+        details: expect.any(String),
       });
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[DEBUG] Failed to obtain GBG auth token after 3 attempts'),
-      );
+      expect(consoleErrorSpy).toHaveBeenCalled();
 
       consoleErrorSpy.mockRestore();
     });
@@ -359,17 +337,7 @@ describe('uploadGBGDocumentsHandler', () => {
   describe('Task retrieval', () => {
     test('returns 500 if task list request fails', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      mockFetch.mockImplementation((url: string) => {
-        if (url.includes('/journey/task/list')) {
-          return Promise.resolve({
-            ok: false,
-            status: 500,
-            statusText: 'Internal Server Error',
-            text: async () => 'GBG API error',
-          });
-        }
-        return Promise.resolve({ ok: true, json: async () => ({}) });
-      });
+      (retrieveTasks as jest.Mock).mockRejectedValue(new Error('Failed to retrieve tasks: 500 Internal Server Error - GBG API error'));
 
       const req = {
         body: createValidRequestBody(),
@@ -384,28 +352,16 @@ describe('uploadGBGDocumentsHandler', () => {
         message: 'Failed to upload documents for verification',
         details: 'GBG error occurred',
       });
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        '[DEBUG] Failed to retrieve tasks:',
-        500,
-        'GBG API error',
-      );
+      expect(consoleErrorSpy).toHaveBeenCalled();
 
       consoleErrorSpy.mockRestore();
     });
 
     test('returns 422 if no tasks available', async () => {
-      mockFetch.mockImplementation((url: string) => {
-        if (url.includes('/journey/task/list')) {
-          return Promise.resolve({
-            ok: true,
-            json: async () => ({
-              status: 'InProgress',
-              instanceId: 'test-instance-123',
-              tasks: [],
-            }),
-          });
-        }
-        return Promise.resolve({ ok: true, json: async () => ({}) });
+      (retrieveTasks as jest.Mock).mockResolvedValue({
+        status: 'InProgress',
+        instanceId: 'test-instance-123',
+        tasks: [],
       });
 
       const req = {
@@ -424,18 +380,10 @@ describe('uploadGBGDocumentsHandler', () => {
 
     test('handles null tasks gracefully', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      mockFetch.mockImplementation((url: string) => {
-        if (url.includes('/journey/task/list')) {
-          return Promise.resolve({
-            ok: true,
-            json: async () => ({
-              status: 'InProgress',
-              instanceId: 'test-instance-123',
-              tasks: null,
-            }),
-          });
-        }
-        return Promise.resolve({ ok: true, json: async () => ({}) });
+      (retrieveTasks as jest.Mock).mockResolvedValue({
+        status: 'InProgress',
+        instanceId: 'test-instance-123',
+        tasks: null,
       });
 
       const req = {
@@ -455,22 +403,9 @@ describe('uploadGBGDocumentsHandler', () => {
   describe('Document submission', () => {
     test('returns 500 if document submission fails', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      mockFetch.mockImplementation((url: string) => {
-        if (url.includes('/journey/task/list')) {
-          return Promise.resolve({
-            ok: true,
-            json: async () => mockTaskListResponse,
-          });
-        } else if (url.includes('/journey/task/update')) {
-          return Promise.resolve({
-            ok: false,
-            status: 400,
-            statusText: 'Bad Request',
-            text: async () => 'Invalid document format',
-          });
-        }
-        return Promise.resolve({ ok: true, json: async () => ({}) });
-      });
+      (submitDocumentsToTask as jest.Mock).mockRejectedValue(
+        new Error('Failed to submit documents: 400 Bad Request - Invalid document format')
+      );
 
       const req = {
         body: createValidRequestBody(),
@@ -485,11 +420,7 @@ describe('uploadGBGDocumentsHandler', () => {
         message: 'Failed to upload documents for verification',
         details: 'GBG error occurred',
       });
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        '[DEBUG] Failed to submit documents:',
-        400,
-        'Invalid document format',
-      );
+      expect(consoleErrorSpy).toHaveBeenCalled();
 
       consoleErrorSpy.mockRestore();
     });
@@ -504,28 +435,20 @@ describe('uploadGBGDocumentsHandler', () => {
 
       await uploadGBGDocumentsHandler(req, res, mockNext);
 
-      const submitCall = mockFetch.mock.calls.find(call =>
-        call[0].includes('/journey/task/update')
+      expect(submitDocumentsToTask).toHaveBeenCalledWith(
+        'test-instance-123',
+        'task-123',
+        'John',
+        'Doe',
+        expect.any(Array),
+        mockAuthToken
       );
-      expect(submitCall).toBeDefined();
-      const submitBody = JSON.parse(submitCall[1].body);
-      expect(submitBody).toMatchObject({
-        intent: 'Complete',
-        instanceId: 'test-instance-123',
-        taskId: 'task-123',
-        context: {
-          subject: {
-            identity: {
-              firstName: 'John',
-              lastNames: ['Doe'],
-            },
-            documents: expect.arrayContaining([
-              expect.objectContaining({ side1Image: expect.any(String) }),
-            ]),
-          },
-        },
-      });
-      expect(submitBody.context.subject.documents).toHaveLength(2);
+
+      // Verify the documents array passed (should have base64 data stripped)
+      const documentsArg = (submitDocumentsToTask as jest.Mock).mock.calls[0][4];
+      expect(documentsArg).toHaveLength(2);
+      expect(documentsArg[0]).not.toContain('data:image/jpeg;base64,');
+      expect(documentsArg[1]).not.toContain('data:image/jpeg;base64,');
     });
   });
 
@@ -558,7 +481,7 @@ describe('uploadGBGDocumentsHandler', () => {
 
     test('logs error information', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      (getAuthToken as jest.Mock).mockRejectedValue(new Error('Test error'));
+      (retryWithBackoff as jest.Mock).mockRejectedValue(new Error('Test error'));
 
       const req = {
         body: createValidRequestBody(),
@@ -567,7 +490,8 @@ describe('uploadGBGDocumentsHandler', () => {
 
       await uploadGBGDocumentsHandler(req, res, mockNext);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('[DEBUG] Document upload error:', 'Test error');
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('[DEBUG] Document upload error:'), expect.anything());
       expect(consoleErrorSpy).toHaveBeenCalledWith('[DEBUG] GBG error code:', 'GBG_ERROR');
       expect(consoleErrorSpy).toHaveBeenCalledWith('[DEBUG] GBG error message:', 'GBG error occurred');
 
@@ -587,14 +511,12 @@ describe('uploadGBGDocumentsHandler', () => {
 
       await uploadGBGDocumentsHandler(req, res, mockNext);
 
-      const submitCall = mockFetch.mock.calls.find(call =>
-        call[0].includes('/journey/task/update')
-      );
-      const submitBody = JSON.parse(submitCall[1].body);
+      expect(submitDocumentsToTask).toHaveBeenCalled();
+      const documentsArg = (submitDocumentsToTask as jest.Mock).mock.calls[0][4];
 
-      expect(submitBody.context.subject.documents).toHaveLength(2);
-      expect(submitBody.context.subject.documents[0].side1Image).not.toContain('data:image/jpeg;base64,');
-      expect(submitBody.context.subject.documents[1].side1Image).not.toContain('data:image/jpeg;base64,');
+      expect(documentsArg).toHaveLength(2);
+      expect(documentsArg[0]).not.toContain('data:image/jpeg;base64,');
+      expect(documentsArg[1]).not.toContain('data:image/jpeg;base64,');
     });
   });
 });

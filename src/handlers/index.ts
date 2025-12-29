@@ -3,6 +3,7 @@ export * from './user/createUser';
 export * from './user/deleteCurrentUser';
 export * from './user/fetchGBGState';
 export * from './user/getCurrentUser';
+export * from './user/getGBGTasks';
 export * from './user/updateCurrentUser';
 export * from './user/uploadGBGDocuments';
 

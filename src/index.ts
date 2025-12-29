@@ -7,6 +7,7 @@ import cors from 'cors';
 import express, { Express, Request, Response } from 'express';
 import { version } from '../package.json';
 import { config, env } from './config';
+import { validateComplianceEnv } from './config/validateEnv';
 import { AuthenticateAdminMiddleware } from './middlewares';
 import { routes } from './routes';
 import { ensureDatabaseReady } from './services';
@@ -113,6 +114,10 @@ console.log('SERVER APP GENERATED');
 
 (async () => {
   try {
+    console.log('⏳ Validating compliance environment variables...');
+    validateComplianceEnv();
+    console.log('✅ Compliance environment variables validated');
+
     console.log('⏳ Waiting for database connection...');
     await ensureDatabaseReady();
     console.log('✅ Database connection established');

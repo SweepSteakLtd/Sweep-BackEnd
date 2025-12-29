@@ -1,3 +1,8 @@
+import { getGamStopConfig } from '../../config/gamstop.config';
+import { fetchWithTimeout } from '../../utils/fetchWithTimeout';
+
+const gamstopConfig = getGamStopConfig();
+
 interface GamstopUserData {
   first_name: string;
   last_name: string;
@@ -32,18 +37,11 @@ export const checkGamstopRegistration = async (
   userData: GamstopUserData,
 ): Promise<GamstopCheckResult> => {
   try {
-    const apiUrl = 'https://api.stage.gamstop.io/v2';
-    const apiKey = process.env.GAMSTOP_API_KEY;
-
-    if (!apiKey) {
-      throw new Error('GAMSTOP_API_KEY environment variable is not set');
-    }
-
-    const response = await fetch(apiUrl, {
+    const response = await fetchWithTimeout(gamstopConfig.apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'X-API-Key': `${apiKey}`,
+        'X-API-Key': gamstopConfig.apiKey,
       },
       body: new URLSearchParams({
         firstName: userData.first_name,
@@ -51,8 +49,9 @@ export const checkGamstopRegistration = async (
         dateOfBirth: userData.date_of_birth,
         email: userData.email,
         postcode: userData.postcode,
-        mobile: '07700900461',
+        mobile: userData.phone,
       }),
+      timeout: gamstopConfig.timeout,
     });
 
     if (!response.ok) {
@@ -86,19 +85,12 @@ export const checkGamstopRegistrationBatch = async (
   usersData: GamstopBatchUserData[],
 ): Promise<GamstopBatchCheckResult[]> => {
   try {
-    const batchApiUrl = 'https://batch.stage.gamstop.io/v2';
-    const apiKey = process.env.GAMSTOP_API_KEY;
-
-    if (!apiKey) {
-      throw new Error('GAMSTOP_API_KEY environment variable is not set');
-    }
-
     if (usersData.length === 0) {
       return [];
     }
 
-    if (usersData.length > 1000) {
-      throw new Error('Batch requests are limited to 1,000 users per request');
+    if (usersData.length > gamstopConfig.batchSize) {
+      throw new Error(`Batch requests are limited to ${gamstopConfig.batchSize} users per request`);
     }
 
     // Format data according to GamStop API requirements
@@ -112,14 +104,15 @@ export const checkGamstopRegistrationBatch = async (
       mobile: user.phone,
     }));
 
-    const response = await fetch(batchApiUrl, {
+    const response = await fetchWithTimeout(gamstopConfig.batchApiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'X-API-Key': `${apiKey}`,
+        'X-API-Key': gamstopConfig.apiKey,
       },
       body: JSON.stringify(requestBody),
+      timeout: gamstopConfig.timeout,
     });
 
     if (!response.ok) {

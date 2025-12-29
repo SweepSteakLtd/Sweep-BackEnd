@@ -48,12 +48,12 @@ export const fetchGBGStateHandler = async (req: Request, res: Response, next: Ne
     }
 
     const finalResult = Object.values(fetchResult.data.context.process.flow).filter(
-      value => !!value._ggo,
+      value => !!value?.result?.outcome?.includes('Decision:'),
     );
 
     if (
       fetchResult.status === 'Completed' ||
-      (fetchResult.status === 'inProgress' &&
+      (fetchResult.status === 'InProgress' &&
         finalResult[0].result.outcome === 'Decision: Manual review')
     ) {
       const verificationStatus = mapDecisionsToResult(finalResult[0].result.outcome);

@@ -2,6 +2,14 @@
 // Type Definitions
 // ============================================================================
 
+import { getGBGConfig } from '../../config/gbg.config';
+import { fetchWithTimeout, retryWithBackoff as retry } from '../../utils/fetchWithTimeout';
+
+// Re-export for use in handlers
+export { retryWithBackoff } from '../../utils/fetchWithTimeout';
+
+const gbgConfig = getGBGConfig();
+
 interface AuthResponse {
   access_token: string; // really big string
   token_type: string; // Bearer
@@ -21,7 +29,7 @@ interface Address {
 interface PersonData {
   first_name: string;
   last_name: string;
-  birthday?: string; // Format: YYYY-MM-DD
+  date_of_birth?: string; // Format: YYYY-MM-DD
   address?: Address;
   email?: string;
   phone_number?: string;
@@ -105,22 +113,23 @@ type Decision =
   | 'Decision: Pass 1+1'
   | 'Decision: Pass 2+2';
 
-export const getAuthToken = async (): Promise<AuthResponse> => {
+export const getAuthToken = async (): Promise<AuthResponse | null> => {
   try {
     console.log('[DEBUG]: trying to get auth token');
-    const res = await fetch('https://api.auth.gbgplc.com/as/token.oauth2', {
+    const res = await fetchWithTimeout(gbgConfig.authUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        client_id: process.env.GBG_CLIENT_ID!,
-        client_secret: process.env.GBG_CLIENT_SECRET!,
+        client_id: gbgConfig.clientId,
+        client_secret: gbgConfig.clientSecret,
         grant_type: 'password',
         scope: 'openid',
-        username: process.env.GBG_USERNAME!,
-        password: process.env.GBG_PASSWORD!,
+        username: gbgConfig.username,
+        password: gbgConfig.password,
       }),
+      timeout: gbgConfig.timeout,
     });
 
     if (!res.ok) {
@@ -139,19 +148,22 @@ export const getAuthToken = async (): Promise<AuthResponse> => {
 
 const startJourney = async (
   request: StartJourneyRequest,
-  authToken?: AuthResponse,
+  authToken?: AuthResponse | null,
 ): Promise<StartJourneyResponse> => {
   const token = authToken || (await getAuthToken());
 
-  console.log('@@@@@@@ request body start journey', request);
+  if (!token) {
+    throw new Error('Failed to obtain GBG authentication token');
+  }
 
-  const res = await fetch('https://eu.platform.go.gbgplc.com/captain/api/journey/start', {
+  const res = await fetchWithTimeout(`${gbgConfig.baseUrl}/captain/api/journey/start`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token.access_token}`,
     },
     body: JSON.stringify(request),
+    timeout: gbgConfig.timeout,
   });
 
   if (!res.ok) {
@@ -164,10 +176,14 @@ const startJourney = async (
   return result;
 };
 
-export const fetchState = async (instanceId: string, authToken?: AuthResponse) => {
+export const fetchState = async (instanceId: string, authToken?: AuthResponse | null) => {
   const token = authToken || (await getAuthToken());
 
-  const res = await fetch('https://eu.platform.go.gbgplc.com/captain/api/journey/state/fetch', {
+  if (!token) {
+    throw new Error('Failed to obtain GBG authentication token');
+  }
+
+  const res = await fetchWithTimeout(`${gbgConfig.baseUrl}/captain/api/journey/state/fetch`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -177,6 +193,7 @@ export const fetchState = async (instanceId: string, authToken?: AuthResponse) =
       instanceId: instanceId,
       filterKeys: ['/.*/'],
     }),
+    timeout: gbgConfig.timeout,
   });
 
   if (!res.ok) {
@@ -216,14 +233,19 @@ export const verifyIdentity = async (person: PersonData, resourceId: string): Pr
     throw new Error('Address is required for identity verification');
   }
 
-  // Get auth token once for the entire journey
+  // Get auth token with retry logic and exponential backoff
   console.log('[DEBUG] Fetching GBG auth token...');
-  let authTokenTries = 0;
-  let authToken = null;
-  while (!authToken && authTokenTries !== 3) {
-    authToken = await getAuthToken();
-    authTokenTries += 1;
-  }
+  const authToken = await retry(
+    async () => {
+      const token = await getAuthToken();
+      if (!token) {
+        throw new Error('Failed to get auth token');
+      }
+      return token;
+    },
+    gbgConfig.maxRetries,
+    1000, // 1 second base delay
+  );
 
   console.log('[DEBUG] GBG auth token obtained');
 
@@ -274,7 +296,7 @@ export const verifyIdentity = async (person: PersonData, resourceId: string): Pr
         identity: {
           firstName: person.first_name,
           lastNames: [person.last_name],
-          dateOfBirth: person.birthday,
+          dateOfBirth: person.date_of_birth,
           currentAddress: {
             lines: lines,
             locality: town,
@@ -301,21 +323,127 @@ export const verifyIdentity = async (person: PersonData, resourceId: string): Pr
   console.log('[DEBUG] GBG journey started:', journey.instanceId);
 
   return journey.instanceId;
-  // const fetchResult = await fetchState(journey.instanceId, authToken);
-  // const finalResult = Object.values(fetchResult.data.context.process.flow).filter(
-  //   value => !!value._ggo,
-  // );
+};
 
-  // if (
-  //   fetchResult.status === 'Completed' ||
-  //   (fetchResult.status === 'inProgress' &&
-  //     finalResult[0].result.outcome === 'Decision: Manual review')
-  // ) {
-  //   return {
-  //     decision: finalResult[0].result.outcome, //"PASS" | "FAIL" | "MANUAL"
-  //     instanceId: journey.instanceId,
-  //   };
-  // }
+// ============================================================================
+// Task Management Functions
+// ============================================================================
+
+export interface GBGTask {
+  taskId: string;
+  variantId: string;
+}
+
+export interface GBGTaskListResponse {
+  status: string;
+  instanceId: string;
+  tasks: GBGTask[];
+}
+
+export interface GBGSubmitTaskResponse {
+  status: string;
+  instanceId: string;
+}
+
+/**
+ * Retrieve pending tasks for a GBG verification journey
+ * @param instanceId - GBG journey instance ID
+ * @param authToken - Optional auth token (will fetch if not provided)
+ * @returns Task list response
+ */
+export const retrieveTasks = async (
+  instanceId: string,
+  authToken?: AuthResponse | null,
+): Promise<GBGTaskListResponse> => {
+  const token = authToken || (await getAuthToken());
+
+  if (!token) {
+    throw new Error('Failed to obtain GBG authentication token');
+  }
+
+  const res = await fetchWithTimeout(`${gbgConfig.baseUrl}/captain/api/journey/task/list`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token.access_token}`,
+    },
+    body: JSON.stringify({
+      instanceId: instanceId,
+    }),
+    timeout: gbgConfig.timeout,
+  });
+
+  if (!res.ok) {
+    const errorData = await res.text().catch(() => 'Unknown error');
+    throw new Error(`Failed to retrieve tasks: ${res.status} ${res.statusText} - ${errorData}`);
+  }
+
+  const result = (await res.json()) as GBGTaskListResponse;
+
+  return result;
+};
+
+/**
+ * Submit documents to complete a GBG verification task
+ * @param instanceId - GBG journey instance ID
+ * @param taskId - Task ID to complete
+ * @param firstName - User first name
+ * @param lastName - User last name
+ * @param documents - Array of base64-encoded document images
+ * @param authToken - Optional auth token (will fetch if not provided)
+ * @returns Submit task response
+ */
+export const submitDocumentsToTask = async (
+  instanceId: string,
+  taskId: string,
+  firstName: string,
+  lastName: string,
+  documents: string[],
+  authToken?: AuthResponse | null,
+): Promise<GBGSubmitTaskResponse> => {
+  const token = authToken || (await getAuthToken());
+
+  if (!token) {
+    throw new Error('Failed to obtain GBG authentication token');
+  }
+
+  const documentsArray = documents.map(base64Data => ({
+    side1Image: base64Data,
+  }));
+
+  const submitTaskRequest = {
+    intent: 'Complete',
+    instanceId: instanceId,
+    taskId: taskId,
+    context: {
+      subject: {
+        identity: {
+          firstName: firstName,
+          lastNames: [lastName],
+        },
+        documents: documentsArray,
+      },
+    },
+  };
+
+  const res = await fetchWithTimeout(`${gbgConfig.baseUrl}/captain/api/journey/task/update`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token.access_token}`,
+    },
+    body: JSON.stringify(submitTaskRequest),
+    timeout: gbgConfig.timeout,
+  });
+
+  if (!res.ok) {
+    const errorData = await res.text().catch(() => 'Unknown error');
+    throw new Error(`Failed to submit documents: ${res.status} ${res.statusText} - ${errorData}`);
+  }
+
+  const result = (await res.json()) as GBGSubmitTaskResponse;
+
+  return result;
 };
 
 // ============================================================================

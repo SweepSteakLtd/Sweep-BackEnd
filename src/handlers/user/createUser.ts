@@ -42,7 +42,7 @@ import { Validators as StringValidators, validateEmail } from '../validators/str
  * @body exclusion_ending - string - optional
  * @returns User
  */
-export const createUserHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const createUserHandler = async (req: Request, res: Response, _next: NextFunction) => {
   try {
     // Validate email from authentication
     if (
@@ -356,16 +356,15 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
     // Perform GBG verification if address is provided
     if (req.body.address && req.body.address !== null) {
       console.log('[DEBUG] Starting GBG identity verification for new user');
-      const { first_name, last_name, birthday, address } = req.body;
       try {
         gbg_instance_id = await verifyIdentity(
           {
-            first_name: first_name,
-            last_name: last_name,
-            birthday: birthday,
-            address: address,
+            first_name: req.body.first_name,
+            last_name: req.body.last_name,
+            date_of_birth: req.body.date_of_birth,
+            address: req.body.address,
             email: res.locals.email,
-            phone_number: (res.locals as User).phone_number,
+            phone_number: req.body.phone_number,
           },
           remoteConfig.gbg_resource_id,
         );
@@ -407,7 +406,7 @@ export const createUserHandler = async (req: Request, res: Response, next: NextF
       kyc_completed: false,
       kyc_instance_id: gbg_instance_id,
       exclusion_ending: new Date(),
-      is_self_excluded: false,
+      is_self_excluded: gamstopResult.is_registered,
       address: req.body.address,
       date_of_birth: req.body.date_of_birth,
       created_at: new Date(),

@@ -1,22 +1,12 @@
 import { NextFunction, Request, Response } from 'express';
-import { getAuthToken, handleGBGError } from '../../integrations/GBG/GBG';
+import {
+  handleGBGError,
+  retrieveTasks,
+  retryWithBackoff,
+  getAuthToken,
+  submitDocumentsToTask,
+} from '../../integrations/GBG/GBG';
 import { apiKeyAuth } from '../schemas';
-
-interface GBGTask {
-  taskId: string;
-  variantId: string;
-}
-
-interface GBGTaskListResponse {
-  status: string;
-  instanceId: string;
-  tasks: GBGTask[];
-}
-
-interface GBGSubmitTaskResponse {
-  status: string;
-  instanceId: string;
-}
 
 /**
  * Upload GBG Documents for Identity Verification
@@ -101,49 +91,25 @@ export const uploadGBGDocumentsHandler = async (
       });
     }
 
-    // Get GBG auth token
+    // Get GBG auth token with retry logic
     console.log('[DEBUG] Fetching GBG auth token...');
-    let authTokenTries = 0;
-    let authToken = null;
-    while (!authToken && authTokenTries < 3) {
-      authToken = await getAuthToken();
-      authTokenTries += 1;
-    }
-
-    if (!authToken) {
-      console.error('[DEBUG] Failed to obtain GBG auth token after 3 attempts');
-      return res.status(503).send({
-        error: 'Service Unavailable',
-        message: 'Unable to authenticate with verification service. Please try again later.',
-      });
-    }
+    const authToken = await retryWithBackoff(
+      async () => {
+        const token = await getAuthToken();
+        if (!token) {
+          throw new Error('Failed to get auth token');
+        }
+        return token;
+      },
+      3,
+      1000,
+    );
 
     console.log('[DEBUG] GBG auth token obtained');
 
+    // Retrieve tasks for the verification journey
     console.log('[DEBUG] Retrieving tasks for instance:', user.kyc_instance_id);
-    const taskListResponse = await fetch(
-      'https://eu.platform.go.gbgplc.com/captain/api/journey/task/list',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authToken.access_token}`,
-        },
-        body: JSON.stringify({
-          instanceId: user.kyc_instance_id,
-        }),
-      },
-    );
-
-    if (!taskListResponse.ok) {
-      const errorData = await taskListResponse.text().catch(() => 'Unknown error');
-      console.error('[DEBUG] Failed to retrieve tasks:', taskListResponse.status, errorData);
-      throw new Error(
-        `Failed to retrieve tasks: ${taskListResponse.status} ${taskListResponse.statusText} - ${errorData}`,
-      );
-    }
-
-    const taskList = (await taskListResponse.json()) as GBGTaskListResponse;
+    const taskList = await retrieveTasks(user.kyc_instance_id, authToken);
     console.log('[DEBUG] Retrieved tasks:', taskList.tasks.length);
 
     if (!taskList.tasks || taskList.tasks.length === 0) {
@@ -157,48 +123,17 @@ export const uploadGBGDocumentsHandler = async (
     const task = taskList.tasks[0];
     console.log('[DEBUG] Using task:', task.taskId, JSON.stringify(taskList));
 
-    const documentsArray = validDocuments.map(base64Data => ({
-      side1Image: base64Data,
-    }));
-
-    const submitTaskRequest = {
-      intent: 'Complete',
-      instanceId: user.kyc_instance_id,
-      taskId: task.taskId,
-      context: {
-        subject: {
-          identity: {
-            firstName: user.first_name,
-            lastNames: [user.last_name],
-          },
-          documents: documentsArray,
-        },
-      },
-    };
-
+    // Submit documents to the task
     console.log('[DEBUG] Submitting documents to task...');
-
-    const submitResponse = await fetch(
-      'https://eu.platform.go.gbgplc.com/captain/api/journey/task/update',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authToken.access_token}`,
-        },
-        body: JSON.stringify(submitTaskRequest),
-      },
+    const result = await submitDocumentsToTask(
+      user.kyc_instance_id,
+      task.taskId,
+      user.first_name,
+      user.last_name,
+      validDocuments,
+      authToken,
     );
 
-    if (!submitResponse.ok) {
-      const errorData = await submitResponse.text().catch(() => 'Unknown error');
-      console.error('[DEBUG] Failed to submit documents:', submitResponse.status, errorData);
-      throw new Error(
-        `Failed to submit documents: ${submitResponse.status} ${submitResponse.statusText} - ${errorData}`,
-      );
-    }
-
-    const result = (await submitResponse.json()) as GBGSubmitTaskResponse;
     console.log('[DEBUG] Documents submitted successfully for instance:', result.instanceId);
 
     return res.status(200).send({

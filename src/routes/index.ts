@@ -29,6 +29,7 @@ import {
   getAllUsersHandler,
   getBetsHandler,
   getCurrentUserHandler,
+  getGBGTasksHandler,
   getLeaderboardHandler,
   getLeagueByIdHandler,
   getPlayerProfilesHandler,
@@ -122,6 +123,7 @@ export const routes: RouteDescription[] = [
         stack: [AuthenticateMiddleware, deleteCurrentUserHandler],
       },
       { method: 'get', name: '/verify/gbg', stack: [AuthenticateMiddleware, fetchGBGStateHandler] },
+      { method: 'get', name: '/tasks/gbg', stack: [AuthenticateMiddleware, getGBGTasksHandler] },
       {
         method: 'post',
         name: '/upload/gbg',

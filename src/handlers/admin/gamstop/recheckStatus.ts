@@ -1,5 +1,6 @@
 import { eq, isNotNull } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
+import { getGamStopConfig } from '../../../config/gamstop.config';
 import {
   checkGamstopRegistrationBatch,
   GamstopBatchCheckResult,
@@ -9,7 +10,8 @@ import { User, users } from '../../../models';
 import { database } from '../../../services';
 import { apiKeyAuth, standardResponses } from '../../schemas';
 
-const BATCH_SIZE = 1000; // Max allowed by GamStop API
+const gamstopConfig = getGamStopConfig();
+const BATCH_SIZE = gamstopConfig.batchSize;
 
 interface RecheckStats {
   totalUsers: number;
@@ -216,10 +218,12 @@ export const recheckGamstopStatusHandler = async (
       totalUnchanged += unchangedCount;
       totalErrors += errorCount;
 
-      // Rate limiting: Wait 1 second between batches (except for the last one)
+      // Rate limiting: Wait between batches (except for the last one)
       if (i < batches.length - 1) {
-        console.log('[GamStop Recheck] Waiting 1 second before next batch (rate limit)...');
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.log(
+          `[GamStop Recheck] Waiting ${gamstopConfig.rateLimitDelay}ms before next batch (rate limit)...`,
+        );
+        await new Promise(resolve => setTimeout(resolve, gamstopConfig.rateLimitDelay));
       }
     }
 
