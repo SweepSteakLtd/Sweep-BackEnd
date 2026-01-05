@@ -232,3 +232,21 @@ export type NewTeam = typeof teams.$inferInsert;
 
 export type TournamentHole = typeof tournamentHole.$inferSelect;
 export type TournamentAd = typeof tournamentAd.$inferSelect;
+
+// Audit Log Table
+export const auditLogs = pgTable('AuditLog', {
+  id: text('id').primaryKey().notNull(),
+  user_id: text('user_id'), // Can be null for system actions
+  action: text('action').notNull(), // e.g., 'CREATE_BET', 'DELETE_USER', 'UPDATE_LEAGUE'
+  entity_type: text('entity_type').notNull(), // e.g., 'bet', 'user', 'league'
+  entity_id: text('entity_id').notNull(), // ID of the entity being acted upon
+  old_values: jsonb('old_values').$type<Record<string, unknown>>().default({}),
+  new_values: jsonb('new_values').$type<Record<string, unknown>>().default({}),
+  ip_address: text('ip_address'),
+  user_agent: text('user_agent'),
+  metadata: jsonb('metadata').$type<Record<string, unknown>>().default({}),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+});
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type NewAuditLog = typeof auditLogs.$inferInsert;

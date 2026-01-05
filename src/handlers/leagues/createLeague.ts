@@ -316,8 +316,9 @@ export const createLeagueHandler = async (req: Request, res: Response, next: Nex
     await database.insert(leagues).values(leagueObject).execute();
 
     return res.status(201).send({ data: leagueObject });
-  } catch (error: any) {
-    console.log(`CREATE league ERROR: ${error.message} 🛑`);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`CREATE league ERROR: ${errorMessage} 🛑`);
     return res.status(500).send({
       error: 'Internal Server Error',
       message: 'An unexpected error occurred',

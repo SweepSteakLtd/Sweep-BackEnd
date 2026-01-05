@@ -68,8 +68,9 @@ export const checkGamstopRegistration = async (
       is_registered: exclusionValue === 'Y' ? true : false,
       registration_id: exclusionId,
     };
-  } catch (error: any) {
-    console.error('[ERROR] Gamstop API error:', error.message);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[ERROR] Gamstop API error:', errorMessage);
     throw error;
   }
 };
@@ -132,16 +133,26 @@ export const checkGamstopRegistrationBatch = async (
       throw new Error('Invalid response format from Gamstop batch API');
     }
 
+    // Define the expected structure of batch response items
+    interface GamstopBatchResponseItem {
+      correlationId: string;
+      exclusion: string;
+      msRequestId: string;
+    }
+
     // Map response to our interface
-    const results: GamstopBatchCheckResult[] = responseData.map((item: any) => ({
-      correlationId: item.correlationId,
-      is_registered: item.exclusion === 'Y' || item.exclusion === 'P',
-      ms_request_id: item.msRequestId,
-    }));
+    const results: GamstopBatchCheckResult[] = responseData.map(
+      (item: GamstopBatchResponseItem) => ({
+        correlationId: item.correlationId,
+        is_registered: item.exclusion === 'Y' || item.exclusion === 'P',
+        ms_request_id: item.msRequestId,
+      }),
+    );
 
     return results;
-  } catch (error: any) {
-    console.error('[ERROR] Gamstop Batch API error:', error.message);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[ERROR] Gamstop Batch API error:', errorMessage);
     throw error;
   }
 };
@@ -151,7 +162,7 @@ export const checkGamstopRegistrationBatch = async (
  * @param error Error object from Gamstop API
  * @returns User-friendly error message and code
  */
-export const handleGamstopError = (error: any): { message: string; code: string } => {
+export const handleGamstopError = (error: unknown): { message: string; code: string } => {
   if (error instanceof Error) {
     const errorMsg = error.message.toLowerCase();
 

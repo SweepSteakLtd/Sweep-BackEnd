@@ -35,8 +35,9 @@ export const AuthenticateAdminMiddleware = async (
     res.locals.user = existingUser[0];
 
     next();
-  } catch (error: any) {
-    console.log(`GET CURRENT USER ERROR: ${error.message} 🛑`);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`GET CURRENT USER ERROR: ${errorMessage} 🛑`);
     return res.status(500).send({
       error: 'Internal Server Error',
       message: 'An unexpected error occurred',

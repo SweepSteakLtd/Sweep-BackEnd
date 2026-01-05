@@ -1,6 +1,16 @@
 import { eq, inArray } from 'drizzle-orm';
 import { Request, Response } from 'express';
-import { leagues, playerProfiles, players, teams, users } from '../../models';
+import {
+  Player,
+  PlayerProfile,
+  Team,
+  User,
+  leagues,
+  playerProfiles,
+  players,
+  teams,
+  users,
+} from '../../models';
 import { database } from '../../services';
 import { apiKeyAuth, dataWrapper, standardResponses } from '../schemas';
 
@@ -70,71 +80,66 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
       league = existingLeague[0];
     }
 
-    const leagueTeams = await database
+    const leagueTeams: Team[] = await database
       .select()
       .from(teams)
       .where(eq(teams.league_id, league_id))
       .execute();
 
     // Get team owners
-    const ownerIds = leagueTeams.map((team: any) => team.owner_id);
-    const uniqueOwnerIds = [...new Set(ownerIds)] as string[];
-    const teamOwners = await database
+    const ownerIds = leagueTeams.map(team => team.owner_id);
+    const uniqueOwnerIds = [...new Set(ownerIds)];
+    const teamOwners: User[] = await database
       .select()
       .from(users)
       .where(inArray(users.id, uniqueOwnerIds))
       .execute();
 
     // Get all players for these teams
-    const allPlayerIds = leagueTeams.flatMap((team: any) => team.player_ids);
-    const uniquePlayerIds = [...new Set(allPlayerIds)] as string[];
+    const allPlayerIds = leagueTeams.flatMap(team => team.player_ids);
+    const uniquePlayerIds = [...new Set(allPlayerIds)];
 
-    let leaguePlayers: any[] = [];
-    let leaguePlayerProfiles: any[] = [];
+    let leaguePlayers: Player[] = [];
+    let leaguePlayerProfiles: PlayerProfile[] = [];
 
     if (uniquePlayerIds.length > 0) {
       leaguePlayerProfiles = await database
         .select()
         .from(playerProfiles)
-        .where(inArray(playerProfiles.id, uniquePlayerIds as string[]))
+        .where(inArray(playerProfiles.id, uniquePlayerIds))
         .execute();
 
-      const allplayerProfiles = leaguePlayerProfiles.flatMap((team: any) => team.id);
+      const allPlayerProfileIds = leaguePlayerProfiles.map(profile => profile.id);
 
       leaguePlayers = await database
         .select()
         .from(players)
-        .where(inArray(players.profile_id, allplayerProfiles as string[]))
+        .where(inArray(players.profile_id, allPlayerProfileIds))
         .execute();
     }
     // Build leaderboard entries
     const leaderboardEntries: LeaderboardEntry[] = [];
 
-    for (const team of leagueTeams as any[]) {
+    for (const team of leagueTeams) {
       // Get team players
-      const teamProfiles = leaguePlayerProfiles.filter((p: any) => team.player_ids.includes(p.id));
-      const allplayerProfiles = teamProfiles.flatMap((profile: any) => profile.id);
-      const teamPlayers = leaguePlayers.filter((p: any) =>
-        allplayerProfiles.includes(p.profile_id),
-      );
+      const teamProfiles = leaguePlayerProfiles.filter(p => team.player_ids.includes(p.id));
+      const teamProfileIds = teamProfiles.map(profile => profile.id);
+      const teamPlayers = leaguePlayers.filter(p => teamProfileIds.includes(p.profile_id));
 
       // Calculate total score
-      const totalScore = teamPlayers.reduce(
-        (sum: number, player: any) => sum + (player.current_score || 0),
-        0,
-      );
+      const totalScore = teamPlayers.reduce((sum, player) => sum + (player.current_score || 0), 0);
 
       // Get best scores (top 4 player scores)
       const sortedScores = teamPlayers
-        .map((p: any) => p.current_score || 0)
-        .sort((a: number, b: number) => a - b)
+        .map(p => p.current_score || 0)
+        .sort((a, b) => a - b)
         .slice(0, 4);
 
       // Build players array
-      const leaderboardPlayers: LeaderboardPlayer[] = teamPlayers.map((player: any) => {
-        const profile = leaguePlayerProfiles.find((p: any) => p.id === player.profile_id);
+      const leaderboardPlayers: LeaderboardPlayer[] = teamPlayers.map(player => {
+        const profile = leaguePlayerProfiles.find(p => p.id === player.profile_id);
         return {
-          group: profile.group,
+          group: profile?.group || '',
           player_name: profile
             ? `${profile.first_name} ${profile.last_name}`
             : `Player ${player.id}`,
@@ -144,7 +149,7 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
       });
 
       // Get team owner name
-      const owner = teamOwners.find((u: any) => u.id === team.owner_id);
+      const owner = teamOwners.find(u => u.id === team.owner_id);
       const ownerName = owner
         ? `${owner.first_name || ''} ${owner.last_name || ''}`.trim() || 'Unknown Owner'
         : 'Unknown Owner';
@@ -174,7 +179,7 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
     if (league.rewards && Array.isArray(league.rewards) && league.rewards.length > 0) {
       const totalPot = league.entry_fee * leagueTeams.length * 0.9; // 10% platform fee
 
-      for (const reward of league.rewards as any[]) {
+      for (const reward of league.rewards) {
         const position = reward.position;
         if (position > 0 && position <= leaderboardEntries.length) {
           const prizeAmount = totalPot * reward.percentage;
@@ -186,8 +191,9 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
     const totalPot = league.entry_fee * leagueTeams.length * 0.9;
 
     return res.status(200).send({ data: { entries: leaderboardEntries, total_pot: totalPot } });
-  } catch (error: any) {
-    console.log(`GET LEADERBOARD ERROR: ${error.message} 🛑`);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`GET LEADERBOARD ERROR: ${errorMessage} 🛑`);
     return res.status(500).send({
       error: 'Internal Server Error',
       message: 'An unexpected error occurred',

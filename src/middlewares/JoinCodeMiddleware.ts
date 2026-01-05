@@ -83,8 +83,9 @@ export const JoinCodeMiddleware = async (req: Request, res: Response, next: Next
     }
 
     next();
-  } catch (error: any) {
-    console.log(`[DEBUG]: JOIN CODE MIDDLEWARE ERROR: ${error.message} 🛑`);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`[DEBUG]: JOIN CODE MIDDLEWARE ERROR: ${errorMessage} 🛑`);
     return res.status(500).send({
       error: 'Internal Server Error',
       message: 'An unexpected error occurred',

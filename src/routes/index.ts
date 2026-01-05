@@ -54,6 +54,7 @@ import {
   AuthenticateMiddleware,
   CheckMonthlyBetLimitMiddleware,
   CheckSelfExclusionMiddleware,
+  GamstopCheckMiddleware,
   JoinCodeMiddleware,
 } from '../middlewares';
 
@@ -110,7 +111,7 @@ export const routes: RouteDescription[] = [
       {
         method: 'get',
         name: '/me',
-        stack: [AuthenticateMiddleware, getCurrentUserHandler],
+        stack: [AuthenticateMiddleware, GamstopCheckMiddleware, getCurrentUserHandler],
       },
       {
         method: 'put',

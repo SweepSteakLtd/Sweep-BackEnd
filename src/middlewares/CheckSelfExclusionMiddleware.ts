@@ -35,13 +35,12 @@ export const CheckSelfExclusionMiddleware = async (
       });
     }
 
-    console.log(
-      `[DEBUG] User ${user.id} self-exclusion check passed - not self-excluded`,
-    );
+    console.log(`[DEBUG] User ${user.id} self-exclusion check passed - not self-excluded`);
 
     next();
-  } catch (error: any) {
-    console.log(`CHECK SELF-EXCLUSION ERROR: ${error.message} 🛑`, error);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`CHECK SELF-EXCLUSION ERROR: ${errorMessage} 🛑`, error);
     return res.status(500).send({
       error: 'Internal Server Error',
       message: 'An unexpected error occurred while checking self-exclusion status',

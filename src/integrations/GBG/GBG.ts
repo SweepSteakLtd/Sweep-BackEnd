@@ -455,7 +455,7 @@ export const submitDocumentsToTask = async (
  * @param error Error object from GBG API
  * @returns User-friendly error message and code
  */
-export const handleGBGError = (error: any): { message: string; code: string } => {
+export const handleGBGError = (error: unknown): { message: string; code: string } => {
   if (error instanceof Error) {
     const errorMsg = error.message.toLowerCase();
 

@@ -42,6 +42,8 @@ export const initializeRemoteConfig = async (): Promise<void> => {
     let needsUpdate = false;
     for (const [key, config] of Object.entries(defaultParameters)) {
       if (!template.parameters[key]) {
+        // TypeScript cannot infer the Firebase Remote Config parameter structure
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         template.parameters[key] = config as any;
         needsUpdate = true;
       }
@@ -54,8 +56,9 @@ export const initializeRemoteConfig = async (): Promise<void> => {
     }
 
     console.log('[Remote Config] Initialized successfully');
-  } catch (error: any) {
-    console.error('[Remote Config] Initialization error:', error.message);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Remote Config] Initialization error:', errorMessage);
     // Don't throw - allow app to continue with defaults
   }
 };
@@ -77,12 +80,19 @@ export const fetchRemoteConfig = async (): Promise<RemoteConfigValues> => {
     const template = await remoteConfig.getTemplate();
 
     // Parse values from template
-    const getStringValue = (param: any): string => {
+    interface RemoteConfigParam {
+      defaultValue?: {
+        value?: string;
+        useInAppDefault?: boolean;
+      };
+    }
+
+    const getStringValue = (param: RemoteConfigParam | undefined): string => {
       if (!param?.defaultValue) return '';
       const defaultValue = param.defaultValue;
       // Handle both { value: string } and { useInAppDefault: boolean } formats
-      if ('value' in defaultValue) {
-        return defaultValue.value || '';
+      if ('value' in defaultValue && defaultValue.value) {
+        return defaultValue.value;
       }
       return '';
     };
@@ -99,8 +109,9 @@ export const fetchRemoteConfig = async (): Promise<RemoteConfigValues> => {
 
     console.log('[Remote Config] Fetched values:', values);
     return values;
-  } catch (error: any) {
-    console.error('[Remote Config] Fetch error:', error.message);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Remote Config] Fetch error:', errorMessage);
 
     // Return cached values if available, otherwise defaults
     if (configCache) {
@@ -110,8 +121,7 @@ export const fetchRemoteConfig = async (): Promise<RemoteConfigValues> => {
 
     // Return default values as fallback
     const defaults: RemoteConfigValues = {
-      gbg_resource_id:
-        'd27b6807703eec9f5f5c0d45eb3abc883c142236055b85e30df2f75fdb22cbbe@1gobnzjz',
+      gbg_resource_id: 'd27b6807703eec9f5f5c0d45eb3abc883c142236055b85e30df2f75fdb22cbbe@1gobnzjz',
     };
 
     console.log('[Remote Config] Using default values due to error');
