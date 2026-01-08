@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-import openapi from '@wesleytodd/openapi';
+import openapi from './lib/express-openapi';
 import BP from 'body-parser';
 import cors from 'cors';
 import express, { Express, Request, Response } from 'express';

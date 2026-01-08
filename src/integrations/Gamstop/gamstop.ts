@@ -109,7 +109,7 @@ export const checkGamstopRegistrationBatch = async (
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'X-API-Key': gamstopConfig.apiKey,
       },
       body: JSON.stringify(requestBody),

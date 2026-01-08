@@ -95,6 +95,37 @@ test('getLeaderboardHandler - returns 404 when league not found', async () => {
   );
 });
 
+// Tournament not found test
+test('getLeaderboardHandler - returns 404 when tournament not found', async () => {
+  const res = mockResponse();
+  (res as any).locals.user = { id: 'u1' };
+  const req = { params: { league_id: 'league_abc123' } } as unknown as Request;
+
+  const league = {
+    id: 'league_abc123',
+    name: 'Test League',
+    entry_fee: 100,
+    rewards: [],
+    tournament_id: 'tournament_nonexistent',
+  };
+
+  // Mock league found, but tournament not found
+  mockDatabaseCalls([
+    [league], // league query
+    [], // tournament query (empty)
+  ]);
+
+  await getLeaderboardHandler(req, res);
+
+  expect(res.status).toHaveBeenCalledWith(404);
+  expect(res.send).toHaveBeenCalledWith(
+    expect.objectContaining({
+      error: 'Not found',
+      message: 'Tournament not found',
+    }),
+  );
+});
+
 // Empty leaderboard test
 test('getLeaderboardHandler - returns empty array when no teams exist', async () => {
   const res = mockResponse();
@@ -106,23 +137,31 @@ test('getLeaderboardHandler - returns empty array when no teams exist', async ()
     name: 'Test League',
     entry_fee: 100,
     rewards: [],
+    tournament_id: 'tournament_1',
   };
 
-  // Mock: league exists, but no teams
+  const tournament = {
+    id: 'tournament_1',
+    starts_at: new Date(),
+  };
+
+  // Mock: league exists, tournament exists, but no teams
   mockDatabaseCalls([
     [league], // league query
+    [tournament], // tournament query
     [], // teams query (empty)
   ]);
 
   await getLeaderboardHandler(req, res);
 
   expect(res.status).toHaveBeenCalledWith(200);
-  expect(res.send).toHaveBeenCalledWith({
-    data: {
-      entries: [],
-      total_pot: 0
-    }
-  });
+  const response = (res.send as jest.Mock).mock.calls[0][0];
+  expect(response.data).toHaveProperty('entries');
+  expect(response.data).toHaveProperty('total_pot');
+  expect(response.data).toHaveProperty('round');
+  expect(response.data.entries).toEqual([]);
+  expect(response.data.total_pot).toBe(0);
+  expect(response.data.round).toBe('1/4');
 });
 
 // Success case with leaderboard data
@@ -139,16 +178,29 @@ test('getLeaderboardHandler - returns leaderboard with teams and players', async
       { position: 1, percentage: 50, type: 'cash', product_id: '' },
       { position: 2, percentage: 30, type: 'cash', product_id: '' },
     ],
+    tournament_id: 'tournament_1',
+  };
+
+  const tournament = {
+    id: 'tournament_1',
+    starts_at: new Date(),
   };
 
   const teams = [
-    { id: 'team1', owner_id: 'u1', name: 'Team Alpha', player_ids: ['p1', 'p2'], league_id: 'league_abc123' },
-    { id: 'team2', owner_id: 'u2', name: 'Team Beta', player_ids: ['p3', 'p4'], league_id: 'league_abc123' },
+    { id: 'team1', owner_id: 'u1', name: 'Team Alpha', player_ids: ['profile1', 'profile2'], league_id: 'league_abc123' },
+    { id: 'team2', owner_id: 'u2', name: 'Team Beta', player_ids: ['profile3', 'profile4'], league_id: 'league_abc123' },
   ];
 
   const owners = [
     { id: 'u1', first_name: 'John', last_name: 'Smith' },
     { id: 'u2', first_name: 'Jane', last_name: 'Doe' },
+  ];
+
+  const profiles = [
+    { id: 'profile1', first_name: 'Tiger', last_name: 'Woods', group: 'A' },
+    { id: 'profile2', first_name: 'Rory', last_name: 'McIlroy', group: 'B' },
+    { id: 'profile3', first_name: 'Phil', last_name: 'Mickelson', group: 'A' },
+    { id: 'profile4', first_name: 'Justin', last_name: 'Thomas', group: 'B' },
   ];
 
   const players = [
@@ -182,20 +234,14 @@ test('getLeaderboardHandler - returns leaderboard with teams and players', async
     },
   ];
 
-  const profiles = [
-    { id: 'profile1', first_name: 'Tiger', last_name: 'Woods' },
-    { id: 'profile2', first_name: 'Rory', last_name: 'McIlroy' },
-    { id: 'profile3', first_name: 'Phil', last_name: 'Mickelson' },
-    { id: 'profile4', first_name: 'Justin', last_name: 'Thomas' },
-  ];
-
   // Mock all database calls in order
   mockDatabaseCalls([
     [league], // league query
+    [tournament], // tournament query
     teams, // teams query
     owners, // team owners query
-    players, // players query
     profiles, // player profiles query
+    players, // players query
   ]);
 
   await getLeaderboardHandler(req, res);
@@ -204,7 +250,9 @@ test('getLeaderboardHandler - returns leaderboard with teams and players', async
   const response = (res.send as jest.Mock).mock.calls[0][0];
   expect(response.data).toHaveProperty('entries');
   expect(response.data).toHaveProperty('total_pot');
+  expect(response.data).toHaveProperty('round');
   expect(response.data.total_pot).toBe(180); // 2 teams * 100 entry fee * 0.9
+  expect(response.data.round).toBe('1/4'); // Tournament starts today, so round 1/4
   expect(response.data.entries).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
@@ -268,11 +316,19 @@ test('getLeaderboardHandler - handles missed cut status correctly', async () => 
     name: 'Test League',
     entry_fee: 100,
     rewards: [],
+    tournament_id: 'tournament_1',
   };
 
-  const teams = [{ id: 'team1', owner_id: 'u1', name: 'Team Alpha', player_ids: ['p1'], league_id: 'league_abc123' }];
+  const tournament = {
+    id: 'tournament_1',
+    starts_at: new Date(),
+  };
+
+  const teams = [{ id: 'team1', owner_id: 'u1', name: 'Team Alpha', player_ids: ['profile1'], league_id: 'league_abc123' }];
 
   const owners = [{ id: 'u1', first_name: 'John', last_name: 'Smith' }];
+
+  const profiles = [{ id: 'profile1', first_name: 'Tiger', last_name: 'Woods', group: 'A' }];
 
   const players = [
     {
@@ -284,9 +340,7 @@ test('getLeaderboardHandler - handles missed cut status correctly', async () => 
     },
   ];
 
-  const profiles = [{ id: 'profile1', first_name: 'Tiger', last_name: 'Woods' }];
-
-  mockDatabaseCalls([[league], teams, owners, players, profiles]);
+  mockDatabaseCalls([[league], [tournament], teams, owners, profiles, players]);
 
   await getLeaderboardHandler(req, res);
 
@@ -306,14 +360,20 @@ test('getLeaderboardHandler - handles teams with no players', async () => {
     name: 'Test League',
     entry_fee: 100,
     rewards: [],
+    tournament_id: 'tournament_1',
+  };
+
+  const tournament = {
+    id: 'tournament_1',
+    starts_at: new Date(),
   };
 
   const teams = [{ id: 'team1', owner_id: 'u1', name: 'Team Alpha', player_ids: [], league_id: 'league_abc123' }];
 
   const owners = [{ id: 'u1', first_name: 'John', last_name: 'Smith' }];
 
-  // Mock: league, teams, owners (no players)
-  mockDatabaseCalls([[league], teams, owners]);
+  // Mock: league, tournament, teams, owners (no players)
+  mockDatabaseCalls([[league], [tournament], teams, owners]);
 
   await getLeaderboardHandler(req, res);
 
@@ -345,6 +405,12 @@ test('getLeaderboardHandler - handles missing or incomplete owner names', async 
     name: 'Test League',
     entry_fee: 100,
     rewards: [],
+    tournament_id: 'tournament_1',
+  };
+
+  const tournament = {
+    id: 'tournament_1',
+    starts_at: new Date(),
   };
 
   const teams = [
@@ -359,7 +425,7 @@ test('getLeaderboardHandler - handles missing or incomplete owner names', async 
     // u3 not in owners array - owner not found
   ];
 
-  mockDatabaseCalls([[league], teams, owners]);
+  mockDatabaseCalls([[league], [tournament], teams, owners]);
 
   await getLeaderboardHandler(req, res);
 
@@ -377,6 +443,114 @@ test('getLeaderboardHandler - handles missing or incomplete owner names', async 
   // Team3 should have "Unknown Owner" (owner not found)
   const team3 = response.data.entries.find((t: any) => t.name.main === 'Team Gamma');
   expect(team3.name.substring).toBe('Unknown Owner');
+});
+
+// Test round calculation
+test('getLeaderboardHandler - calculates correct round based on tournament start date', async () => {
+  const res = mockResponse();
+  (res as any).locals.user = { id: 'u1' };
+  const req = { params: { league_id: 'league_abc123' } } as unknown as Request;
+
+  // Tournament started 2 days ago, so we should be in round 3
+  const twoDaysAgo = new Date();
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+  const league = {
+    id: 'league_abc123',
+    name: 'Test League',
+    entry_fee: 100,
+    rewards: [],
+    tournament_id: 'tournament_1',
+  };
+
+  const tournament = {
+    id: 'tournament_1',
+    starts_at: twoDaysAgo,
+  };
+
+  const teams = [{ id: 'team1', owner_id: 'u1', name: 'Team Alpha', player_ids: [], league_id: 'league_abc123' }];
+
+  const owners = [{ id: 'u1', first_name: 'John', last_name: 'Smith' }];
+
+  mockDatabaseCalls([[league], [tournament], teams, owners]);
+
+  await getLeaderboardHandler(req, res);
+
+  expect(res.status).toHaveBeenCalledWith(200);
+  const response = (res.send as jest.Mock).mock.calls[0][0];
+  expect(response.data.round).toBe('3/4'); // Day 0 = Round 1, Day 1 = Round 2, Day 2 = Round 3
+});
+
+// Test round at day 3 shows 4/4
+test('getLeaderboardHandler - shows 4/4 for day 3', async () => {
+  const res = mockResponse();
+  (res as any).locals.user = { id: 'u1' };
+  const req = { params: { league_id: 'league_abc123' } } as unknown as Request;
+
+  // Tournament started 3 days ago, should be round 4/4
+  const threeDaysAgo = new Date();
+  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+  const league = {
+    id: 'league_abc123',
+    name: 'Test League',
+    entry_fee: 100,
+    rewards: [],
+    tournament_id: 'tournament_1',
+  };
+
+  const tournament = {
+    id: 'tournament_1',
+    starts_at: threeDaysAgo,
+  };
+
+  const teams = [{ id: 'team1', owner_id: 'u1', name: 'Team Alpha', player_ids: [], league_id: 'league_abc123' }];
+
+  const owners = [{ id: 'u1', first_name: 'John', last_name: 'Smith' }];
+
+  mockDatabaseCalls([[league], [tournament], teams, owners]);
+
+  await getLeaderboardHandler(req, res);
+
+  expect(res.status).toHaveBeenCalledWith(200);
+  const response = (res.send as jest.Mock).mock.calls[0][0];
+  expect(response.data.round).toBe('4/4'); // Day 3 = Round 4
+});
+
+// Test tournament finished after 4+ days
+test('getLeaderboardHandler - shows Tournament finished for tournaments beyond 4 days', async () => {
+  const res = mockResponse();
+  (res as any).locals.user = { id: 'u1' };
+  const req = { params: { league_id: 'league_abc123' } } as unknown as Request;
+
+  // Tournament started 5 days ago, should show Tournament finished
+  const fiveDaysAgo = new Date();
+  fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+
+  const league = {
+    id: 'league_abc123',
+    name: 'Test League',
+    entry_fee: 100,
+    rewards: [],
+    tournament_id: 'tournament_1',
+  };
+
+  const tournament = {
+    id: 'tournament_1',
+    starts_at: fiveDaysAgo,
+  };
+
+  const teams = [{ id: 'team1', owner_id: 'u1', name: 'Team Alpha', player_ids: [], league_id: 'league_abc123' }];
+
+  const owners = [{ id: 'u1', first_name: 'John', last_name: 'Smith' }];
+
+  mockDatabaseCalls([[league], [tournament], teams, owners]);
+
+  await getLeaderboardHandler(req, res);
+
+  expect(res.status).toHaveBeenCalledWith(200);
+  const response = (res.send as jest.Mock).mock.calls[0][0];
+  expect(response.data.round).toBe('Tournament finished'); // 5+ days = Tournament finished
 });
 
 // Error handling test

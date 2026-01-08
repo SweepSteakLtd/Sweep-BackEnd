@@ -1,4 +1,4 @@
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, asc, eq, inArray } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { players, Tournament, tournamentAd, tournamentHole, tournaments } from '../../models';
 import { database } from '../../services';
@@ -24,7 +24,8 @@ export const getTournamentsHandler = async (req: Request, res: Response, next: N
     const existingTournaments = await database
       .select()
       .from(tournaments)
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(asc(tournaments.starts_at));
 
     const wholeTournaments = await Promise.all(
       existingTournaments.map(async (tournament: Tournament) => {

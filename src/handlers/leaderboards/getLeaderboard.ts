@@ -4,11 +4,13 @@ import {
   Player,
   PlayerProfile,
   Team,
+  Tournament,
   User,
   leagues,
   playerProfiles,
   players,
   teams,
+  tournaments,
   users,
 } from '../../models';
 import { database } from '../../services';
@@ -78,6 +80,45 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
       }
 
       league = existingLeague[0];
+    }
+
+    // Fetch tournament to calculate current round
+    const existingTournament = await database
+      .select()
+      .from(tournaments)
+      .where(eq(tournaments.id, league.tournament_id))
+      .limit(1)
+      .execute();
+
+    if (!existingTournament.length) {
+      console.log('[DEBUG] Tournament not found for league:', league_id);
+      return res.status(404).send({
+        error: 'Not found',
+        message: 'Tournament not found',
+      });
+    }
+
+    const tournament: Tournament = existingTournament[0];
+
+    // Calculate current round based on tournament start date
+    // Round 1 = starting day, Round 2 = day 2, etc. (max 4 rounds)
+    const now = new Date();
+    const tournamentStart = new Date(tournament.starts_at);
+
+    // Set both dates to midnight for accurate day comparison
+    const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startDate = new Date(tournamentStart.getFullYear(), tournamentStart.getMonth(), tournamentStart.getDate());
+
+    // Calculate difference in days
+    const daysDifference = Math.floor((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    // Determine round format: "1/4", "2/4", "3/4", "4/4", or "Tournament finished"
+    let roundDisplay: string;
+    if (daysDifference >= 4) {
+      roundDisplay = 'Tournament finished';
+    } else {
+      const roundNumber = Math.max(1, daysDifference + 1);
+      roundDisplay = `${roundNumber}/4`;
     }
 
     const leagueTeams: Team[] = await database
@@ -190,7 +231,7 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
 
     const totalPot = league.entry_fee * leagueTeams.length * 0.9;
 
-    return res.status(200).send({ data: { entries: leaderboardEntries, total_pot: totalPot } });
+    return res.status(200).send({ data: { entries: leaderboardEntries, total_pot: totalPot, round: roundDisplay } });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error(`GET LEADERBOARD ERROR: ${errorMessage} 🛑`);
@@ -204,7 +245,7 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
 getLeaderboardHandler.apiDescription = {
   summary: 'Get leaderboard for a league',
   description:
-    'Retrieves the leaderboard for a specific league. Returns ranked teams with their players, scores, potential prizes based on league rewards, and the total pot amount. For private leagues, a valid join_code is required in the query parameters.',
+    'Retrieves the leaderboard for a specific league. Returns ranked teams with their players, scores, potential prizes based on league rewards, the total pot amount, and the current tournament round. For private leagues, a valid join_code is required in the query parameters.',
   operationId: 'getLeaderboard',
   tags: ['leaderboards'],
   responses: {
@@ -214,7 +255,7 @@ getLeaderboardHandler.apiDescription = {
         'application/json': {
           schema: dataWrapper({
             type: 'object',
-            required: ['entries', 'total_pot'],
+            required: ['entries', 'total_pot', 'round'],
             properties: {
               entries: {
                 type: 'array',
@@ -297,6 +338,11 @@ getLeaderboardHandler.apiDescription = {
                 description: 'Total pot amount for the league (entry fee * team count * 0.9)',
                 example: 432132,
               },
+              round: {
+                type: 'string',
+                description: 'Current tournament round in format "X/4" (e.g., "1/4", "2/4", "3/4", "4/4") where X is the current round. Returns "Tournament finished" if 5 or more days have passed since tournament start.',
+                example: '2/4',
+              },
             },
           }),
           examples: {
@@ -367,6 +413,7 @@ getLeaderboardHandler.apiDescription = {
                     },
                   ],
                   total_pot: 432132,
+                  round: '2/4',
                 },
               },
             },
@@ -376,6 +423,7 @@ getLeaderboardHandler.apiDescription = {
                 data: {
                   entries: [],
                   total_pot: 0,
+                  round: '1/4',
                 },
               },
             },
