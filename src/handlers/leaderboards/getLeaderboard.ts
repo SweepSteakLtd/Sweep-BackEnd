@@ -158,6 +158,10 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
         .where(inArray(players.profile_id, allPlayerProfileIds))
         .execute();
     }
+
+    // Check if tournament has started
+    const tournamentHasStarted = now >= new Date(tournament.starts_at);
+
     // Build leaderboard entries
     const leaderboardEntries: LeaderboardEntry[] = [];
 
@@ -176,18 +180,20 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
         .sort((a, b) => a - b)
         .slice(0, 4);
 
-      // Build players array
-      const leaderboardPlayers: LeaderboardPlayer[] = teamPlayers.map(player => {
-        const profile = leaguePlayerProfiles.find(p => p.id === player.profile_id);
-        return {
-          group: profile?.group || '',
-          player_name: profile
-            ? `${profile.first_name} ${profile.last_name}`
-            : `Player ${player.id}`,
-          score: player.current_score || 0,
-          status: player.missed_cut ? 'MC' : 'F',
-        };
-      });
+      // Build players array (only if tournament has started)
+      const leaderboardPlayers: LeaderboardPlayer[] = tournamentHasStarted
+        ? teamPlayers.map(player => {
+            const profile = leaguePlayerProfiles.find(p => p.id === player.profile_id);
+            return {
+              group: profile?.group || '',
+              player_name: profile
+                ? `${profile.first_name} ${profile.last_name}`
+                : `Player ${player.id}`,
+              score: player.current_score || 0,
+              status: player.missed_cut ? 'MC' : 'F',
+            };
+          })
+        : [];
 
       // Get team owner name
       const owner = teamOwners.find(u => u.id === team.owner_id);
@@ -202,9 +208,11 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
           substring: ownerName,
         },
         total: totalScore,
-        players: leaderboardPlayers.sort((a, b) => a.group.localeCompare(b.group)),
-        bestScore: sortedScores,
-        prize: 0, // Prize calculation would be based on league rewards
+        players: tournamentHasStarted
+          ? leaderboardPlayers.sort((a, b) => a.group.localeCompare(b.group))
+          : [],
+        bestScore: tournamentHasStarted ? sortedScores : [],
+        prize: 0, // Prize will be assigned based on position and fixed distribution
       });
     }
 
@@ -216,22 +224,43 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
       entry.rank = index + 1;
     });
 
-    // Calculate prizes based on league rewards
-    if (league.rewards && Array.isArray(league.rewards) && league.rewards.length > 0) {
-      const totalPot = league.entry_fee * leagueTeams.length * 0.9; // 10% platform fee
+    const totalPot = league.entry_fee * leagueTeams.length * 0.9; // 10% platform fee
 
-      for (const reward of league.rewards) {
-        const position = reward.position;
-        if (position > 0 && position <= leaderboardEntries.length) {
-          const prizeAmount = totalPot * reward.percentage;
-          leaderboardEntries[position - 1].prize = prizeAmount;
+    // Fixed prize distribution percentages
+    const distributionPercentages = [
+      { position: 1, percentage: 0.6 },    // 60%
+      { position: 2, percentage: 0.15 },   // 15%
+      { position: 3, percentage: 0.125 },  // 12.5%
+      { position: 4, percentage: 0.075 },  // 7.5%
+      { position: 5, percentage: 0.05 },   // 5%
+    ];
+
+    // Build prize distribution array with calculated amounts (only if tournament has started)
+    const prizeDistribution = tournamentHasStarted
+      ? distributionPercentages.map(dist => ({
+          position: dist.position,
+          percentage: dist.percentage,
+          amount: totalPot * dist.percentage,
+        }))
+      : [];
+
+    // Assign prizes to teams based on prize distribution (only if tournament has started)
+    if (tournamentHasStarted) {
+      prizeDistribution.forEach((prize: { position: number; percentage: number; amount: number }) => {
+        if (prize.position > 0 && prize.position <= leaderboardEntries.length) {
+          leaderboardEntries[prize.position - 1].prize = prize.amount;
         }
-      }
+      });
     }
 
-    const totalPot = league.entry_fee * leagueTeams.length * 0.9;
-
-    return res.status(200).send({ data: { entries: leaderboardEntries, total_pot: totalPot, round: roundDisplay } });
+    return res.status(200).send({
+      data: {
+        entries: leaderboardEntries,
+        total_pot: totalPot,
+        round: roundDisplay,
+        prize_distribution: prizeDistribution,
+      }
+    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error(`GET LEADERBOARD ERROR: ${errorMessage} 🛑`);
@@ -245,7 +274,7 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
 getLeaderboardHandler.apiDescription = {
   summary: 'Get leaderboard for a league',
   description:
-    'Retrieves the leaderboard for a specific league. Returns ranked teams with their players, scores, potential prizes based on league rewards, the total pot amount, and the current tournament round. For private leagues, a valid join_code is required in the query parameters.',
+    'Retrieves the leaderboard for a specific league. Returns ranked teams with names, the total pot amount, and the current tournament round. Player details (players array and bestScore), and prize information (individual prizes and prize_distribution) are only included after the tournament has started. Prizes use a fixed distribution (60%, 15%, 12.5%, 7.5%, 5% for positions 1-5). For private leagues, a valid join_code is required in the query parameters.',
   operationId: 'getLeaderboard',
   tags: ['leaderboards'],
   responses: {
@@ -255,7 +284,7 @@ getLeaderboardHandler.apiDescription = {
         'application/json': {
           schema: dataWrapper({
             type: 'object',
-            required: ['entries', 'total_pot', 'round'],
+            required: ['entries', 'total_pot', 'round', 'prize_distribution'],
             properties: {
               entries: {
                 type: 'array',
@@ -292,6 +321,7 @@ getLeaderboardHandler.apiDescription = {
                     },
                     players: {
                       type: 'array',
+                      description: 'Team players with their scores and status. Only populated after tournament has started, otherwise empty array.',
                       items: {
                         type: 'object',
                         required: ['group', 'player_name', 'score', 'status'],
@@ -322,12 +352,12 @@ getLeaderboardHandler.apiDescription = {
                     bestScore: {
                       type: 'array',
                       items: { type: 'number' },
-                      description: 'Top 4 player scores for this team',
+                      description: 'Top 4 player scores for this team. Only populated after tournament has started, otherwise empty array.',
                       example: [-14, -13, -7, -3],
                     },
                     prize: {
                       type: 'number',
-                      description: 'Prize amount if team is in winning position',
+                      description: 'Prize amount if team is in winning position. Only populated after tournament has started, otherwise 0.',
                       example: 216066,
                     },
                   },
@@ -342,6 +372,35 @@ getLeaderboardHandler.apiDescription = {
                 type: 'string',
                 description: 'Current tournament round in format "X/4" (e.g., "1/4", "2/4", "3/4", "4/4") where X is the current round. Returns "Tournament finished" if 5 or more days have passed since tournament start.',
                 example: '2/4',
+              },
+              prize_distribution: {
+                type: 'array',
+                description: 'Prize distribution breakdown showing position, percentage, and amount for each prize tier. Only populated after tournament has started, otherwise empty array.',
+                items: {
+                  type: 'object',
+                  required: ['position', 'percentage', 'amount'],
+                  properties: {
+                    position: {
+                      type: 'number',
+                      minimum: 1,
+                      description: 'Prize position (1 for 1st place, 2 for 2nd place, etc.)',
+                      example: 1,
+                    },
+                    percentage: {
+                      type: 'number',
+                      minimum: 0,
+                      maximum: 1,
+                      description: 'Percentage of total pot allocated to this position (0.6 = 60%)',
+                      example: 0.6,
+                    },
+                    amount: {
+                      type: 'number',
+                      minimum: 0,
+                      description: 'Prize amount in pence/cents for this position',
+                      example: 2160,
+                    },
+                  },
+                },
               },
             },
           }),
@@ -414,6 +473,33 @@ getLeaderboardHandler.apiDescription = {
                   ],
                   total_pot: 432132,
                   round: '2/4',
+                  prize_distribution: [
+                    {
+                      position: 1,
+                      percentage: 0.6,
+                      amount: 259279.2,
+                    },
+                    {
+                      position: 2,
+                      percentage: 0.15,
+                      amount: 64819.8,
+                    },
+                    {
+                      position: 3,
+                      percentage: 0.125,
+                      amount: 54016.5,
+                    },
+                    {
+                      position: 4,
+                      percentage: 0.075,
+                      amount: 32409.9,
+                    },
+                    {
+                      position: 5,
+                      percentage: 0.05,
+                      amount: 21606.6,
+                    },
+                  ],
                 },
               },
             },
@@ -424,6 +510,7 @@ getLeaderboardHandler.apiDescription = {
                   entries: [],
                   total_pot: 0,
                   round: '1/4',
+                  prize_distribution: [],
                 },
               },
             },

@@ -57,9 +57,25 @@ export const getLeagueByIdHandler = async (req: Request, res: Response, next: Ne
             return leagueWithoutJoinCode;
           })();
 
+    // Add is_live and is_finished to tournament if it exists
+    let tournamentWithFlags = fetchedTournaments[0] || {};
+    if (fetchedTournaments[0]) {
+      const now = new Date();
+      const startsAt = new Date(fetchedTournaments[0].starts_at);
+      const finishesAt = new Date(fetchedTournaments[0].finishes_at);
+      const isLive = startsAt <= now && finishesAt > now;
+      const isFinished = finishesAt <= now;
+
+      tournamentWithFlags = {
+        ...fetchedTournaments[0],
+        is_live: isLive,
+        is_finished: isFinished,
+      };
+    }
+
     const leagueData = {
       league: sanitizedLeague,
-      tournament: fetchedTournaments[0] || {},
+      tournament: tournamentWithFlags,
       user_team_count: fetchedTeams.filter((team: Team) => team.owner_id === userId).length,
       total_team_count: fetchedTeams.length || 0,
       total_pot: fetchedTeams.length * league.entry_fee * 0.9, // 10% is going to the platform

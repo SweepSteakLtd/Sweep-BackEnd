@@ -67,11 +67,18 @@ export const getAllTournamentsHandler = async (req: Request, res: Response, next
                 .execute()
             : [];
 
+        const startsAt = new Date(tournament.starts_at);
+        const finishesAt = new Date(tournament.finishes_at);
+        const is_live = startsAt <= now && finishesAt > now;
+        const is_finished = finishesAt <= now;
+
         return {
           ...tournament,
           holes,
           ads,
           players: resolvedPlayers,
+          is_live,
+          is_finished,
         };
       }),
     );

@@ -84,13 +84,41 @@ export const updateTournamentHandler = async (req: Request, res: Response, next:
 
     updateObject['updated_at'] = new Date();
 
-    const finishedUpdatedObject = await database
+    await database
       .update(tournaments)
       .set(updateObject)
       .where(eq(tournaments.id, id))
       .execute();
 
-    return res.status(200).send({ data: finishedUpdatedObject });
+    // Fetch the updated tournament
+    const updatedTournament = await database
+      .select()
+      .from(tournaments)
+      .where(eq(tournaments.id, id))
+      .limit(1)
+      .execute();
+
+    if (!updatedTournament.length) {
+      return res.status(404).send({
+        error: 'Not found',
+        message: 'Tournament not found after update',
+      });
+    }
+
+    // Add is_live and is_finished flags
+    const now = new Date();
+    const startsAt = new Date(updatedTournament[0].starts_at);
+    const finishesAt = new Date(updatedTournament[0].finishes_at);
+    const isLive = startsAt <= now && finishesAt > now;
+    const isFinished = finishesAt <= now;
+
+    return res.status(200).send({
+      data: {
+        ...updatedTournament[0],
+        is_live: isLive,
+        is_finished: isFinished,
+      },
+    });
   } catch (error: any) {
     console.log(`UPDATE TOURNAMENT ERROR: ${error.message} 🛑`);
     return res.status(500).send({

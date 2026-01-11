@@ -325,6 +325,14 @@ export const tournamentSchema = {
       description:
         'Tournament tour type: pga (PGA Tour), euro (European Tour), kft (Korn Ferry Tour), opp (opposite field), alt (alternate event), major (Major Championship)',
     },
+    is_live: {
+      type: 'boolean',
+      description: 'Whether the tournament is currently live (started but not finished)',
+    },
+    is_finished: {
+      type: 'boolean',
+      description: 'Whether the tournament has finished',
+    },
     created_at: { type: 'string', format: 'date-time' },
     updated_at: { type: 'string', format: 'date-time' },
   },

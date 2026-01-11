@@ -27,6 +27,7 @@ export const getTournamentsHandler = async (req: Request, res: Response, next: N
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(asc(tournaments.starts_at));
 
+    const now = new Date();
     const wholeTournaments = await Promise.all(
       existingTournaments.map(async (tournament: Tournament) => {
         const existingHoles = await database
@@ -44,11 +45,18 @@ export const getTournamentsHandler = async (req: Request, res: Response, next: N
           .from(players)
           .where(inArray(players.id, tournament.players));
 
+        const startsAt = new Date(tournament.starts_at);
+        const finishesAt = new Date(tournament.finishes_at);
+        const is_live = startsAt <= now && finishesAt > now;
+        const is_finished = finishesAt <= now;
+
         return {
           ...tournament,
           holes: existingHoles,
           ads: existingAds,
           players: existingPlayers,
+          is_live,
+          is_finished,
         };
       }),
     );

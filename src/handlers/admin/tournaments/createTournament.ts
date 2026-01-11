@@ -120,7 +120,20 @@ export const createTournamentHandler = async (req: Request, res: Response, next:
 
     await database.insert(tournaments).values(createdObject).execute();
 
-    return res.status(201).send({ data: createdObject });
+    // Add is_live and is_finished flags
+    const now = new Date();
+    const startsAt = new Date(createdObject.starts_at);
+    const finishesAt = new Date(createdObject.finishes_at);
+    const isLive = startsAt <= now && finishesAt > now;
+    const isFinished = finishesAt <= now;
+
+    return res.status(201).send({
+      data: {
+        ...createdObject,
+        is_live: isLive,
+        is_finished: isFinished,
+      },
+    });
   } catch (error: any) {
     console.log(`CREATE TOURNAMENT ERROR: ${error.message} 🛑`);
     return res.status(500).send({
