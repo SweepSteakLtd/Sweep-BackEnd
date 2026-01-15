@@ -1,7 +1,7 @@
 import { createId } from '@paralleldrive/cuid2';
 import { and, eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { bets, leagues, Team, teams } from '../../models';
+import { bets, leagues, Team, teams, tournaments } from '../../models';
 import { database } from '../../services';
 import { apiKeyAuth, dataWrapper, standardResponses, teamSchema } from '../schemas';
 
@@ -68,6 +68,25 @@ export const createTeamHandler = async (req: Request, res: Response, next: NextF
     const league = existingLeague[0];
     const maxParticipants = league.max_participants;
 
+    // Fetch the tournament to validate players
+    const existingTournament = await database
+      .select()
+      .from(tournaments)
+      .where(eq(tournaments.id, league.tournament_id))
+      .limit(1)
+      .execute();
+
+    if (!existingTournament.length) {
+      console.log('[DEBUG] Tournament not found:', league.tournament_id);
+      return res.status(404).send({
+        error: 'Not found',
+        message: 'Tournament not found for this league',
+      });
+    }
+
+    const tournament = existingTournament[0];
+    const validPlayerIds = tournament.players || [];
+
     if (maxParticipants !== null && maxParticipants !== undefined) {
       const userTeamsInLeague = await database
         .select()
@@ -101,6 +120,16 @@ export const createTeamHandler = async (req: Request, res: Response, next: NextF
             message: 'Each player_id must be a non-empty string',
           });
         }
+      }
+
+      // Validate that all player IDs belong to the tournament
+      const invalidPlayers = players.filter(playerId => !validPlayerIds.includes(playerId));
+      if (invalidPlayers.length > 0) {
+        console.log('[DEBUG] Invalid player IDs for tournament:', invalidPlayers);
+        return res.status(422).send({
+          error: 'Invalid request body',
+          message: `The following player IDs are not valid for this tournament: ${invalidPlayers.join(', ')}`,
+        });
       }
     }
 

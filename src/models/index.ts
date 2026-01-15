@@ -203,6 +203,14 @@ export const transactions = pgTable('Transaction', {
   user_id: text('user_id').notNull(), // required
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
+  // Paysafe-specific fields
+  payment_status: text('payment_status').default('PENDING'), // PENDING, COMPLETED, FAILED, REFUNDED
+  payment_handle_token: text('payment_handle_token'), // Token from frontend
+  payment_method: text('payment_method'), // CARD, NETBANKING, etc.
+  payment_error_code: text('payment_error_code'), // Error code if failed
+  payment_error_message: text('payment_error_message'), // Error message
+  idempotency_key: text('idempotency_key').unique(), // Prevent duplicate charges
+  metadata: jsonb('metadata').$type<Record<string, unknown>>().default({}), // Additional Paysafe response data
 });
 
 // Export types for use in the application

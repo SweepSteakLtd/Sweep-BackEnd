@@ -102,6 +102,7 @@ export const userSchema = {
     last_name: { type: 'string', nullable: true, maxLength: 100 },
     nickname: { type: 'string', nullable: true, maxLength: 50 },
     email: { type: 'string', format: 'email', description: 'User email address' },
+    date_of_birth: { type: 'string', nullable: true, description: 'User date of birth' },
     bio: { type: 'string', nullable: true, maxLength: 500 },
     profile_picture: { type: 'string', format: 'uri', nullable: true },
     phone_number: { type: 'string', nullable: true, pattern: '^\\+[1-9]\\d{1,14}$' },

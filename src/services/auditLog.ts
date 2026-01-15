@@ -25,7 +25,14 @@ export type AuditAction =
   | 'GAMSTOP_CHECK'
   | 'GBG_CHECK'
   | 'LOGIN'
-  | 'LOGOUT';
+  | 'LOGOUT'
+  | 'PAYMENT_INITIATED'
+  | 'PAYMENT_COMPLETED'
+  | 'PAYMENT_FAILED'
+  | 'PAYMENT_COMPLETED_WEBHOOK'
+  | 'PAYMENT_FAILED_WEBHOOK'
+  | 'REFUND_INITIATED'
+  | 'REFUND_COMPLETED';
 
 export type EntityType =
   | 'user'

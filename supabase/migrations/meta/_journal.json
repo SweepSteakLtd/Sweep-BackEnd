@@ -169,6 +169,13 @@
       "when": 1767651144633,
       "tag": "0023_powerful_psynapse",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1768247769516,
+      "tag": "0024_amusing_groot",
+      "breakpoints": true
     }
   ]
 }

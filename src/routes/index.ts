@@ -49,6 +49,12 @@ import {
   uploadGBGDocumentsHandler,
 } from '../handlers';
 import {
+  initiatePayment,
+  confirmPayment,
+  webhookHandler,
+  getPublicKey,
+} from '../handlers/payments';
+import {
   AuthenticateAdminMiddleware,
   AuthenticateEmailMiddleware,
   AuthenticateMiddleware,
@@ -246,6 +252,31 @@ export const routes: RouteDescription[] = [
         method: 'get',
         name: '/',
         stack: [AuthenticateMiddleware, getTransactionsHandler],
+      },
+    ],
+  },
+  {
+    apiName: 'payments',
+    endpoints: [
+      {
+        method: 'post',
+        name: '/initiate',
+        stack: [AuthenticateMiddleware, CheckSelfExclusionMiddleware, initiatePayment],
+      },
+      {
+        method: 'post',
+        name: '/confirm',
+        stack: [AuthenticateMiddleware, CheckSelfExclusionMiddleware, confirmPayment],
+      },
+      {
+        method: 'post',
+        name: '/webhook',
+        stack: [webhookHandler],
+      },
+      {
+        method: 'get',
+        name: '/public-key',
+        stack: [AuthenticateMiddleware, getPublicKey],
       },
     ],
   },
