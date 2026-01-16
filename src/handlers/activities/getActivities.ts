@@ -1,4 +1,4 @@
-import { and, eq, gte } from 'drizzle-orm';
+import { and, desc, eq, gte } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { Transaction, transactions, User } from '../../models';
 import { database } from '../../services';
@@ -27,22 +27,40 @@ export const getActivityHandler = async (req: Request, res: Response, next: Next
             )
           : eq(transactions.user_id, user.id),
       )
+      .orderBy(desc(transactions.created_at))
       .execute();
 
-    existingTransactions.forEach(item => {
-      if (item.type === TransactionType.deposit) {
+    // Filter out PENDING transactions
+    const completedTransactions = existingTransactions.filter(
+      transaction => transaction.payment_status !== 'PENDING',
+    );
+
+    completedTransactions.forEach(item => {
+      if (item.type === TransactionType.deposit && item.payment_status === 'COMPLETED') {
         deposited += item.value;
-      } else if (item.type === TransactionType.withdrawal) {
+      } else if (item.type === TransactionType.withdrawal && item.payment_status === 'COMPLETED') {
         withdrawal += item.value;
       }
     });
+
+    // Remove sensitive fields from transactions before returning
+    const sanitizedTransactions = completedTransactions.map(transaction => ({
+      id: transaction.id,
+      name: transaction.name,
+      value: transaction.value,
+      type: transaction.type,
+      payment_status: transaction.payment_status,
+      payment_method: transaction.payment_method,
+      created_at: transaction.created_at,
+      updated_at: transaction.updated_at,
+    }));
 
     return res.status(200).send({
       data: {
         deposited,
         withdrawn: withdrawal,
         net_profit: withdrawal - deposited, // TODO: Should we only track information user betted? It would make 0 sense if user deposited 100 euro and then net profit is -100 euro
-        transactions: existingTransactions,
+        transactions: sanitizedTransactions,
       },
     });
   } catch (error: any) {
@@ -67,78 +85,44 @@ getActivityHandler.apiDescription = {
         'application/json': {
           schema: dataWrapper(transactionSummarySchema),
           examples: {
-            allActivities: {
-              summary: 'All user activities',
-              value: {
-                data: {
-                  deposited: 1500,
-                  withdrawn: 750,
-                  netProfit: -750,
-                  transactions: [
-                    {
-                      id: 'txn_abc123',
-                      name: 'Initial deposit',
-                      value: 1000,
-                      type: 'deposit',
-                      charge_id: 'ch_xyz789',
-                      user_id: 'user_abc123',
-                      created_at: '2025-01-15T10:00:00Z',
-                      updated_at: '2025-01-15T10:00:00Z',
-                    },
-                    {
-                      id: 'txn_def456',
-                      name: 'Second deposit',
-                      value: 500,
-                      type: 'deposit',
-                      charge_id: 'ch_def012',
-                      user_id: 'user_abc123',
-                      created_at: '2025-01-18T14:20:00Z',
-                      updated_at: '2025-01-18T14:20:00Z',
-                    },
-                    {
-                      id: 'txn_ghi789',
-                      name: 'Winnings withdrawal',
-                      value: 750,
-                      type: 'withdrawal',
-                      charge_id: 'ch_ghi345',
-                      user_id: 'user_abc123',
-                      created_at: '2025-01-20T16:00:00Z',
-                      updated_at: '2025-01-20T16:00:00Z',
-                    },
-                  ],
-                },
-              },
-            },
-            filteredByTimestamp: {
-              summary: 'Activities since specific timestamp',
-              value: {
-                data: {
-                  deposited: 500,
-                  withdrawn: 750,
-                  netProfit: 250,
-                  transactions: [
-                    {
-                      id: 'txn_def456',
-                      name: 'Second deposit',
-                      value: 500,
-                      type: 'deposit',
-                      charge_id: 'ch_def012',
-                      user_id: 'user_abc123',
-                      created_at: '2025-01-18T14:20:00Z',
-                      updated_at: '2025-01-18T14:20:00Z',
-                    },
-                    {
-                      id: 'txn_ghi789',
-                      name: 'Winnings withdrawal',
-                      value: 750,
-                      type: 'withdrawal',
-                      charge_id: 'ch_ghi345',
-                      user_id: 'user_abc123',
-                      created_at: '2025-01-20T16:00:00Z',
-                      updated_at: '2025-01-20T16:00:00Z',
-                    },
-                  ],
-                },
+            summary: 'All user activities',
+            value: {
+              data: {
+                deposited: 1500,
+                withdrawn: 750,
+                netProfit: -750,
+                transactions: [
+                  {
+                    id: 'txn_ghi789',
+                    name: 'Winnings withdrawal',
+                    value: 750,
+                    type: 'withdrawal',
+                    created_at: '2025-01-20T16:00:00Z',
+                    updated_at: '2025-01-20T16:00:00Z',
+                    payment_status: 'COMPLETED',
+                    payment_method: 'BANK_TRANSFER',
+                  },
+                  {
+                    id: 'txn_def456',
+                    name: 'Second deposit',
+                    value: 500,
+                    type: 'deposit',
+                    created_at: '2025-01-18T14:20:00Z',
+                    updated_at: '2025-01-18T14:20:00Z',
+                    payment_status: 'COMPLETED',
+                    payment_method: 'CARD',
+                  },
+                  {
+                    id: 'txn_abc123',
+                    name: 'Initial deposit',
+                    value: 1000,
+                    type: 'deposit',
+                    created_at: '2025-01-15T10:00:00Z',
+                    updated_at: '2025-01-15T10:00:00Z',
+                    payment_status: 'COMPLETED',
+                    payment_method: 'CARD',
+                  },
+                ],
               },
             },
           },

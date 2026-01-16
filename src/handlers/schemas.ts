@@ -379,16 +379,24 @@ export const betSchema = {
 
 export const transactionSchema = {
   type: 'object',
-  required: ['id', 'name', 'user_id', 'type', 'value'],
+  required: ['id', 'name', 'type', 'value', 'payment_status', 'created_at', 'updated_at'],
   properties: {
     id: { type: 'string', format: 'uuid', description: 'Unique transaction identifier' },
-    name: { type: 'string', maxLength: 200, description: 'Transaction name' },
-    value: { type: 'number', minimum: 0, description: 'Transaction amount' },
+    name: { type: 'string', maxLength: 200, description: 'Transaction name or description' },
+    value: { type: 'number', minimum: 0, description: 'Transaction amount in smallest currency unit (e.g., cents)' },
     type: { type: 'string', enum: ['deposit', 'withdrawal'], description: 'Transaction type' },
-    charge_id: { type: 'string', default: '', description: 'Payment processor charge ID' },
-    user_id: { type: 'string', description: 'User who made the transaction' },
-    created_at: { type: 'string', format: 'date-time' },
-    updated_at: { type: 'string', format: 'date-time' },
+    payment_status: {
+      type: 'string',
+      enum: ['PENDING', 'COMPLETED', 'FAILED', 'REFUNDED'],
+      description: 'Current status of the payment',
+    },
+    payment_method: {
+      type: 'string',
+      nullable: true,
+      description: 'Payment method used (e.g., CARD, BANK_TRANSFER, NETBANKING)',
+    },
+    created_at: { type: 'string', format: 'date-time', description: 'Transaction creation timestamp' },
+    updated_at: { type: 'string', format: 'date-time', description: 'Transaction last update timestamp' },
   },
 };
 

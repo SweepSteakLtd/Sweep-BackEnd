@@ -21,3 +21,9 @@ env:
     secret: projects/230553092247/secrets/GBG_PASSWORD
   - variable: GAMSTOP_API_KEY
     secret: projects/230553092247/secrets/GAMSTOP_API_KEY
+  - variable: PAYSAFE_API_KEY_USERNAME
+    secret: projects/230553092247/secrets/PAYSAFE_API_KEY_USERNAME
+  - variable: PAYSAFE_API_KEY_PASSWORD
+    secret: projects/230553092247/secrets/PAYSAFE_API_KEY_PASSWORD
+  - variable: PAYSAFE_KEY
+    secret: projects/230553092247/secrets/PAYSAFE_KEY

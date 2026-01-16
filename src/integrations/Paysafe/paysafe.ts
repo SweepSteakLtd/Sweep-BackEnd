@@ -1,5 +1,5 @@
-import { fetchWithTimeout } from '../../utils/fetchWithTimeout';
 import { paysafeConfig } from '../../config/paysafe.config';
+import { fetchWithTimeout } from '../../utils/fetchWithTimeout';
 import { PaysafePaymentRequest, PaysafePaymentResponse } from './types';
 
 class PaysafeClient {
@@ -7,13 +7,11 @@ class PaysafeClient {
   private headers: Record<string, string>;
 
   constructor() {
-    const auth = Buffer.from(
-      `${paysafeConfig.apiKeyUsername}:${paysafeConfig.apiKeyPassword}`
-    ).toString('base64');
+    const auth = Buffer.from(paysafeConfig.backendApiKey).toString('base64');
 
     this.baseUrl = paysafeConfig.apiBaseUrl;
     this.headers = {
-      'Authorization': `Basic ${auth}`,
+      Authorization: `Basic ${auth}`,
       'Content-Type': 'application/json',
     };
   }
@@ -21,33 +19,28 @@ class PaysafeClient {
   /**
    * Process a payment using a payment handle token
    */
-  async processPayment(
-    paymentRequest: PaysafePaymentRequest
-  ): Promise<PaysafePaymentResponse> {
+  async processPayment(paymentRequest: PaysafePaymentRequest): Promise<PaysafePaymentResponse> {
     try {
-      const response = await fetchWithTimeout(
-        `${this.baseUrl}/paymenthub/v1/payments`,
-        {
-          method: 'POST',
-          headers: this.headers,
-          body: JSON.stringify({
-            merchantRefNum: paymentRequest.merchantRefNum,
-            amount: paymentRequest.amount,
-            currencyCode: paymentRequest.currencyCode,
-            paymentHandleToken: paymentRequest.paymentHandleToken,
-            merchantDescriptor: {
-              dynamicDescriptor: paymentRequest.description || 'Sweep Deposit',
-            },
-            billingDetails: paymentRequest.billingDetails,
-          }),
-          timeout: 30000,
-        }
-      );
+      const response = await fetchWithTimeout(`${this.baseUrl}/paymenthub/v1/payments`, {
+        method: 'POST',
+        headers: this.headers,
+        body: JSON.stringify({
+          merchantRefNum: paymentRequest.merchantRefNum,
+          amount: paymentRequest.amount,
+          currencyCode: paymentRequest.currencyCode,
+          paymentHandleToken: paymentRequest.paymentHandleToken,
+          merchantDescriptor: {
+            dynamicDescriptor: 'ChipIn betting',
+          },
+          billingDetails: paymentRequest.billingDetails,
+        }),
+        timeout: 30000,
+      });
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => 'Unknown error');
         throw new Error(
-          `Paysafe API request failed: ${response.status} ${response.statusText} - ${errorText}`
+          `Paysafe API request failed: ${response.status} ${response.statusText} - ${errorText}`,
         );
       }
 
@@ -68,13 +61,13 @@ class PaysafeClient {
           method: 'GET',
           headers: this.headers,
           timeout: 30000,
-        }
+        },
       );
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => 'Unknown error');
         throw new Error(
-          `Failed to get payment status: ${response.status} ${response.statusText} - ${errorText}`
+          `Failed to get payment status: ${response.status} ${response.statusText} - ${errorText}`,
         );
       }
 
@@ -87,30 +80,23 @@ class PaysafeClient {
   /**
    * Refund a payment
    */
-  async refundPayment(
-    transactionId: string,
-    amount: number,
-    merchantRefNum: string
-  ): Promise<any> {
+  async refundPayment(transactionId: string, amount: number, merchantRefNum: string): Promise<any> {
     try {
-      const response = await fetchWithTimeout(
-        `${this.baseUrl}/paymenthub/v1/refunds`,
-        {
-          method: 'POST',
-          headers: this.headers,
-          body: JSON.stringify({
-            paymentId: transactionId,
-            amount,
-            merchantRefNum,
-          }),
-          timeout: 30000,
-        }
-      );
+      const response = await fetchWithTimeout(`${this.baseUrl}/paymenthub/v1/refunds`, {
+        method: 'POST',
+        headers: this.headers,
+        body: JSON.stringify({
+          paymentId: transactionId,
+          amount,
+          merchantRefNum,
+        }),
+        timeout: 30000,
+      });
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => 'Unknown error');
         throw new Error(
-          `Failed to refund payment: ${response.status} ${response.statusText} - ${errorText}`
+          `Failed to refund payment: ${response.status} ${response.statusText} - ${errorText}`,
         );
       }
 
