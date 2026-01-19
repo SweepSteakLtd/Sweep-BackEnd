@@ -316,7 +316,9 @@ async function upsertPlayer(
       .where(eq(players.external_id, String(dgId)))
       .execute();
 
-    const existingPlayer = existingPlayers.find((p: Player) => p.profile_id === profileId);
+    const existingPlayer = existingPlayers.find(
+      (p: Player) => p.profile_id === profileId && p.tournament_id === eventId,
+    );
 
     if (existingPlayer) {
       await database
@@ -384,7 +386,10 @@ async function main() {
       .where(eq(tournaments.external_id, args[0]))
       .execute();
 
-    console.log(`📋 Fetching tournament field for event ${tournamentId}...`, databaseTournamentTour[0].tour);
+    console.log(
+      `📋 Fetching tournament field for event ${tournamentId}...`,
+      databaseTournamentTour[0].tour,
+    );
     const tournamentField = await fetchTournamentField(
       tournamentId,
       databaseTournamentTour[0].tour || 'pga',

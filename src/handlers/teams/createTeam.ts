@@ -1,7 +1,7 @@
 import { createId } from '@paralleldrive/cuid2';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { bets, leagues, Team, teams, tournaments } from '../../models';
+import { bets, leagues, players, Team, teams, tournaments, users } from '../../models';
 import { database } from '../../services';
 import { apiKeyAuth, dataWrapper, standardResponses, teamSchema } from '../schemas';
 
@@ -23,7 +23,7 @@ export const createTeamHandler = async (req: Request, res: Response, next: NextF
       });
     }
 
-    const { name, league_id, players } = req.body;
+    const { name, league_id, players: playerProfileIds } = req.body;
 
     if (name !== undefined && name !== null) {
       if (typeof name !== 'string' || name.trim().length === 0) {
@@ -68,6 +68,21 @@ export const createTeamHandler = async (req: Request, res: Response, next: NextF
     const league = existingLeague[0];
     const maxParticipants = league.max_participants;
 
+    const user = res.locals.user;
+
+    // Check if user has enough balance to cover entry fee
+    if (user.current_balance < league.entry_fee) {
+      console.log('[DEBUG] Insufficient balance:', {
+        userId: user.id,
+        currentBalance: user.current_balance,
+        entryFee: league.entry_fee,
+      });
+      return res.status(422).send({
+        error: 'Insufficient balance',
+        message: `You need ${league.entry_fee} coins to join this league, but you only have ${user.current_balance} coins`,
+      });
+    }
+
     // Fetch the tournament to validate players
     const existingTournament = await database
       .select()
@@ -85,7 +100,6 @@ export const createTeamHandler = async (req: Request, res: Response, next: NextF
     }
 
     const tournament = existingTournament[0];
-    const validPlayerIds = tournament.players || [];
 
     if (maxParticipants !== null && maxParticipants !== undefined) {
       const userTeamsInLeague = await database
@@ -103,8 +117,11 @@ export const createTeamHandler = async (req: Request, res: Response, next: NextF
       }
     }
 
-    if (players !== undefined && players !== null) {
-      if (!Array.isArray(players)) {
+    // Map player profile IDs to tournament player IDs
+    let tournamentPlayerIds: string[] = [];
+
+    if (playerProfileIds !== undefined && playerProfileIds !== null) {
+      if (!Array.isArray(playerProfileIds)) {
         console.log('[DEBUG] Invalid players: must be an array');
         return res.status(422).send({
           error: 'Invalid request body',
@@ -112,8 +129,8 @@ export const createTeamHandler = async (req: Request, res: Response, next: NextF
         });
       }
 
-      for (const playerId of players) {
-        if (typeof playerId !== 'string' || playerId.trim().length === 0) {
+      for (const profileId of playerProfileIds) {
+        if (typeof profileId !== 'string' || profileId.trim().length === 0) {
           console.log('[DEBUG] Invalid player_id in players array');
           return res.status(422).send({
             error: 'Invalid request body',
@@ -122,15 +139,37 @@ export const createTeamHandler = async (req: Request, res: Response, next: NextF
         }
       }
 
-      // Validate that all player IDs belong to the tournament
-      const invalidPlayers = players.filter(playerId => !validPlayerIds.includes(playerId));
-      if (invalidPlayers.length > 0) {
-        console.log('[DEBUG] Invalid player IDs for tournament:', invalidPlayers);
+      // Find tournament players that match the provided player profile IDs
+      const tournamentPlayers = await database
+        .select()
+        .from(players)
+        .where(
+          and(
+            eq(players.tournament_id, tournament.id),
+            inArray(players.profile_id, playerProfileIds)
+          )
+        )
+        .execute();
+
+      // Check if all player profile IDs were found in the tournament
+      if (tournamentPlayers.length !== playerProfileIds.length) {
+        const foundProfileIds = tournamentPlayers.map(p => p.profile_id);
+        const invalidProfileIds = playerProfileIds.filter(id => !foundProfileIds.includes(id));
+
+        console.log('[DEBUG] Invalid player profile IDs for tournament:', invalidProfileIds);
         return res.status(422).send({
           error: 'Invalid request body',
-          message: `The following player IDs are not valid for this tournament: ${invalidPlayers.join(', ')}`,
+          message: `The following player profile IDs are not valid for this tournament: ${invalidProfileIds.join(', ')}`,
         });
       }
+
+      // Extract the tournament player IDs
+      tournamentPlayerIds = tournamentPlayers.map(p => p.id);
+
+      console.log('[INFO] Mapped player profiles to tournament players:', {
+        profileIds: playerProfileIds,
+        tournamentPlayerIds,
+      });
     }
 
     const teamObject: Team = {
@@ -139,16 +178,15 @@ export const createTeamHandler = async (req: Request, res: Response, next: NextF
       league_id: league_id,
       name: name || null,
       position: null,
-      player_ids: players || [],
+      player_ids: tournamentPlayerIds,
       created_at: new Date(),
       updated_at: new Date(),
     };
 
-    await database.insert(teams).values(teamObject).execute();
+    await database.transaction(async (tx: any) => {
+      await tx.insert(teams).values(teamObject);
 
-    await database
-      .insert(bets)
-      .values({
+      await tx.insert(bets).values({
         league_id: league_id!,
         owner_id: res.locals.user.id,
         team_id: teamObject.id,
@@ -156,8 +194,25 @@ export const createTeamHandler = async (req: Request, res: Response, next: NextF
         id: createId(),
         created_at: new Date(),
         updated_at: new Date(),
-      })
-      .execute();
+      });
+
+      await tx
+        .update(users)
+        .set({
+          current_balance: sql`${users.current_balance} - ${league.entry_fee}`,
+          updated_at: new Date(),
+        })
+        .where(eq(users.id, res.locals.user.id));
+
+      console.log('[INFO] Entry fee deducted from user balance:', {
+        userId: res.locals.user.id,
+        teamId: teamObject.id,
+        leagueId: league_id,
+        entryFee: league.entry_fee,
+        previousBalance: user.current_balance,
+        newBalance: user.current_balance - league.entry_fee,
+      });
+    });
 
     return res.status(201).send({ data: teamObject });
   } catch (error: any) {
@@ -172,7 +227,7 @@ export const createTeamHandler = async (req: Request, res: Response, next: NextF
 createTeamHandler.apiDescription = {
   summary: 'Create a new team',
   description:
-    'Creates a new team with optional name and player list. The owner_id is automatically set from the authenticated user. League validation is performed if league_id is provided. Users can create up to max_participants teams per league (e.g., if max_participants is 5, a user can create up to 5 teams in that league). When creating a team for a private league, a valid join_code query parameter is required.',
+    'Creates a new team with optional name and player list. The owner_id is automatically set from the authenticated user. League validation is performed if league_id is provided. Users can create up to max_participants teams per league (e.g., if max_participants is 5, a user can create up to 5 teams in that league). When creating a team for a private league, a valid join_code query parameter is required. The user must have sufficient balance to cover the league entry fee, which will be deducted from their account upon team creation.',
   operationId: 'createTeam',
   tags: ['teams'],
   responses: {
@@ -215,7 +270,36 @@ createTeamHandler.apiDescription = {
       },
     },
     404: standardResponses[404],
-    422: standardResponses[422],
+    422: {
+      description: 'Unprocessable Entity - Invalid input or insufficient balance',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+          examples: {
+            insufficientBalance: {
+              summary: 'User has insufficient balance',
+              value: {
+                error: 'Insufficient balance',
+                message: 'You need 100 coins to join this league, but you only have 50 coins',
+              },
+            },
+            invalidInput: {
+              summary: 'Invalid request body',
+              value: {
+                error: 'Invalid request body',
+                message: 'name must be a non-empty string',
+              },
+            },
+          },
+        },
+      },
+    },
     403: {
       description:
         'Forbidden - Authentication required, max teams limit reached, or invalid join_code for private league',
@@ -303,8 +387,8 @@ createTeamHandler.apiDescription = {
               type: 'array',
               items: { type: 'string' },
               default: [],
-              description: 'Array of player IDs',
-              example: ['player_1', 'player_2', 'player_3'],
+              description: 'Array of player profile IDs (will be automatically mapped to tournament-specific player IDs)',
+              example: ['profile_1', 'profile_2', 'profile_3'],
             },
           },
         },
@@ -314,7 +398,7 @@ createTeamHandler.apiDescription = {
             value: {
               name: 'Dream Team',
               league_id: 'league_abc123',
-              players: ['player_1', 'player_2', 'player_3'],
+              players: ['profile_abc123', 'profile_def456', 'profile_ghi789'],
             },
           },
           minimal: {
