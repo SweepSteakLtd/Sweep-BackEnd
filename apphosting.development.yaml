@@ -27,3 +27,6 @@ env:
     secret: projects/230553092247/secrets/PAYSAFE_API_KEY_PASSWORD
   - variable: PAYSAFE_KEY
     secret: projects/230553092247/secrets/PAYSAFE_KEY
+  - variable: GBG_RESOURCE_ID
+    secret: projects/230553092247/secrets/GBG_RESOURCE_ID
+

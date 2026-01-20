@@ -29,7 +29,6 @@ export const initializeRemoteConfig = async (): Promise<void> => {
     const template = await remoteConfig.getTemplate();
 
     // Use environment variable if available, otherwise use default
-    // PROD resource ID: 8a2fa1c23591f53e7a01c68ed37c5620f10c634ef25b131c7c425c04f3495738
     const gbgResourceId =
       process.env.GBG_RESOURCE_ID ||
       'd27b6807703eec9f5f5c0d45eb3abc883c142236055b85e30df2f75fdb22cbbe@latest';
