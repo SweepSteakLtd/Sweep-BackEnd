@@ -28,11 +28,17 @@ export const initializeRemoteConfig = async (): Promise<void> => {
     const remoteConfig = getRemoteConfig();
     const template = await remoteConfig.getTemplate();
 
+    // Use environment variable if available, otherwise use default
+    // PROD resource ID: 8a2fa1c23591f53e7a01c68ed37c5620f10c634ef25b131c7c425c04f3495738
+    const gbgResourceId =
+      process.env.GBG_RESOURCE_ID ||
+      'd27b6807703eec9f5f5c0d45eb3abc883c142236055b85e30df2f75fdb22cbbe@latest';
+
     // Define default values if they don't exist
     const defaultParameters = {
       gbg_resource_id: {
         defaultValue: {
-          value: 'd27b6807703eec9f5f5c0d45eb3abc883c142236055b85e30df2f75fdb22cbbe@latest',
+          value: gbgResourceId,
         },
         description: 'GBG Resource ID for verification',
       },
@@ -100,6 +106,7 @@ export const fetchRemoteConfig = async (): Promise<RemoteConfigValues> => {
     const values: RemoteConfigValues = {
       gbg_resource_id:
         getStringValue(template.parameters.gbg_resource_id) ||
+        process.env.GBG_RESOURCE_ID ||
         'd27b6807703eec9f5f5c0d45eb3abc883c142236055b85e30df2f75fdb22cbbe@1gobnzjz',
     };
 
@@ -121,7 +128,9 @@ export const fetchRemoteConfig = async (): Promise<RemoteConfigValues> => {
 
     // Return default values as fallback
     const defaults: RemoteConfigValues = {
-      gbg_resource_id: 'd27b6807703eec9f5f5c0d45eb3abc883c142236055b85e30df2f75fdb22cbbe@1gobnzjz',
+      gbg_resource_id:
+        process.env.GBG_RESOURCE_ID ||
+        'd27b6807703eec9f5f5c0d45eb3abc883c142236055b85e30df2f75fdb22cbbe@1gobnzjz',
     };
 
     console.log('[Remote Config] Using default values due to error');
