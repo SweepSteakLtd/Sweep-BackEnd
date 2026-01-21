@@ -106,7 +106,7 @@ export const fetchRemoteConfig = async (): Promise<RemoteConfigValues> => {
       gbg_resource_id:
         getStringValue(template.parameters.gbg_resource_id) ||
         process.env.GBG_RESOURCE_ID ||
-        '8a2fa1c23591f53e7a01c68ed37c5620f10c634ef25b131c7c425c04f3495738@1gobnzjz',
+        '8a2fa1c23591f53e7a01c68ed37c5620f10c634ef25b131c7c425c04f3495738@latest',
     };
 
     // Update cache
@@ -129,7 +129,7 @@ export const fetchRemoteConfig = async (): Promise<RemoteConfigValues> => {
     const defaults: RemoteConfigValues = {
       gbg_resource_id:
         process.env.GBG_RESOURCE_ID ||
-        '8a2fa1c23591f53e7a01c68ed37c5620f10c634ef25b131c7c425c04f3495738@1gobnzjz',
+        '8a2fa1c23591f53e7a01c68ed37c5620f10c634ef25b131c7c425c04f3495738@latest',
     };
 
     console.log('[Remote Config] Using default values due to error');
