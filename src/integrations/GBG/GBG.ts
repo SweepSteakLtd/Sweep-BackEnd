@@ -407,8 +407,8 @@ export const submitDocumentsToTask = async (
     throw new Error('Failed to obtain GBG authentication token');
   }
 
-  const documentsArray = documents.map(base64Data => ({
-    side1Image: base64Data,
+  const documentsArray = documents.map((base64Data, index) => ({
+    [`side${index + 1}Image`]: base64Data,
   }));
 
   const submitTaskRequest = {
