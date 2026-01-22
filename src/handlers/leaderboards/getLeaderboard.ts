@@ -177,8 +177,12 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
       const teamProfileIds = teamPlayers.map(player => player.profile_id);
       const teamProfiles = leaguePlayerProfiles.filter(p => teamProfileIds.includes(p.id));
 
+      const sortedPlayersByScore = teamPlayers
+        .map(p => p.current_score || 0)
+        .sort((a, b) => a - b)
+        .slice(0, 4);
       // Calculate total score
-      const totalScore = teamPlayers.reduce((sum, player) => sum + (player.current_score || 0), 0);
+      const totalScore = sortedPlayersByScore.reduce((sum, score) => sum + score, 0);
 
       // Get best scores (top 4 player scores)
       const sortedScores = teamPlayers
