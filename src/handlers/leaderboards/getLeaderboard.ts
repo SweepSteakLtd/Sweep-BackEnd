@@ -107,10 +107,16 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
 
     // Set both dates to midnight for accurate day comparison
     const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const startDate = new Date(tournamentStart.getFullYear(), tournamentStart.getMonth(), tournamentStart.getDate());
+    const startDate = new Date(
+      tournamentStart.getFullYear(),
+      tournamentStart.getMonth(),
+      tournamentStart.getDate(),
+    );
 
     // Calculate difference in days
-    const daysDifference = Math.floor((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const daysDifference = Math.floor(
+      (currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+    );
 
     // Determine round format: "1/4", "2/4", "3/4", "4/4", or "Tournament finished"
     let roundDisplay: string;
@@ -144,18 +150,18 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
     let leaguePlayerProfiles: PlayerProfile[] = [];
 
     if (uniquePlayerIds.length > 0) {
-      leaguePlayerProfiles = await database
-        .select()
-        .from(playerProfiles)
-        .where(inArray(playerProfiles.id, uniquePlayerIds))
-        .execute();
-
-      const allPlayerProfileIds = leaguePlayerProfiles.map(profile => profile.id);
-
       leaguePlayers = await database
         .select()
         .from(players)
-        .where(inArray(players.profile_id, allPlayerProfileIds))
+        .where(inArray(players.id, uniquePlayerIds))
+        .execute();
+
+      const allPlayerProfileIds = leaguePlayers.map(player => player.profile_id);
+
+      leaguePlayerProfiles = await database
+        .select()
+        .from(playerProfiles)
+        .where(inArray(playerProfiles.id, allPlayerProfileIds))
         .execute();
     }
 
@@ -167,9 +173,9 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
 
     for (const team of leagueTeams) {
       // Get team players
-      const teamProfiles = leaguePlayerProfiles.filter(p => team.player_ids.includes(p.id));
-      const teamProfileIds = teamProfiles.map(profile => profile.id);
-      const teamPlayers = leaguePlayers.filter(p => teamProfileIds.includes(p.profile_id));
+      const teamPlayers = leaguePlayers.filter(p => team.player_ids.includes(p.id));
+      const teamProfileIds = teamPlayers.map(player => player.profile_id);
+      const teamProfiles = leaguePlayerProfiles.filter(p => teamProfileIds.includes(p.id));
 
       // Calculate total score
       const totalScore = teamPlayers.reduce((sum, player) => sum + (player.current_score || 0), 0);
@@ -183,7 +189,7 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
       // Build players array (only if tournament has started)
       const leaderboardPlayers: LeaderboardPlayer[] = tournamentHasStarted
         ? teamPlayers.map(player => {
-            const profile = leaguePlayerProfiles.find(p => p.id === player.profile_id);
+            const profile = teamProfiles.find(p => p.id === player.profile_id);
             return {
               group: profile?.group || '',
               player_name: profile
@@ -228,11 +234,11 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
 
     // Fixed prize distribution percentages
     const distributionPercentages = [
-      { position: 1, percentage: 0.6 },    // 60%
-      { position: 2, percentage: 0.15 },   // 15%
-      { position: 3, percentage: 0.125 },  // 12.5%
-      { position: 4, percentage: 0.075 },  // 7.5%
-      { position: 5, percentage: 0.05 },   // 5%
+      { position: 1, percentage: 0.6 }, // 60%
+      { position: 2, percentage: 0.15 }, // 15%
+      { position: 3, percentage: 0.125 }, // 12.5%
+      { position: 4, percentage: 0.075 }, // 7.5%
+      { position: 5, percentage: 0.05 }, // 5%
     ];
 
     // Build prize distribution array with calculated amounts (only if tournament has started)
@@ -246,11 +252,13 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
 
     // Assign prizes to teams based on prize distribution (only if tournament has started)
     if (tournamentHasStarted) {
-      prizeDistribution.forEach((prize: { position: number; percentage: number; amount: number }) => {
-        if (prize.position > 0 && prize.position <= leaderboardEntries.length) {
-          leaderboardEntries[prize.position - 1].prize = prize.amount;
-        }
-      });
+      prizeDistribution.forEach(
+        (prize: { position: number; percentage: number; amount: number }) => {
+          if (prize.position > 0 && prize.position <= leaderboardEntries.length) {
+            leaderboardEntries[prize.position - 1].prize = prize.amount;
+          }
+        },
+      );
     }
 
     return res.status(200).send({
@@ -259,7 +267,7 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
         total_pot: totalPot,
         round: roundDisplay,
         prize_distribution: prizeDistribution,
-      }
+      },
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -321,7 +329,8 @@ getLeaderboardHandler.apiDescription = {
                     },
                     players: {
                       type: 'array',
-                      description: 'Team players with their scores and status. Only populated after tournament has started, otherwise empty array.',
+                      description:
+                        'Team players with their scores and status. Only populated after tournament has started, otherwise empty array.',
                       items: {
                         type: 'object',
                         required: ['group', 'player_name', 'score', 'status'],
@@ -352,12 +361,14 @@ getLeaderboardHandler.apiDescription = {
                     bestScore: {
                       type: 'array',
                       items: { type: 'number' },
-                      description: 'Top 4 player scores for this team. Only populated after tournament has started, otherwise empty array.',
+                      description:
+                        'Top 4 player scores for this team. Only populated after tournament has started, otherwise empty array.',
                       example: [-14, -13, -7, -3],
                     },
                     prize: {
                       type: 'number',
-                      description: 'Prize amount if team is in winning position. Only populated after tournament has started, otherwise 0.',
+                      description:
+                        'Prize amount if team is in winning position. Only populated after tournament has started, otherwise 0.',
                       example: 216066,
                     },
                   },
@@ -370,12 +381,14 @@ getLeaderboardHandler.apiDescription = {
               },
               round: {
                 type: 'string',
-                description: 'Current tournament round in format "X/4" (e.g., "1/4", "2/4", "3/4", "4/4") where X is the current round. Returns "Tournament finished" if 5 or more days have passed since tournament start.',
+                description:
+                  'Current tournament round in format "X/4" (e.g., "1/4", "2/4", "3/4", "4/4") where X is the current round. Returns "Tournament finished" if 5 or more days have passed since tournament start.',
                 example: '2/4',
               },
               prize_distribution: {
                 type: 'array',
-                description: 'Prize distribution breakdown showing position, percentage, and amount for each prize tier. Only populated after tournament has started, otherwise empty array.',
+                description:
+                  'Prize distribution breakdown showing position, percentage, and amount for each prize tier. Only populated after tournament has started, otherwise empty array.',
                 items: {
                   type: 'object',
                   required: ['position', 'percentage', 'amount'],
