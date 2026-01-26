@@ -290,6 +290,7 @@ export const tournamentSchema = {
     id: { type: 'string', format: 'uuid', description: 'Unique tournament identifier' },
     external_id: { type: 'string', description: 'External tournament identifier' },
     name: { type: 'string', minLength: 1, maxLength: 200 },
+    short_name: { type: 'string', default: '', maxLength: 50, description: 'Short name for tournament' },
     starts_at: { type: 'string', format: 'date-time', description: 'Tournament start date' },
     finishes_at: { type: 'string', format: 'date-time', description: 'Tournament end date' },
     description: { type: 'string', default: '', maxLength: 2000 },
@@ -333,6 +334,11 @@ export const tournamentSchema = {
     is_finished: {
       type: 'boolean',
       description: 'Whether the tournament has finished',
+    },
+    totalStaked: {
+      type: 'number',
+      minimum: 0,
+      description: 'Total amount staked across all leagues in this tournament',
     },
     created_at: { type: 'string', format: 'date-time' },
     updated_at: { type: 'string', format: 'date-time' },

@@ -7,6 +7,7 @@ import { apiKeyAuth, dataWrapper, standardResponses, tournamentSchema } from '..
 /**
  * Create tournament (admin endpoint)
  * @body name - string - required
+ * @body short_name - string - optional
  * @body starts_at - string - required
  * @body finishes_at - string - required
  * @body description - string - optional
@@ -44,6 +45,7 @@ export const createTournamentHandler = async (req: Request, res: Response, next:
       holes,
       ads,
       name,
+      short_name,
       colours,
       sport,
       rules,
@@ -95,6 +97,7 @@ export const createTournamentHandler = async (req: Request, res: Response, next:
     const createdObject: Tournament = {
       id: createId(),
       name,
+      short_name: short_name || '',
       starts_at,
       finishes_at,
       proposed_entry_fee,
@@ -183,6 +186,7 @@ createTournamentHandler.apiDescription = {
           ],
           properties: {
             name: { type: 'string', minLength: 1, maxLength: 200, description: 'Tournament name' },
+            short_name: { type: 'string', maxLength: 50, nullable: true, description: 'Short name for tournament' },
             starts_at: {
               type: 'string',
               format: 'date-time',

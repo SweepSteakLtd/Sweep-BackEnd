@@ -1,0 +1,1 @@
+ALTER TABLE "Tournament" ADD COLUMN "short_name" text DEFAULT '';

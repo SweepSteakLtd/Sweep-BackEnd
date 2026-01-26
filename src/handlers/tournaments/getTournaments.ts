@@ -1,6 +1,6 @@
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { players, Tournament, tournamentAd, tournamentHole, tournaments } from '../../models';
+import { leagues, players, teams, Tournament, tournamentAd, tournamentHole, tournaments } from '../../models';
 import { database } from '../../services';
 import { apiKeyAuth, arrayDataWrapper, standardResponses, tournamentSchema } from '../schemas';
 
@@ -50,6 +50,22 @@ export const getTournamentsHandler = async (req: Request, res: Response, next: N
         const is_live = startsAt <= now && finishesAt > now;
         const is_finished = finishesAt <= now;
 
+        // Calculate total staked for this tournament
+        const tournamentLeagues = await database
+          .select()
+          .from(leagues)
+          .where(eq(leagues.tournament_id, tournament.id));
+
+        let totalStaked = 0;
+        for (const league of tournamentLeagues) {
+          const leagueTeams = await database
+            .select()
+            .from(teams)
+            .where(eq(teams.league_id, league.id));
+
+          totalStaked += league.entry_fee * leagueTeams.length;
+        }
+
         return {
           ...tournament,
           holes: existingHoles,
@@ -57,6 +73,7 @@ export const getTournamentsHandler = async (req: Request, res: Response, next: N
           players: existingPlayers,
           is_live,
           is_finished,
+          totalStaked,
         };
       }),
     );

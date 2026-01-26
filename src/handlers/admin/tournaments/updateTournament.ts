@@ -8,6 +8,7 @@ import { dataWrapper, standardResponses, tournamentSchema } from '../../schemas'
  * Update tournament (admin endpoint)
  * @params id - required
  * @body name - string - optional
+ * @body short_name - string - optional
  * @body starts_at - string - optional
  * @body finishes_at - string - optional
  * @body description - string - optional
@@ -33,6 +34,7 @@ export const updateTournamentHandler = async (req: Request, res: Response, next:
   try {
     const propertiesAvailableForUpdate: Array<keyof Tournament> = [
       'name',
+      'short_name',
       'description',
       'starts_at',
       'finishes_at',
@@ -156,6 +158,7 @@ updateTournamentHandler.apiDescription = {
           minProperties: 1,
           properties: {
             name: { type: 'string', minLength: 1, maxLength: 200 },
+            short_name: { type: 'string', maxLength: 50, nullable: true, description: 'Short name for tournament' },
             starts_at: { type: 'string', format: 'date-time' },
             finishes_at: { type: 'string', format: 'date-time' },
             proposed_entry_fee: { type: 'integer', minimum: 0 },

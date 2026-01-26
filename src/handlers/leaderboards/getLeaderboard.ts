@@ -118,13 +118,13 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
       (currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
     );
 
-    // Determine round format: "1/4", "2/4", "3/4", "4/4", or "Tournament finished"
+    // Determine round format: "round 1/4", "round 2/4", "round 3/4", "round 4/4", or "Tournament finished"
     let roundDisplay: string;
     if (daysDifference >= 4) {
       roundDisplay = 'Tournament finished';
     } else {
       const roundNumber = Math.max(1, daysDifference + 1);
-      roundDisplay = `${roundNumber}/4`;
+      roundDisplay = `round ${roundNumber}/4`;
     }
 
     const leagueTeams: Team[] = await database
@@ -386,8 +386,8 @@ getLeaderboardHandler.apiDescription = {
               round: {
                 type: 'string',
                 description:
-                  'Current tournament round in format "X/4" (e.g., "1/4", "2/4", "3/4", "4/4") where X is the current round. Returns "Tournament finished" if 5 or more days have passed since tournament start.',
-                example: '2/4',
+                  'Current tournament round in format "round X/4" (e.g., "round 1/4", "round 2/4", "round 3/4", "round 4/4") where X is the current round. Returns "Tournament finished" if 4 or more days have passed since tournament start.',
+                example: 'round 2/4',
               },
               prize_distribution: {
                 type: 'array',
