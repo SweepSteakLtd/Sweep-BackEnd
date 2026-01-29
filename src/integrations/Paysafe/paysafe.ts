@@ -1,6 +1,6 @@
 import { paysafeConfig } from '../../config/paysafe.config';
 import { fetchWithTimeout } from '../../utils/fetchWithTimeout';
-import { PaysafePaymentRequest, PaysafePaymentResponse } from './types';
+import { PaysafePaymentRequest, PaysafePaymentResponse, PaysafeWithdrawalRequest } from './types';
 
 class PaysafeClient {
   private baseUrl: string;
@@ -47,6 +47,47 @@ class PaysafeClient {
       return (await response.json()) as PaysafePaymentResponse;
     } catch (error: any) {
       throw new Error(`Paysafe API Error: ${error.message}`);
+    }
+  }
+
+  /**
+   * Process a withdrawal using original credits endpoint (for iGaming)
+   */
+  async processWithdrawal(
+    withdrawalRequest: PaysafeWithdrawalRequest,
+  ): Promise<PaysafePaymentResponse> {
+    try {
+      const requestBody: any = {
+        merchantRefNum: withdrawalRequest.merchantRefNum,
+        amount: withdrawalRequest.amount,
+        currencyCode: withdrawalRequest.currencyCode,
+        paymentHandleToken: withdrawalRequest.paymentHandleToken,
+        description: withdrawalRequest.description,
+        dupCheck: true,
+      };
+
+      // Add optional billingDetails if provided
+      if (withdrawalRequest.billingDetails) {
+        requestBody.billingDetails = withdrawalRequest.billingDetails;
+      }
+
+      const response = await fetchWithTimeout(`${this.baseUrl}/paymenthub/v1/originalcredits`, {
+        method: 'POST',
+        headers: this.headers,
+        body: JSON.stringify(requestBody),
+        timeout: 30000,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unknown error');
+        throw new Error(
+          `Paysafe Original Credit API request failed: ${response.status} ${response.statusText} - ${errorText}`,
+        );
+      }
+
+      return (await response.json()) as PaysafePaymentResponse;
+    } catch (error: any) {
+      throw new Error(`Paysafe Original Credit API Error: ${error.message}`);
     }
   }
 

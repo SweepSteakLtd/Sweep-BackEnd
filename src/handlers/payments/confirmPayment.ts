@@ -1,23 +1,15 @@
-import { Request, Response, NextFunction } from 'express';
-import { eq, and, sql } from 'drizzle-orm';
-import { database } from '../../services';
-import { transactions, users } from '../../models';
+import { and, eq, sql } from 'drizzle-orm';
+import { NextFunction, Request, Response } from 'express';
 import { paysafeClient } from '../../integrations/Paysafe/paysafe';
+import { transactions, users } from '../../models';
+import { database } from '../../services';
 import { createAuditLog } from '../../services/auditLog';
 import { apiKeyAuth, standardResponses } from '../schemas';
 
-export const confirmPayment = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const confirmPayment = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = res.locals.user;
-    const {
-      transactionId,
-      paymentHandleToken,
-      paymentMethod,
-    } = req.body;
+    const { transactionId, paymentHandleToken, paymentMethod } = req.body;
 
     // Validate input
     if (!transactionId || !paymentHandleToken) {
@@ -32,7 +24,7 @@ export const confirmPayment = async (
       where: and(
         eq(transactions.id, transactionId),
         eq(transactions.user_id, user.id),
-        eq(transactions.payment_status, 'PENDING')
+        eq(transactions.payment_status, 'PENDING'),
       ),
     });
 
@@ -47,13 +39,32 @@ export const confirmPayment = async (
 
     // Process payment with Paysafe
     try {
-      const paymentResult = await paysafeClient.processPayment({
+      console.log(`Processing ${transaction.type} for transaction ${transactionId} with Paysafe...`, {
         merchantRefNum: metadata.merchantRefNum,
         amount: transaction.value,
         currencyCode: metadata.currency || 'GBP',
         paymentHandleToken,
-        description: `Deposit for user ${user.id}`,
+        type: transaction.type,
       });
+
+      // Use different Paysafe endpoints based on transaction type
+      // Withdrawals use original credits endpoint (iGaming), deposits use payments endpoint
+      const paymentResult =
+        transaction.type === 'withdrawal'
+          ? await paysafeClient.processWithdrawal({
+              merchantRefNum: metadata.merchantRefNum,
+              amount: transaction.value,
+              currencyCode: metadata.currency || 'GBP',
+              paymentHandleToken,
+              description: `Withdrawal for user ${user.id}`,
+            })
+          : await paysafeClient.processPayment({
+              merchantRefNum: metadata.merchantRefNum,
+              amount: transaction.value,
+              currencyCode: metadata.currency || 'GBP',
+              paymentHandleToken,
+              description: `Deposit for user ${user.id}`,
+            });
 
       if (paymentResult.status === 'COMPLETED') {
         // Payment successful - update transaction status
@@ -74,11 +85,17 @@ export const confirmPayment = async (
           .where(eq(transactions.id, transactionId))
           .execute();
 
-        // Update user balance (separate operation - not atomic!)
+        // Update user balance based on transaction type (separate operation - not atomic!)
+        // For deposits: add to balance, for withdrawals: subtract from balance
+        const balanceOperation =
+          transaction.type === 'withdrawal'
+            ? sql`${users.current_balance} - ${transaction.value}`
+            : sql`${users.current_balance} + ${transaction.value}`;
+
         await database
           .update(users)
           .set({
-            current_balance: sql`${users.current_balance} + ${transaction.value}`,
+            current_balance: balanceOperation,
             updated_at: new Date(),
           })
           .where(eq(users.id, user.id))
@@ -87,12 +104,13 @@ export const confirmPayment = async (
         // Audit log
         await createAuditLog({
           userId: user.id,
-          action: 'PAYMENT_COMPLETED',
+          action: transaction.type === 'withdrawal' ? 'WITHDRAWAL_COMPLETED' : 'PAYMENT_COMPLETED',
           entityType: 'transaction',
           entityId: transactionId,
           metadata: {
             chargeId: paymentResult.id,
             amount: transaction.value,
+            type: transaction.type,
           },
           req,
         });

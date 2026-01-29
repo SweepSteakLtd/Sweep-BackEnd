@@ -78,11 +78,16 @@ async function handlePaymentCompleted(payload: PaysafeWebhookPayload, req: Reque
     .where(eq(transactions.id, transaction.id))
     .execute();
 
-  // Update user balance (separate operation - not atomic!)
+  // Update user balance based on transaction type (separate operation - not atomic!)
+  // For deposits: add to balance, for withdrawals: subtract from balance
+  const balanceOperation = transaction.type === 'withdrawal'
+    ? sql`${users.current_balance} - ${transaction.value}`
+    : sql`${users.current_balance} + ${transaction.value}`;
+
   await database
     .update(users)
     .set({
-      current_balance: sql`${users.current_balance} + ${transaction.value}`,
+      current_balance: balanceOperation,
       updated_at: new Date(),
     })
     .where(eq(users.id, transaction.user_id))

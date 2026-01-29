@@ -50,6 +50,7 @@ import {
 } from '../handlers';
 import {
   initiatePayment,
+  initiateWithdrawal,
   confirmPayment,
   webhookHandler,
   getPublicKey,
@@ -262,6 +263,11 @@ export const routes: RouteDescription[] = [
         method: 'post',
         name: '/initiate',
         stack: [AuthenticateMiddleware, CheckSelfExclusionMiddleware, initiatePayment],
+      },
+      {
+        method: 'post',
+        name: '/initiate-withdrawal',
+        stack: [AuthenticateMiddleware, CheckSelfExclusionMiddleware, initiateWithdrawal],
       },
       {
         method: 'post',
