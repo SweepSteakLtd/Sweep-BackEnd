@@ -21,8 +21,8 @@ test('getPlayersByTournamentHandler - returns all players when no tournament_id'
   const req = { params: {} } as unknown as Request;
 
   const players = [
-    { id: 'p1', external_id: 'ext1', level: 1 },
-    { id: 'p2', external_id: 'ext2', level: 2 },
+    { id: 'p1', external_ids: { datagolf: 27644 }, level: 1 },
+    { id: 'p2', external_ids: { datagolf: 10959 }, level: 2 },
   ];
 
   jest.spyOn(database as any, 'select').mockImplementation(() => ({

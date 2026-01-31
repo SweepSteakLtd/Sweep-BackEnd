@@ -33,10 +33,17 @@ interface DataGolfFieldPlayer {
 
 const DATAGOLF_API_KEY = process.env.DATAGOLF_API_KEY;
 const DATAGOLF_BASE_URL = 'https://feeds.datagolf.com';
+const LIVE_GOLF_DATA_API_KEY = process.env.LIVE_GOLF_DATA_API_KEY;
+const LIVE_GOLF_DATA_BASE_URL = 'https://live-golf-data.p.rapidapi.com';
 
 if (!DATAGOLF_API_KEY) {
   console.error('ERROR: DATAGOLF_API_KEY environment variable is not set');
   process.exit(1);
+}
+
+if (!LIVE_GOLF_DATA_API_KEY) {
+  console.warn('WARNING: LIVE_GOLF_DATA_API_KEY environment variable is not set');
+  console.warn('Live Golf Data integration will be skipped');
 }
 
 async function fetchPlayerList(): Promise<DataGolfPlayerListItem[]> {
@@ -107,7 +114,19 @@ async function fetchTournamentField(
 }
 
 function splitPlayerName(fullName: string): { firstName: string; lastName: string } {
-  const parts = fullName.trim().split(' ');
+  const trimmedName = fullName.trim();
+
+  // Check if name is in "Last, First" format (DataGolf format)
+  if (trimmedName.includes(',')) {
+    const parts = trimmedName.split(',').map(part => part.trim());
+    return {
+      firstName: parts[1] || '',
+      lastName: parts[0] || '',
+    };
+  }
+
+  // Otherwise assume "First Last" format
+  const parts = trimmedName.split(' ');
 
   if (parts.length === 1) {
     return { firstName: parts[0], lastName: '' };
@@ -303,54 +322,114 @@ async function upsertPlayerProfile(
   }
 }
 
+async function fetchLiveGolfDataPlayerId(
+  firstName: string,
+  lastName: string,
+): Promise<string | null> {
+  if (!LIVE_GOLF_DATA_API_KEY) {
+    return null;
+  }
+
+  try {
+    const endpoint = '/players';
+    const response = await axios.get(`${LIVE_GOLF_DATA_BASE_URL}${endpoint}`, {
+      params: {
+        firstName,
+        lastName,
+      },
+      headers: {
+        'x-rapidapi-host': 'live-golf-data.p.rapidapi.com',
+        'x-rapidapi-key': LIVE_GOLF_DATA_API_KEY,
+      },
+      timeout: 10000,
+    });
+
+    if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+      const playerId = response.data[0].playerId;
+      console.log(`   ✅ Found Live Golf Data ID: ${playerId}`);
+      return playerId;
+    }
+
+    console.log(`   ⚠️  No Live Golf Data match found`);
+    return null;
+  } catch (error: any) {
+    console.error(`   ⚠️  Error fetching Live Golf Data ID:`, error.message);
+    return null;
+  }
+}
+
 async function upsertPlayer(
   dgId: number,
+  liveGolfDataId: string | null,
   profileId: string,
   level: number = 1,
-  eventId: string,
-): Promise<string | null> {
+  databaseTournamentId: string,
+): Promise<{ id: string; hadLiveGolfDataId: boolean } | null> {
   try {
-    const existingPlayers = await database
+    // Get all players for this tournament and filter by datagolf ID
+    const allPlayers = await database
       .select()
       .from(players)
-      .where(eq(players.external_id, String(dgId)))
+      .where(eq(players.tournament_id, databaseTournamentId))
       .execute();
 
-    const existingPlayer = existingPlayers.find(
-      (p: Player) => p.profile_id === profileId && p.tournament_id === eventId,
+    const existingPlayer = allPlayers.find(
+      (p: Player) => p.profile_id === profileId && p.external_ids?.datagolf === dgId,
     );
 
+    const externalIds: any = { datagolf: dgId };
+
     if (existingPlayer) {
+      // Preserve existing liveGolfData ID if it exists, otherwise use the new one
+      const existingLiveGolfDataId = existingPlayer.external_ids?.liveGolfData;
+      if (existingLiveGolfDataId) {
+        externalIds.liveGolfData = existingLiveGolfDataId;
+      } else if (liveGolfDataId) {
+        externalIds.liveGolfData = liveGolfDataId;
+      }
+
       await database
         .update(players)
         .set({
           profile_id: profileId,
           level: level,
+          external_ids: externalIds,
           updated_at: new Date(),
         })
-        .where(and(eq(players.id, existingPlayer.id), eq(players.tournament_id, eventId)))
+        .where(and(eq(players.id, existingPlayer.id), eq(players.tournament_id, databaseTournamentId)))
         .execute();
 
       console.log(`   ↳ Updated player entry (ID: ${existingPlayer.id})`);
-      return existingPlayer.id;
+      return {
+        id: existingPlayer.id,
+        hadLiveGolfDataId: !!existingLiveGolfDataId,
+      };
     } else {
+      // New player - add liveGolfDataId if provided
+      if (liveGolfDataId) {
+        externalIds.liveGolfData = liveGolfDataId;
+      }
+
       const playerId = generateId();
       const newPlayer = {
         id: playerId,
-        external_id: String(dgId),
+        external_ids: externalIds,
         level: level,
         profile_id: profileId,
         current_score: 0,
         position: 0,
         missed_cut: false,
         odds: 0,
-        tournament_id: eventId,
+        tournament_id: databaseTournamentId,
       };
 
       await database.insert(players).values(newPlayer).execute();
 
       console.log(`   ↳ Created player entry (ID: ${playerId})`);
-      return playerId;
+      return {
+        id: playerId,
+        hadLiveGolfDataId: false,
+      };
     }
   } catch (error: any) {
     console.error(`❌ Error upserting player for profile ${profileId}:`, error.message);
@@ -380,20 +459,28 @@ async function main() {
     await ensureDatabaseReady();
     console.log('✅ Database connection established\n');
 
-    const databaseTournamentTour = await database
-      .select(tournaments)
+    // Fetch tournament from database using external_id
+    const databaseTournament = await database
+      .select()
       .from(tournaments)
       .where(eq(tournaments.external_id, args[0]))
       .execute();
 
-    console.log(
-      `📋 Fetching tournament field for event ${tournamentId}...`,
-      databaseTournamentTour[0].tour,
-    );
-    const tournamentField = await fetchTournamentField(
-      tournamentId,
-      databaseTournamentTour[0].tour || 'pga',
-    );
+    if (databaseTournament.length === 0) {
+      console.error(`❌ Tournament with external_id "${args[0]}" not found in database`);
+      console.log('Please create the tournament first before syncing players.');
+      process.exit(1);
+    }
+
+    const tournament = databaseTournament[0];
+    const databaseTournamentId = tournament.id; // Internal database ID
+    const tour = tournament.tour || 'pga';
+
+    console.log(`📋 Fetching tournament field for event ${tournamentId}...`);
+    console.log(`   Tournament: ${tournament.name} (DB ID: ${databaseTournamentId})`);
+    console.log(`   Tour: ${tour}`);
+
+    const tournamentField = await fetchTournamentField(tournamentId, tour);
 
     if (tournamentField.length === 0) {
       console.error('❌ No players found in tournament field');
@@ -428,6 +515,8 @@ async function main() {
 
     let successCount = 0;
     let missingDataCount = 0;
+    let liveGolfDataMatchCount = 0;
+    let liveGolfDataNewlyAdded = 0;
     const playerIds: string[] = [];
 
     for (const fieldPlayer of tournamentField) {
@@ -483,9 +572,44 @@ async function main() {
 
         successCount++;
       }
-      const playerId = await upsertPlayer(dgId, profileResult.id, level, tournamentId);
-      if (playerId) {
-        playerIds.push(playerId);
+
+      // Check if player already exists in this tournament (using database tournament ID)
+      const existingPlayers = await database
+        .select()
+        .from(players)
+        .where(eq(players.tournament_id, databaseTournamentId))
+        .execute();
+
+      const existingPlayer = existingPlayers.find(
+        (p: Player) => p.profile_id === profileResult?.id && p.external_ids?.datagolf === dgId,
+      );
+
+      // Fetch Live Golf Data ID only if player doesn't have one
+      let liveGolfDataId: string | null = null;
+      const { firstName, lastName } = splitPlayerName(playerData.player_name);
+
+      if (existingPlayer?.external_ids?.liveGolfData) {
+        console.log(
+          `   ✓ Player already has Live Golf Data ID: ${existingPlayer.external_ids.liveGolfData}`,
+        );
+        liveGolfDataMatchCount++;
+      } else {
+        liveGolfDataId = await fetchLiveGolfDataPlayerId(firstName, lastName);
+        if (liveGolfDataId) {
+          liveGolfDataMatchCount++;
+          liveGolfDataNewlyAdded++;
+        }
+      }
+
+      const playerResult = await upsertPlayer(
+        dgId,
+        liveGolfDataId,
+        profileResult.id,
+        level,
+        databaseTournamentId,
+      );
+      if (playerResult) {
+        playerIds.push(playerResult.id);
       }
     }
 
@@ -494,6 +618,9 @@ async function main() {
     console.log('='.repeat(60));
     console.log(`✅ Successfully processed: ${successCount} players`);
     console.log(`⚠️  Missing data: ${missingDataCount} players`);
+    console.log(`🏌️  Live Golf Data total matches: ${liveGolfDataMatchCount} players`);
+    console.log(`   ├─ Newly added: ${liveGolfDataNewlyAdded} players`);
+    console.log(`   └─ Already existed: ${liveGolfDataMatchCount - liveGolfDataNewlyAdded} players`);
     console.log(`📋 Total in field: ${tournamentField.length} players`);
     console.log('='.repeat(60));
 

@@ -34,7 +34,7 @@ const mockInsertExecute = (shouldThrow = false) => {
   }
 };
 
-test('createPlayerHandler - returns 422 when external_id is missing', async () => {
+test('createPlayerHandler - creates player without external_ids (defaults to {})', async () => {
   const res = mockResponse();
   const req = {
     body: {
@@ -44,20 +44,28 @@ test('createPlayerHandler - returns 422 when external_id is missing', async () =
     },
   } as unknown as Request;
 
+  mockInsertExecute(false);
+
   await createPlayerHandler(req, res, mockNext);
 
-  expect(res.status).toHaveBeenCalledWith(422);
-  expect(res.send).toHaveBeenCalledWith({
-    error: 'Invalid request body',
-    message: 'Missing required field: external_id',
-  });
+  expect(res.status).toHaveBeenCalledWith(201);
+  expect(res.send).toHaveBeenCalledWith(
+    expect.objectContaining({
+      data: expect.objectContaining({
+        external_ids: {},
+        level: 4,
+        profile_id: 'profile_123',
+        tournament_id: 'tournament_123',
+      }),
+    }),
+  );
 });
 
 test('createPlayerHandler - returns 422 when level is missing', async () => {
   const res = mockResponse();
   const req = {
     body: {
-      external_id: 'ext_123',
+      external_ids: { datagolf: 12345 },
       profile_id: 'profile_123',
       tournament_id: 'tournament_123',
     },
@@ -76,7 +84,7 @@ test('createPlayerHandler - returns 422 when profile_id is missing', async () =>
   const res = mockResponse();
   const req = {
     body: {
-      external_id: 'ext_123',
+      external_ids: { datagolf: 12345 },
       level: 4,
       tournament_id: 'tournament_123',
     },
@@ -95,7 +103,7 @@ test('createPlayerHandler - returns 422 when tournament_id is missing', async ()
   const res = mockResponse();
   const req = {
     body: {
-      external_id: 'ext_123',
+      external_ids: { datagolf: 12345 },
       level: 4,
       profile_id: 'profile_123',
     },
@@ -114,7 +122,7 @@ test('createPlayerHandler - creates player with required fields and returns 201'
   const res = mockResponse();
   const req = {
     body: {
-      external_id: 'ext_player_001',
+      external_ids: { datagolf: 27644 },
       level: 4,
       profile_id: 'profile_tiger_woods',
       tournament_id: 'tournament_masters_2025',
@@ -129,7 +137,7 @@ test('createPlayerHandler - creates player with required fields and returns 201'
   expect(res.send).toHaveBeenCalledWith(
     expect.objectContaining({
       data: expect.objectContaining({
-        external_id: 'ext_player_001',
+        external_ids: { datagolf: 27644 },
         level: 4,
         profile_id: 'profile_tiger_woods',
         tournament_id: 'tournament_masters_2025',
@@ -145,7 +153,7 @@ test('createPlayerHandler - creates player with all fields and returns 201', asy
   const res = mockResponse();
   const req = {
     body: {
-      external_id: 'ext_player_001',
+      external_ids: { datagolf: 27644 },
       level: 4,
       current_score: 72,
       position: 5,
@@ -165,7 +173,7 @@ test('createPlayerHandler - creates player with all fields and returns 201', asy
   expect(res.send).toHaveBeenCalledWith(
     expect.objectContaining({
       data: expect.objectContaining({
-        external_id: 'ext_player_001',
+        external_ids: { datagolf: 27644 },
         level: 4,
         current_score: 72,
         position: 5,
@@ -186,7 +194,7 @@ test('createPlayerHandler - returns 500 on DB error', async () => {
   const res = mockResponse();
   const req = {
     body: {
-      external_id: 'ext_player_001',
+      external_ids: { datagolf: 27644 },
       level: 4,
       profile_id: 'profile_tiger_woods',
       tournament_id: 'tournament_masters_2025',

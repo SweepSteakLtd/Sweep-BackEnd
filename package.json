@@ -1,6 +1,6 @@
 {
   "name": "sweepsteak-backend",
-  "version": "1.0.137",
+  "version": "1.0.138",
   "description": "New backend project starter",
   "main": "build/index.js",
   "private": "true",
@@ -21,7 +21,9 @@
     "test": "yarn jest",
     "update:players": "ts-node src/scripts/updatePlayerScores.ts",
     "sync:player-profiles": "ts-node src/scripts/syncPlayerProfiles.ts",
+    "create:tournament": "ts-node src/scripts/createTournamentFromDataGolf.ts",
     "recheck:gamstop": "ts-node src/scripts/recheckGamstopStatus.ts",
+    "process:tournaments": "ts-node src/scripts/processFinishedTournaments.ts",
     "test:gamstop": "ts-node src/integrations/Gamstop/testGamstopRegistrations.ts",
     "ts-check": "yarn tsc --noEmit",
     "format": "prettier --write \"src/**/*.{ts,js,json}\" \"*.{ts,js,json}\"",

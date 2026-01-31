@@ -70,7 +70,7 @@ getPlayersByTournamentHandler.apiDescription = {
                 data: [
                   {
                     id: 'player_abc123',
-                    external_id: 'ext_player_001',
+                    external_ids: { datagolf: 27644 },
                     level: 4,
                     current_score: -5,
                     position: 12,
@@ -83,7 +83,7 @@ getPlayersByTournamentHandler.apiDescription = {
                   },
                   {
                     id: 'player_def456',
-                    external_id: 'ext_player_002',
+                    external_ids: { datagolf: 10959 },
                     level: 5,
                     current_score: -8,
                     position: 3,

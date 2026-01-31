@@ -1084,12 +1084,7 @@
                     "proposed_entry_fee": 50,
                     "maximum_cut_amount": 1000,
                     "maximum_score_generator": 300,
-                    "players": [
-                      {
-                        "id": "player123",
-                        "level": 1
-                      }
-                    ],
+                    "players": ["player_abc123", "player_def456"],
                     "created_at": "2024-01-01T00:00:00Z",
                     "updated_at": "2024-01-01T00:00:00Z"
                   }
@@ -1171,12 +1166,7 @@
                   "proposed_entry_fee": 50,
                   "maximum_cut_amount": 1000,
                   "maximum_score_generator": 300,
-                  "players": [
-                    {
-                      "id": "player123",
-                      "level": 1
-                    }
-                  ],
+                  "players": ["player_abc123", "player_def456"],
                   "created_at": "2024-01-01T00:00:00Z",
                   "updated_at": "2024-01-01T00:00:00Z"
                 }
@@ -1262,12 +1252,7 @@
                 "proposed_entry_fee": 50,
                 "maximum_cut_amount": 1000,
                 "maximum_score_generator": 300,
-                "players": [
-                  {
-                    "id": "player123",
-                    "level": 1
-                  }
-                ]
+                "players": ["player_abc123", "player_def456"]
               }
             }
           },

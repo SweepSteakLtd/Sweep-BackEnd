@@ -35,7 +35,7 @@ export const mockPlayerAttempts: PlayerAttemptData[] = [
 export const mockPlayers: Player[] = [
   {
     id: 'player_1',
-    external_id: 'ext_tiger_woods',
+    external_ids: { datagolf: 27644 },
     level: 95,
     current_score: -8,
     position: 1,
@@ -49,7 +49,7 @@ export const mockPlayers: Player[] = [
   },
   {
     id: 'player_2',
-    external_id: 'ext_rory_mcilroy',
+    external_ids: { datagolf: 10959 },
     level: 92,
     current_score: -6,
     position: 2,
@@ -71,7 +71,7 @@ export const mockPlayers: Player[] = [
   },
   {
     id: 'player_3',
-    external_id: 'ext_jon_rahm',
+    external_ids: { datagolf: 8793 },
     level: 90,
     current_score: -4,
     position: 3,

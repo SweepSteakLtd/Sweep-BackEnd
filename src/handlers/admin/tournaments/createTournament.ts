@@ -29,7 +29,7 @@ import { apiKeyAuth, dataWrapper, standardResponses, tournamentSchema } from '..
  * @body tour - enum (pga, euro, kft, opp, alt, major) - optional - defaults to 'pga'
  * @returns Tournament
  */
-export const createTournamentHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const createTournamentHandler = async (req: Request, res: Response, _next: NextFunction) => {
   try {
     const {
       starts_at,
@@ -117,6 +117,7 @@ export const createTournamentHandler = async (req: Request, res: Response, next:
       external_id,
       course_name: course_name || '',
       tour: tour || 'pga',
+      status: 'active',
       created_at: new Date(),
       updated_at: new Date(),
     };
@@ -148,7 +149,7 @@ export const createTournamentHandler = async (req: Request, res: Response, next:
 createTournamentHandler.apiDescription = {
   summary: 'Create tournament (Admin)',
   description:
-    'Admin endpoint to create a new golf tournament with schedule, fees, and player assignments.',
+    'Admin endpoint to create a new golf tournament with schedule, fees, and player assignments. New tournaments are created with status="active" by default and will be automatically processed for rewards when they finish.',
   operationId: 'adminCreateTournament',
   tags: ['admin', 'tournaments'],
   responses: {

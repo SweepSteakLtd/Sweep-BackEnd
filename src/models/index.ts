@@ -43,6 +43,12 @@ interface DepositLimit {
   monthly: number | null;
 }
 
+export interface PlayerExternalIds {
+  datagolf?: number;
+  liveGolfData?: string;
+  [provider: string]: number | string | undefined;
+}
+
 // Main Tables
 export const users = pgTable('Users', {
   id: text('id').primaryKey().notNull(), // required
@@ -89,7 +95,7 @@ export const playerProfiles = pgTable('PlayerProfile', {
 
 export const players = pgTable('Player', {
   id: text('id').primaryKey().notNull(), // required
-  external_id: text('external_id').notNull(), // required
+  external_ids: jsonb('external_ids').$type<PlayerExternalIds>().default({}), // optional, default {}
   level: integer('level').notNull(), // required
   current_score: integer('current_score').default(0), // optional, default 0
   position: integer('position').default(0), // optional, default 0
@@ -147,6 +153,7 @@ export const tournaments = pgTable('Tournament', {
   instructions: text('instructions').array().default([]), // optional, default []
   course_name: text('course_name').default(''), // optional, default ""
   tour: text('tour').default('pga'), // optional, default "" => can be pga, euro, kft, opp, alt, major
+  status: text('status').default('active'), // optional, default "active" => can be active, processing, finished, cancelled
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });

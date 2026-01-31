@@ -112,7 +112,7 @@ export const getAllTournamentsHandler = async (req: Request, res: Response, next
 getAllTournamentsHandler.apiDescription = {
   summary: 'Get all tournaments (Admin)',
   description:
-    'Admin endpoint to retrieve all tournaments with optional status filtering. Returns tournaments with resolved holes, ads, and players.',
+    'Admin endpoint to retrieve all tournaments with optional time-based status filtering (upcoming/ongoing/finished based on start/end dates). Returns tournaments with resolved holes, ads, and players. Note: This query parameter filters by time-based status, not the tournament.status database field (active/processing/finished/cancelled).',
   operationId: 'adminGetAllTournaments',
   tags: ['admin', 'tournaments'],
   responses: {
@@ -136,7 +136,7 @@ getAllTournamentsHandler.apiDescription = {
         type: 'string',
         enum: ['upcoming', 'ongoing', 'finished'],
       },
-      description: 'Filter tournaments by status (upcoming, ongoing, or finished)',
+      description: 'Filter tournaments by time-based status: upcoming (starts_at > now), ongoing (starts_at <= now && finishes_at > now), finished (finishes_at <= now). This is different from the tournament.status database field which tracks reward processing status.',
       example: 'ongoing',
     },
   ],

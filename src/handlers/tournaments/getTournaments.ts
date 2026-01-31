@@ -90,7 +90,7 @@ export const getTournamentsHandler = async (req: Request, res: Response, next: N
 getTournamentsHandler.apiDescription = {
   summary: 'Get all tournaments',
   description:
-    'Retrieves all tournaments with complete details including holes, ads, and players. Each tournament includes its full nested data. Optionally filter by tour type.',
+    'Retrieves all tournaments with complete details including holes, ads, and players. Each tournament includes its full nested data plus computed fields (is_live, is_finished, totalStaked). Optionally filter by tour type. The tournament.status field indicates reward processing status (active/processing/finished/cancelled).',
   operationId: 'getTournaments',
   tags: ['tournaments'],
   parameters: [

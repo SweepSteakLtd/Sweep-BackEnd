@@ -318,6 +318,232 @@ Potential improvements:
 - [ ] Add Slack/Discord notifications for errors
 - [ ] Track and log API usage/rate limits
 
+---
+
+## Tournament Creation Script
+
+The `createTournamentFromDataGolf.ts` script fetches tournament schedules from DataGolf API and creates tournaments in your database with all required fields pre-populated.
+
+### Overview
+
+- Fetches tournament schedules from DataGolf API for any supported tour
+- Displays available tournaments with dates, courses, and IDs
+- Creates tournament records in the database with proper structure
+- Automatically populates game-specific fields (entry fees, rules, etc.)
+- Supports all major tours: PGA, European Tour, Korn Ferry, and more
+
+### Usage
+
+```bash
+# Show all tournaments for current season (PGA Tour by default)
+yarn create:tournament
+
+# Show tournaments for a specific tour and season
+yarn create:tournament pga 2025
+
+# Show only upcoming tournaments
+yarn create:tournament pga 2025 --upcoming
+
+# Create a specific tournament by event ID
+yarn create:tournament pga 2025 12        # Create The Masters
+yarn create:tournament euro 2025 478      # Create European Tour event
+```
+
+### Tour Options
+
+| Tour Code | Description |
+|-----------|-------------|
+| `pga` | PGA Tour |
+| `euro` | DP World Tour (European Tour) |
+| `kft` | Korn Ferry Tour |
+| `opp` | International Tours |
+| `alt` | Alternative/LIV Tour |
+
+### What It Does
+
+1. **Fetches Schedule**: Retrieves tournament schedule from DataGolf's `/preds/schedule` endpoint
+2. **Displays Tournaments**: Shows a formatted list of all available tournaments
+3. **Creates Tournament**: When given an event ID, creates a tournament record with:
+   - Basic info (name, dates, course, country)
+   - Game settings (entry fees, cut amounts, scoring limits)
+   - Default rules and instructions
+   - Tour-specific configuration
+   - Custom color scheme for the tournament
+
+### Tournament Fields Populated
+
+#### From DataGolf API:
+- `external_id` - DataGolf event ID (for matching with live data)
+- `name` - Full tournament name
+- `short_name` - Abbreviated name (auto-generated if > 30 chars)
+- `starts_at` - Tournament start date
+- `finishes_at` - Tournament end date
+- `course_name` - Golf course name
+- `tour` - Tour type (pga, euro, kft, opp, alt)
+
+#### Game-Specific Defaults:
+- `proposed_entry_fee` - 1000 (10.00 in cents)
+- `maximum_cut_amount` - 5000 (50.00 in cents)
+- `maximum_score_generator` - 400 points
+- `players` - Empty array (populate with `sync:player-profiles`)
+- `rules` - Default game rules array
+- `colours` - Green theme for golf tournaments
+
+#### Optional Fields:
+- `description` - Auto-generated from tournament and course name
+- `url` - Empty (can be added manually)
+- `cover_picture` - Empty (can be added manually)
+- `gallery` - Empty array
+- `holes` - Empty array (can be populated separately)
+- `ads` - Empty array
+- `instructions` - Empty array
+
+### Example Output
+
+```bash
+$ yarn create:tournament pga 2025 12
+
+🏌️  DataGolf Tournament Creator
+
+⏳ Connecting to database...
+✅ Database connected
+
+📡 Fetching PGA tournament schedule for 2025...
+✅ Found 47 tournaments
+
+📌 Creating tournament: The Masters
+
+✅ Tournament created successfully!
+   ID: cm3k5x8y9000008l4abcd1234
+   External ID: 12
+   Name: The Masters
+   Tour: PGA
+   Dates: 4/10/2025 - 4/13/2025
+
+✨ Done! Tournament ID: cm3k5x8y9000008l4abcd1234
+```
+
+### Browse Available Tournaments
+
+To see all available tournaments without creating one:
+
+```bash
+$ yarn create:tournament pga 2025
+
+📋 Available Tournaments:
+
+════════════════════════════════════════════════════════════════════════════
+  1. The Sentry
+     ID: 570 | Tour: PGA
+     Course: Kapalua Resort (USA)
+     Dates: 1/2/2025 - 1/5/2025
+────────────────────────────────────────────────────────────────────────────
+  2. Sony Open in Hawaii
+     ID: 571 | Tour: PGA
+     Course: Waialae Country Club (USA)
+     Dates: 1/9/2025 - 1/12/2025
+────────────────────────────────────────────────────────────────────────────
+  3. The Masters
+     ID: 12 | Tour: PGA
+     Course: Augusta National Golf Club (USA)
+     Dates: 4/10/2025 - 4/13/2025
+────────────────────────────────────────────────────────────────────────────
+[... more tournaments ...]
+```
+
+### Show Only Upcoming Tournaments
+
+Use the `--upcoming` or `-u` flag to filter for future tournaments only:
+
+```bash
+$ yarn create:tournament pga 2025 --upcoming
+
+📡 Fetching PGA tournament schedule for 2025 (upcoming only)...
+✅ Found 23 tournaments
+
+📋 Available Tournaments:
+[... only shows tournaments that haven't started yet ...]
+
+💡 Usage:
+   npm run create-tournament <tour> <season> <event_id> [--upcoming]
+```
+
+This is perfect for planning ahead and creating tournaments before they start!
+
+### Workflow
+
+1. **Browse Tournaments**: Run without event ID to see all available tournaments
+2. **Select Tournament**: Note the `event_id` of the tournament you want to create
+3. **Create Tournament**: Run again with the specific event ID
+4. **Sync Players**: Use `yarn sync:player-profiles <event_id>` to add players
+5. **Monitor Scores**: The `update:players` script will automatically update scores
+
+### Customization
+
+To customize tournament settings, modify the options in the script:
+
+```typescript
+const tournamentId = await createTournament(tournament, {
+  proposedEntryFee: 1000,      // $10.00 entry fee
+  maximumCutAmount: 5000,      // $50.00 maximum
+  maximumScoreGenerator: 400,  // Max 400 points
+  description: 'Custom description',
+  coverPicture: 'https://...',
+  rules: ['Custom rule 1', 'Custom rule 2'],
+});
+```
+
+### Next Steps After Creating a Tournament
+
+1. **Add Players**:
+   ```bash
+   yarn sync:player-profiles 12
+   ```
+
+2. **Verify Tournament**:
+   - Check your database to confirm the tournament was created
+   - Review the `external_id` matches the DataGolf event ID
+   - Verify dates are correct
+
+3. **Update Scores** (during tournament):
+   ```bash
+   yarn update:players
+   ```
+
+### Error Handling
+
+Common issues:
+
+#### "Invalid tour: xyz"
+**Solution**: Use valid tour codes: `pga`, `euro`, `kft`, `opp`, or `alt`
+
+#### "Tournament with ID 'X' not found"
+**Solution**:
+- Run without event ID to see available tournaments
+- Verify the event ID exists in the schedule
+- Check you're using the correct tour and year
+
+#### "DATAGOLF_API_KEY not set"
+**Solution**: Add your DataGolf API key to `.env` file
+
+### DataGolf API Integration
+
+The script uses the **Get Schedule endpoint**:
+- **URL**: `https://feeds.datagolf.com/get-schedule`
+- **Parameters**:
+  - `tour` - Tour type (pga, euro, kft, opp, alt)
+  - `season` - Season year (defaults to current year)
+  - `upcoming_only` - Optional flag to show only future tournaments
+  - `file_format=json`
+  - `key` - Your API key
+
+### Best Practices
+
+1. **Create tournaments ahead of time**: Create tournaments before they start to allow time for player sync
+2. **Use correct event IDs**: Always verify event ID from the schedule before creating
+3. **One tournament per event**: Don't create duplicate tournaments for the same event
+4. **Sync players after creation**: Always run player sync after creating a tournament
+
 ## Support
 
 For issues or questions:

@@ -211,6 +211,13 @@ updateTournamentHandler.apiDescription = {
               description:
                 'Tournament tour type: pga (PGA Tour), euro (European Tour), kft (Korn Ferry Tour), opp (opposite field), alt (alternate event), major (Major Championship)',
             },
+            status: {
+              type: 'string',
+              enum: ['active', 'processing', 'finished', 'cancelled'],
+              nullable: true,
+              description:
+                'Tournament processing status: active (not yet processed), processing (currently being processed for rewards), finished (rewards processed), cancelled (cancelled tournament). Normally set automatically by the tournament processing script.',
+            },
           },
         },
       },

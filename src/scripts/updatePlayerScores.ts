@@ -1,7 +1,7 @@
 import axios from 'axios';
 import * as dotenv from 'dotenv';
 import { and, eq, gte, inArray, lte } from 'drizzle-orm';
-import { players, Tournament, tournaments } from '../models';
+import { leagues, players, teams, Tournament, tournaments } from '../models';
 import { database, ensureDatabaseReady } from '../services';
 dotenv.config();
 
@@ -103,6 +103,51 @@ async function getActiveTournaments(): Promise<Tournament[]> {
   }
 }
 
+async function getPlayerIdsInLeagueTeams(tournamentId: string): Promise<string[]> {
+  try {
+    // Find all leagues for this tournament
+    const tournamentLeagues = await database
+      .select()
+      .from(leagues)
+      .where(eq(leagues.tournament_id, tournamentId))
+      .execute();
+
+    if (tournamentLeagues.length === 0) {
+      console.log(`  ℹ️  No leagues found for tournament ${tournamentId}`);
+      return [];
+    }
+
+    console.log(`  📋 Found ${tournamentLeagues.length} leagues for this tournament`);
+
+    const leagueIds = tournamentLeagues.map(league => league.id);
+
+    // Find all teams in these leagues
+    const leagueTeams = await database
+      .select()
+      .from(teams)
+      .where(inArray(teams.league_id, leagueIds))
+      .execute();
+
+    console.log(`  👥 Found ${leagueTeams.length} teams across all leagues`);
+
+    // Collect all unique player IDs from teams
+    const playerIdsSet = new Set<string>();
+    leagueTeams.forEach(team => {
+      if (team.player_ids && Array.isArray(team.player_ids)) {
+        team.player_ids.forEach(playerId => playerIdsSet.add(playerId));
+      }
+    });
+
+    const uniquePlayerIds = Array.from(playerIdsSet);
+    console.log(`  🏌️  Found ${uniquePlayerIds.length} unique players in teams`);
+
+    return uniquePlayerIds;
+  } catch (error: any) {
+    console.error('Error fetching player IDs from league teams:', error.message);
+    return [];
+  }
+}
+
 function parsePosition(position: string | number | undefined): number {
   if (position === undefined || position === null) return 0;
 
@@ -125,20 +170,22 @@ async function updateTournamentPlayers(
       `Live Event: ${liveData.event_name || 'Unknown'} (ID: ${liveData.event_id || 'Unknown'})`,
     );
 
-    const playerIds = tournament.players;
+    // Get player IDs that are in league teams
+    const playerIdsInTeams = await getPlayerIdsInLeagueTeams(tournament.id);
 
-    if (!playerIds || playerIds.length === 0) {
-      console.log('⚠️  No players in tournament');
+    if (playerIdsInTeams.length === 0) {
+      console.log('⚠️  No players found in any league teams for this tournament');
+      console.log('   Skipping player updates.');
       return 0;
     }
 
     const tournamentPlayers = await database
       .select()
       .from(players)
-      .where(inArray(players.id, playerIds))
+      .where(inArray(players.id, playerIdsInTeams))
       .execute();
 
-    console.log(`Found ${tournamentPlayers.length} players in database`);
+    console.log(`  📊 Fetching updates for ${tournamentPlayers.length} players in league teams`);
 
     const liveStats = liveData.live_stats || liveData;
     const livePlayerData = Array.isArray(liveStats) ? liveStats : [];
@@ -162,11 +209,12 @@ async function updateTournamentPlayers(
     let notFoundCount = 0;
 
     for (const player of tournamentPlayers) {
-      const dgPlayer = dataGolfMap.get(player.external_id);
+      const datagolfId = player.external_ids?.datagolf;
+      const dgPlayer = datagolfId ? dataGolfMap.get(String(datagolfId)) : undefined;
 
       if (!dgPlayer) {
         console.log(
-          `⚠️  Player ${player.id} (external_id: ${player.external_id}) not found in live data`,
+          `⚠️  Player ${player.id} (external_ids.datagolf: ${datagolfId}) not found in live data`,
         );
         notFoundCount++;
         continue;
@@ -201,7 +249,7 @@ async function updateTournamentPlayers(
     }
 
     console.log(
-      `\n📊 Summary: Updated ${updatedCount} players, ${notFoundCount} not found in live data`,
+      `\n📊 Summary: Updated ${updatedCount} players in league teams, ${notFoundCount} not found in live data`,
     );
 
     return updatedCount;

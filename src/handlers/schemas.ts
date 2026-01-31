@@ -195,10 +195,21 @@ export const playerAttemptsSchema = {
 
 export const playerSchema = {
   type: 'object',
-  required: ['id', 'external_id', 'level', 'profile_id', 'tournament_id'],
+  required: ['id', 'level', 'profile_id', 'tournament_id'],
   properties: {
     id: { type: 'string', format: 'uuid', description: 'Unique player identifier' },
-    external_id: { type: 'string', description: 'External API player identifier' },
+    external_ids: {
+      type: 'object',
+      description: 'External API player identifiers by provider (datagolf: number, liveGolfData: string)',
+      additionalProperties: {
+        oneOf: [
+          { type: 'number' },
+          { type: 'string' }
+        ]
+      },
+      default: {},
+      example: { datagolf: 27644, liveGolfData: '28237' }
+    },
     level: { type: 'number', minimum: 1, maximum: 5, description: 'Player skill level' },
     current_score: { type: 'number', default: 0, description: 'Current tournament score' },
     position: { type: 'number', default: 0, description: 'Current leaderboard position' },
@@ -302,7 +313,12 @@ export const tournamentSchema = {
     proposed_entry_fee: { type: 'number', minimum: 0, description: 'Proposed entry fee' },
     maximum_cut_amount: { type: 'number', minimum: 0, description: 'Maximum cut amount' },
     maximum_score_generator: { type: 'number', minimum: 0, description: 'Maximum score generator' },
-    players: { type: 'array', items: playerSchema, default: [] },
+    players: {
+      type: 'array',
+      items: playerSchema,
+      default: [],
+      description: 'Array of players in the tournament (full player objects when retrieved, player IDs when creating/updating)'
+    },
     colours: {
       type: 'object',
       properties: {
@@ -327,6 +343,13 @@ export const tournamentSchema = {
       description:
         'Tournament tour type: pga (PGA Tour), euro (European Tour), kft (Korn Ferry Tour), opp (opposite field), alt (alternate event), major (Major Championship)',
     },
+    status: {
+      type: 'string',
+      enum: ['active', 'processing', 'finished', 'cancelled'],
+      default: 'active',
+      description:
+        'Tournament processing status: active (not yet processed), processing (currently being processed for rewards), finished (rewards processed and distributed), cancelled (cancelled tournament)',
+    },
     is_live: {
       type: 'boolean',
       description: 'Whether the tournament is currently live (started but not finished)',
@@ -342,6 +365,20 @@ export const tournamentSchema = {
     },
     created_at: { type: 'string', format: 'date-time' },
     updated_at: { type: 'string', format: 'date-time' },
+  },
+};
+
+// Tournament Input Schema (for create/update requests - players as string IDs)
+export const tournamentInputSchema = {
+  ...tournamentSchema,
+  properties: {
+    ...tournamentSchema.properties,
+    players: {
+      type: 'array',
+      items: { type: 'string', format: 'uuid' },
+      default: [],
+      description: 'Array of player IDs participating in the tournament'
+    },
   },
 };
 

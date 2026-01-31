@@ -6,7 +6,7 @@ import { apiKeyAuth, dataWrapper, playerSchema, standardResponses } from '../../
 
 /**
  * Create player (admin endpoint)
- * @body external_id - string - required
+ * @body external_ids - object - optional (e.g., {"datagolf": 12345})
  * @body level - number - required
  * @body current_score - number - optional
  * @body position - number - optional
@@ -19,7 +19,7 @@ import { apiKeyAuth, dataWrapper, playerSchema, standardResponses } from '../../
  */
 export const createPlayerHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const requiredProperties = ['level', 'external_id', 'profile_id', 'tournament_id'];
+    const requiredProperties = ['level', 'profile_id', 'tournament_id'];
 
     for (const field of requiredProperties) {
       if (!req.body[field]) {
@@ -35,7 +35,7 @@ export const createPlayerHandler = async (req: Request, res: Response, next: Nex
 
     const createdPlayer: Player = {
       id: createId(),
-      external_id: requestBodyPlayer.external_id,
+      external_ids: requestBodyPlayer.external_ids || {},
       level: requestBodyPlayer.level,
       current_score: requestBodyPlayer.current_score,
       position: requestBodyPlayer.position,
@@ -74,7 +74,7 @@ createPlayerHandler.apiDescription = {
               value: {
                 data: {
                   id: 'player_abc123',
-                  external_id: 'ext_player_001',
+                  external_ids: { datagolf: 27644 },
                   level: 4,
                   current_score: 0,
                   position: null,
@@ -103,12 +103,13 @@ createPlayerHandler.apiDescription = {
       'application/json': {
         schema: {
           type: 'object',
-          required: ['external_id', 'level', 'profile_id', 'tournament_id'],
+          required: ['level', 'profile_id', 'tournament_id'],
           properties: {
-            external_id: {
-              type: 'string',
-              minLength: 1,
-              description: 'External API identifier for this player',
+            external_ids: {
+              type: 'object',
+              additionalProperties: { type: 'number' },
+              description: 'External API identifiers by provider (e.g., {"datagolf": 27644})',
+              default: {}
             },
             level: {
               type: 'integer',
@@ -159,7 +160,7 @@ createPlayerHandler.apiDescription = {
           newPlayer: {
             summary: 'Create new player for tournament',
             value: {
-              external_id: 'ext_player_001',
+              external_ids: { datagolf: 27644 },
               level: 4,
               current_score: 0,
               position: null,
