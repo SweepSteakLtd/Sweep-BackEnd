@@ -1,7 +1,16 @@
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { leagues, players, teams, Tournament, tournamentAd, tournamentHole, tournaments } from '../../models';
+import {
+  leagues,
+  players,
+  teams,
+  Tournament,
+  tournamentAd,
+  tournamentHole,
+  tournaments,
+} from '../../models';
 import { database } from '../../services';
+import { calculateTotalStaked } from '../../utils';
 import { apiKeyAuth, arrayDataWrapper, standardResponses, tournamentSchema } from '../schemas';
 
 /**
@@ -63,7 +72,7 @@ export const getTournamentsHandler = async (req: Request, res: Response, next: N
             .from(teams)
             .where(eq(teams.league_id, league.id));
 
-          totalStaked += league.entry_fee * leagueTeams.length;
+          totalStaked += calculateTotalStaked(league.entry_fee, leagueTeams.length);
         }
 
         return {
@@ -73,7 +82,7 @@ export const getTournamentsHandler = async (req: Request, res: Response, next: N
           players: existingPlayers,
           is_live,
           is_finished,
-          totalStaked,
+          total_staked: totalStaked,
         };
       }),
     );

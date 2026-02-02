@@ -1,19 +1,24 @@
 import { eq, inArray } from 'drizzle-orm';
 import { Request, Response } from 'express';
 import {
+  leagues,
   Player,
   PlayerProfile,
-  Team,
-  Tournament,
-  User,
-  leagues,
   playerProfiles,
   players,
+  Team,
   teams,
+  Tournament,
   tournaments,
+  User,
   users,
 } from '../../models';
 import { database } from '../../services';
+import {
+  calculatePrizeDistribution,
+  calculateTotalPot,
+  DEFAULT_PRIZE_DISTRIBUTION,
+} from '../../utils';
 import { apiKeyAuth, dataWrapper, standardResponses } from '../schemas';
 
 interface LeaderboardPlayer {
@@ -234,24 +239,11 @@ export const getLeaderboardHandler = async (req: Request, res: Response) => {
       entry.rank = index + 1;
     });
 
-    const totalPot = league.entry_fee * leagueTeams.length * 0.9; // 10% platform fee
-
-    // Fixed prize distribution percentages
-    const distributionPercentages = [
-      { position: 1, percentage: 0.6 }, // 60%
-      { position: 2, percentage: 0.15 }, // 15%
-      { position: 3, percentage: 0.125 }, // 12.5%
-      { position: 4, percentage: 0.075 }, // 7.5%
-      { position: 5, percentage: 0.05 }, // 5%
-    ];
+    const totalPot = calculateTotalPot(league.entry_fee, leagueTeams.length);
 
     // Build prize distribution array with calculated amounts (only if tournament has started)
     const prizeDistribution = tournamentHasStarted
-      ? distributionPercentages.map(dist => ({
-          position: dist.position,
-          percentage: dist.percentage,
-          amount: totalPot * dist.percentage,
-        }))
+      ? calculatePrizeDistribution(totalPot, DEFAULT_PRIZE_DISTRIBUTION)
       : [];
 
     // Assign prizes to teams based on prize distribution (only if tournament has started)

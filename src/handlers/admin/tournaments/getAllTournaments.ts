@@ -1,7 +1,15 @@
 import { eq, inArray } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
-import { leagues, players, teams, tournamentAd, tournamentHole, tournaments } from '../../../models';
+import {
+  leagues,
+  players,
+  teams,
+  tournamentAd,
+  tournamentHole,
+  tournaments,
+} from '../../../models';
 import { database } from '../../../services';
+import { calculateTotalStaked } from '../../../utils';
 import { apiKeyAuth, arrayDataWrapper, standardResponses, tournamentSchema } from '../../schemas';
 
 /**
@@ -85,7 +93,7 @@ export const getAllTournamentsHandler = async (req: Request, res: Response, next
             .from(teams)
             .where(eq(teams.league_id, league.id));
 
-          totalStaked += league.entry_fee * leagueTeams.length;
+          totalStaked += calculateTotalStaked(league.entry_fee, leagueTeams.length);
         }
 
         return {
@@ -95,7 +103,7 @@ export const getAllTournamentsHandler = async (req: Request, res: Response, next
           players: resolvedPlayers,
           is_live,
           is_finished,
-          totalStaked,
+          total_staked: totalStaked,
         };
       }),
     );
@@ -136,7 +144,8 @@ getAllTournamentsHandler.apiDescription = {
         type: 'string',
         enum: ['upcoming', 'ongoing', 'finished'],
       },
-      description: 'Filter tournaments by time-based status: upcoming (starts_at > now), ongoing (starts_at <= now && finishes_at > now), finished (finishes_at <= now). This is different from the tournament.status database field which tracks reward processing status.',
+      description:
+        'Filter tournaments by time-based status: upcoming (starts_at > now), ongoing (starts_at <= now && finishes_at > now), finished (finishes_at <= now). This is different from the tournament.status database field which tracks reward processing status.',
       example: 'ongoing',
     },
   ],

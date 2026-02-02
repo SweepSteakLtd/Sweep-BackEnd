@@ -200,15 +200,13 @@ export const playerSchema = {
     id: { type: 'string', format: 'uuid', description: 'Unique player identifier' },
     external_ids: {
       type: 'object',
-      description: 'External API player identifiers by provider (datagolf: number, liveGolfData: string)',
+      description:
+        'External API player identifiers by provider (datagolf: number, liveGolfData: string)',
       additionalProperties: {
-        oneOf: [
-          { type: 'number' },
-          { type: 'string' }
-        ]
+        oneOf: [{ type: 'number' }, { type: 'string' }],
       },
       default: {},
-      example: { datagolf: 27644, liveGolfData: '28237' }
+      example: { datagolf: 27644, liveGolfData: '28237' },
     },
     level: { type: 'number', minimum: 1, maximum: 5, description: 'Player skill level' },
     current_score: { type: 'number', default: 0, description: 'Current tournament score' },
@@ -301,7 +299,12 @@ export const tournamentSchema = {
     id: { type: 'string', format: 'uuid', description: 'Unique tournament identifier' },
     external_id: { type: 'string', description: 'External tournament identifier' },
     name: { type: 'string', minLength: 1, maxLength: 200 },
-    short_name: { type: 'string', default: '', maxLength: 50, description: 'Short name for tournament' },
+    short_name: {
+      type: 'string',
+      default: '',
+      maxLength: 50,
+      description: 'Short name for tournament',
+    },
     starts_at: { type: 'string', format: 'date-time', description: 'Tournament start date' },
     finishes_at: { type: 'string', format: 'date-time', description: 'Tournament end date' },
     description: { type: 'string', default: '', maxLength: 2000 },
@@ -317,7 +320,8 @@ export const tournamentSchema = {
       type: 'array',
       items: playerSchema,
       default: [],
-      description: 'Array of players in the tournament (full player objects when retrieved, player IDs when creating/updating)'
+      description:
+        'Array of players in the tournament (full player objects when retrieved, player IDs when creating/updating)',
     },
     colours: {
       type: 'object',
@@ -358,7 +362,7 @@ export const tournamentSchema = {
       type: 'boolean',
       description: 'Whether the tournament has finished',
     },
-    totalStaked: {
+    total_staked: {
       type: 'number',
       minimum: 0,
       description: 'Total amount staked across all leagues in this tournament',
@@ -377,7 +381,7 @@ export const tournamentInputSchema = {
       type: 'array',
       items: { type: 'string', format: 'uuid' },
       default: [],
-      description: 'Array of player IDs participating in the tournament'
+      description: 'Array of player IDs participating in the tournament',
     },
   },
 };
@@ -426,7 +430,11 @@ export const transactionSchema = {
   properties: {
     id: { type: 'string', format: 'uuid', description: 'Unique transaction identifier' },
     name: { type: 'string', maxLength: 200, description: 'Transaction name or description' },
-    value: { type: 'number', minimum: 0, description: 'Transaction amount in smallest currency unit (e.g., cents)' },
+    value: {
+      type: 'number',
+      minimum: 0,
+      description: 'Transaction amount in smallest currency unit (e.g., cents)',
+    },
     type: { type: 'string', enum: ['deposit', 'withdrawal'], description: 'Transaction type' },
     payment_status: {
       type: 'string',
@@ -438,8 +446,16 @@ export const transactionSchema = {
       nullable: true,
       description: 'Payment method used (e.g., CARD, BANK_TRANSFER, NETBANKING)',
     },
-    created_at: { type: 'string', format: 'date-time', description: 'Transaction creation timestamp' },
-    updated_at: { type: 'string', format: 'date-time', description: 'Transaction last update timestamp' },
+    created_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Transaction creation timestamp',
+    },
+    updated_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Transaction last update timestamp',
+    },
   },
 };
 
