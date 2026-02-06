@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import { users } from '../../../models';
-import { database } from '../../../services';
+import { database, createAuditLog } from '../../../services';
 import { apiKeyAuth, standardResponses } from '../../schemas';
 
 /**
@@ -30,6 +30,44 @@ export const deleteUserHandler = async (req: Request, res: Response, next: NextF
       });
     }
 
+    // Fetch the user before deleting for audit log
+    const userToDelete = await database
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1)
+      .execute();
+
+    if (!userToDelete || userToDelete.length === 0) {
+      console.log('[DEBUG] User not found:', userId);
+      return res.status(404).send({
+        error: 'Not Found',
+        message: 'User not found',
+      });
+    }
+
+    const user = userToDelete[0];
+
+    // Log the user object before deletion
+    await createAuditLog({
+      userId: user.id,
+      action: 'DELETE_USER',
+      entityType: 'user',
+      entityId: user.id,
+      oldValues: user as Record<string, unknown>,
+      metadata: {
+        deletedBy: 'admin',
+        deletedAt: new Date().toISOString(),
+      },
+      req,
+    });
+
+    console.log('[AUDIT] User deletion logged:', {
+      userId: user.id,
+      email: user.email,
+    });
+
+    // Delete user from database
     await database.delete(users).where(eq(users.id, userId)).execute();
 
     return res.status(204).send({ data: {} });
