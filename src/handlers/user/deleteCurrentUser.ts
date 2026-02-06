@@ -10,7 +10,7 @@ import { database, firebaseAuth, createAuditLog } from '../../services';
  */
 export const deleteCurrentUserHandler = async (req: Request, res: Response) => {
   try {
-    const { email } = req.query;
+    const { email, removeFirebase } = req.query;
     const authenticatedUser = res.locals.user;
 
     // TODO: REMOVE for now just used for testing
@@ -21,6 +21,9 @@ export const deleteCurrentUserHandler = async (req: Request, res: Response) => {
         message: 'Email is required',
       });
     }
+
+    // Parse removeFirebase flag (defaults to false for backward compatibility)
+    const shouldRemoveFirebase = removeFirebase === 'true' || removeFirebase === '1';
 
     // Security check: Ensure authenticated user can only delete their own account
     if (!authenticatedUser || authenticatedUser.email !== email) {
@@ -63,6 +66,7 @@ export const deleteCurrentUserHandler = async (req: Request, res: Response) => {
         deletedBy: 'self',
         deletedAt: new Date().toISOString(),
         email: email as string,
+        removeFirebase: shouldRemoveFirebase,
       },
       req,
     });
@@ -70,22 +74,27 @@ export const deleteCurrentUserHandler = async (req: Request, res: Response) => {
     console.log('[AUDIT] User deletion logged:', {
       userId: user.id,
       email: user.email,
+      removeFirebase: shouldRemoveFirebase,
     });
 
-    // Delete user from Firebase Authentication
-    try {
-      const firebaseUser = await firebaseAuth.getUserByEmail(email as string);
-      await firebaseAuth.deleteUser(firebaseUser.uid);
-      console.log(`[DEBUG]: Deleted user from Firebase Auth: ${email}`);
-    } catch (firebaseError: any) {
-      // User might not exist in Firebase, log but don't fail the entire operation
-      if (firebaseError.code === 'auth/user-not-found') {
-        console.log(`[DEBUG]: User not found in Firebase Auth: ${email}`);
-      } else {
-        console.log(`[DEBUG]: Error deleting user from Firebase Auth: ${firebaseError.message}`);
-        // Re-throw for other Firebase errors as they might indicate a real problem
-        throw firebaseError;
+    // Delete user from Firebase Authentication (only if removeFirebase flag is set)
+    if (shouldRemoveFirebase) {
+      try {
+        const firebaseUser = await firebaseAuth.getUserByEmail(email as string);
+        await firebaseAuth.deleteUser(firebaseUser.uid);
+        console.log(`[DEBUG]: Deleted user from Firebase Auth: ${email}`);
+      } catch (firebaseError: any) {
+        // User might not exist in Firebase, log but don't fail the entire operation
+        if (firebaseError.code === 'auth/user-not-found') {
+          console.log(`[DEBUG]: User not found in Firebase Auth: ${email}`);
+        } else {
+          console.log(`[DEBUG]: Error deleting user from Firebase Auth: ${firebaseError.message}`);
+          // Re-throw for other Firebase errors as they might indicate a real problem
+          throw firebaseError;
+        }
       }
+    } else {
+      console.log(`[DEBUG]: Skipping Firebase Auth deletion (removeFirebase flag not set): ${email}`);
     }
 
     // Delete user from database
